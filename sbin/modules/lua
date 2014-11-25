@@ -1,0 +1,26 @@
+--Lua functions
+
+lua = {}
+local libPaths = {".", "/lib"}
+local loaded = {}
+
+function lua.include(lib)
+  for i = 1, #loaded do
+    if loaded[i] == lib then
+      return true
+    end
+  end
+  for i = 1, #libPaths do
+    if fs.exists(libPaths[i] .. "/" .. lib .. ".lua") then
+      status = pcall(shell.run, libPaths[i] .. "/" .. lib .. ".lua")
+      if status then
+        table.insert(loaded, lib)
+        kernel.log("Loaded library: " .. lib .. ".lua")
+        return true
+      end
+    end
+  end
+  error("Failed to load library: " .. lib .. ".lua")
+end
+
+lua = applyreadonly(lua)

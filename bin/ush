@@ -1,0 +1,10 @@
+--UberSHell
+s = ""
+local history = {}
+while s ~= "exit" do
+  thread.runFile(s, false, true)
+  write(users.getUsernameByUID(users.getActiveUID())
+  ..":/" .. shell.dir()  .. "# ")
+  s = read(nil, history)
+  table.insert(history, s)
+end

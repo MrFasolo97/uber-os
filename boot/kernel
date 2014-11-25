@@ -1,0 +1,187 @@
+--UberKernel
+local absoluteReadOnly = {readonlytable}
+
+--Boot flags
+local fDebug = false
+local fSilent = false
+local fNoPanic = false
+local fLog = true
+
+local eventStack = {}
+
+local loadedModules = {}
+
+local threadManager = nil
+
+function applyreadonly(table)
+  local tmp = {}
+  setmetatable(tmp, {
+    __index = table,
+    __newindex = function(table, key, value)
+      error("Attempt to modify read-only table")
+    end,
+    __metatable = false
+  })
+  absoluteReadOnly[#absoluteReadOnly + 1] = tmp
+  return tmp
+end
+
+local oldrawset = rawset
+rawset = function(table, index, value)
+  for i = 1, #absoluteReadOnly do
+    if (table == absoluteReadOnly[i]) or (index == absoluteReadOnly[i]) then
+      error("Attempt to modify read-only table")
+      return 
+    end
+  end
+  oldrawset(table, index, value)
+end
+
+local oldPullEvent = os.pullEvent
+local oldPullEventRaw = os.pullEventRaw
+kernel = {}
+kernel.panic = function(msg)
+  print("[" .. os.clock() .. "] Kernel panic: " .. msg)
+  if fNoPanic then
+    print("No panic is active! Contining...")
+  else
+    while true do
+      coroutine.yield()
+    end
+  end
+end
+
+kernel.log = function(msg)
+  local logmsg = "[" .. os.clock() .. "] " .. msg
+  if not fSilent then
+    print(logmsg)
+  end
+  local logFile 
+  if fLog then
+    if fs.exists("/boot/log") then
+      logFile = fs.open("/boot/log", "a")
+    else
+      logFile = fs.open("/boot/log", "w")
+    end
+    logFile.write(logmsg .. "\n")
+    logFile.close()
+  end
+end
+
+kernel.loadModule = function(module, panic)
+  for i = 1, #loadedModules do
+    if loadedModules[i] == module then
+      return true
+    end
+  end
+  kernel.log("Loading module " .. module)
+  status, err = pcall(shell.run, "/sbin/modules/" .. module)
+  if status then
+    kernel.log("Loading module DONE")
+    table.insert(loadedModules, module)
+    return true
+  else
+    kernel.log("Loading module FAILED")
+    if panic then
+      kernel.panic("Failed to load module " .. module .. "\nError: " .. err)
+    else
+      error("Failed to load module" .. module .. "\nError: " .. err)
+    end
+  end
+end
+
+kernel.getLastEvent = function()
+  return #eventStack
+end
+
+kernel.pullEvent = function()
+  local lastEvent = #eventStack
+  while #eventStack <= lastEvent do
+    lastEvent = thread.getLastEvent(thread.getPID(coroutine.running()))
+    sleep(0.05)
+  end
+  thread.setLastEvent(thread.getPID(coroutine.running()), lastEvent + 1)
+  return eventStack[lastEvent + 1].event,
+         eventStack[lastEvent + 1].a,
+         eventStack[lastEvent + 1].b,
+         eventStack[lastEvent + 1].c,
+         eventStack[lastEvent + 1].d,
+         eventStack[lastEvent + 1].e
+end
+
+kernel.sendEvent = function(event, a, b, c, d, e)
+  if event == "THREADDEAD" then
+    if coroutine.running() ~= threadManager then
+      kernel.log("Fake THREADDEAD event")
+      return false
+    end
+  end
+  eventStack[#eventStack + 1] = {
+    ["event"] = event,
+    ["a"] = a,
+    ["b"] = b,
+    ["c"] = c,
+    ["d"] = d,
+    ["e"] = e
+  }
+  return true
+end
+
+kernel.registerThreadManager = function(cr)
+  if not threadManager then
+    threadManager = cr
+  end
+end
+
+local function start()
+  if fs.exists("/boot/log") then
+    fs.delete("/boot/log")
+  end
+  os.pullEventRaw = function(a)
+    local k = thread.isKilled(coroutine.running())
+    if k >= 2 then
+      kernel.log("Killed process. PID = " .. thread.getPID(coroutine.running()))
+      error() --Kill Process
+    end
+    if k == 1 then
+      return "terminate"
+    end
+    return oldPullEventRaw(a)
+  end
+  os.pullEvent = os.pullEventRaw
+  kernel.loadModule("lua", true) --Main dependency
+  local modules = fs.list("/sbin/modules")
+  for i = 1, #modules do
+    kernel.loadModule(modules[i], true)
+  end
+  shell.run("/sbin/thread")
+end
+
+local function stop()
+  os.pullEvent = oldPullEvent
+  os.pullEventRaw = oldPullEventRaw
+end
+
+argv = { ... }
+if #argv == 0 then
+  start()
+  return
+end
+
+if argv[1] == "start" then
+  start()
+  return
+end
+
+if argv[1] == "unload" then
+  stop()
+  return
+end
+
+if argv[1] == "restart" then
+  os.reboot()
+end
+
+if argv[1] == "stop" then
+  os.shutdown()
+end

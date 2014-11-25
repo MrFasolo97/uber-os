@@ -1,0 +1,188 @@
+kernel.log("Starting thread manager")
+
+local threads = {}
+local starting = {}
+local eventFilter = nil
+local initRan = false
+thread = {}
+
+kernel.registerThreadManager(coroutine.running())
+
+rawset(thread, "newPID", function()
+  if not initRan then
+    initRan = true
+    return 1
+  end
+  local flag = true
+  while true do
+    local pid = math.random(1000, 32767)
+    for i = 1, #threads do
+      if threads[i].pid == pid then
+        flag = false
+        break
+      end
+    end
+    if flag then
+      return pid
+    end
+  end
+end)
+ 
+rawset(thread, "startThread", function(fn, blockTerminate, desc)
+  local newpid = thread.newPID()
+  table.insert(starting, {
+    cr = coroutine.create(fn),
+    blockTerminate = blockTerminate or false,
+    error = nil,
+    dead = false,
+    filter = nil,
+    kill = 0,
+    pid = newpid,
+    lastevent = kernel.getLastEvent(),
+    ppid = thread.getPID(coroutine.running()),
+    desc = desc or ""
+  })
+  return newpid
+end)
+
+rawset(thread, "runFile", function(file, blockTerminate, pause)
+  local pid = thread.startThread(function()
+    shell.run(file)
+  end, blockTerminate or true, file)
+  if pause then
+    while true do
+      local event, e1, e2, e3, e4, e5 = kernel.pullEvent()
+      if (event == "THREADDEAD") and (e1 == pid) then
+        return
+      end
+    end
+  end
+end)
+
+rawset(thread, "getLastEvent", function(pid)
+  if pid == 0 then
+    return 0
+  end
+  local x = thread.status(pid).lastEvent
+  if x then
+    return x
+  else
+    return 0
+  end
+end)
+
+rawset(thread, "setLastEvent", function(pid, newLastEvent)
+  thread.status(pid).lastEvent = newLastEvent
+end)
+
+rawset(thread, "kill", function(pid, level)
+  for i = 1, #threads do
+    if threads[i].pid == pid then
+      threads[i].kill = level
+    end
+  end
+end)
+
+rawset(thread, "isKilled", function(cr)
+  for i = 1, #threads do
+    if threads[i].cr == cr then
+      return threads[i].kill
+    end
+  end
+  for i = 1, #starting do
+    if starting[i].cr == cr then
+      return starting[i].kill
+    end
+  end
+  return 0
+end)
+
+rawset(thread, "getPID", function(cr)
+  for i = 1, #threads do
+    if threads[i].cr == cr then
+      return threads[i].pid
+    end
+  end
+  for i = 1, #starting do
+    if starting[i].cr == cr then
+      return starting[i].pid
+    end
+  end
+  return 0
+end)
+
+rawset(thread, "getRunningThreads", function(cr)
+  return threads
+end)
+
+rawset(thread, "status", function (pid)
+  for i = 1, #threads do
+    if threads[i].pid == pid then
+      return threads[i]
+    end
+  end
+  return nil
+end)
+ 
+local function tick(t, evt, ...)
+  if t.dead then return end
+  if t.filter ~= nil and evt ~= t.filter then return end
+  if evt == "terminate" and t.blockTerminate then return end
+ 
+  coroutine.resume(t.cr, evt, ...)
+  t.dead = (coroutine.status(t.cr) == "dead")
+  if t.dead and t.pid ~= 1 then
+    kernel.sendEvent("THREADDEAD", t.pid)
+  end
+end
+ 
+local function tickAll()
+  if #starting > 0 then
+    local clone = starting
+    starting = {}
+    for _,v in ipairs(clone) do
+      tick(v)
+      table.insert(threads, v)
+    end
+  end
+  local e
+  if eventFilter then
+    e = {eventFilter(coroutine.yield())}
+  else
+    e = {coroutine.yield()}
+  end
+  local dead = nil
+  for k,v in ipairs(threads) do
+    tick(v, unpack(e))
+    if v.dead then
+      if dead == nil then dead = {} end
+      table.insert(dead, k - #dead)
+    end
+  end
+  if dead ~= nil then
+    for _,v in ipairs(dead) do
+      table.remove(threads, v)
+    end
+  end
+end
+ 
+rawset(thread, "setGlobalEventFilter", function(fn)
+  if eventFilter ~= nil then error("This can only be set once!") end
+  eventFilter = fn
+  rawset(thread, "setGlobalEventFilter", nil)
+end)
+ 
+if type(threadMain) == "function" then
+  thread.startThread(threadMain)
+else
+  thread.startThread(function() 
+    kernel.log("Starting init")
+    shell.run("/sbin/init")
+  end, true, "init")
+end
+ 
+while #threads > 0 or #starting > 0 do
+  tickAll()
+end
+ 
+kernel.log("Exiting thread manager")

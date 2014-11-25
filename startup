@@ -1,0 +1,37 @@
+
+-- Setup paths
+local sPath = ".:/bin:/sbin:/rom/programs"
+if term.isColor() then
+	sPath = sPath..":/rom/programs/advanced"
+end
+if turtle then
+	sPath = sPath..":/rom/programs/turtle"
+else
+    sPath = sPath..":/rom/programs/rednet:/rom/programs/fun"
+    if term.isColor() then
+    	sPath = sPath..":/rom/programs/fun/advanced"
+    end
+end
+if pocket then
+    sPath = sPath..":/rom/programs/pocket"
+end
+if http then
+	sPath = sPath..":/rom/programs/http"
+end
+shell.setPath( sPath )
+help.setPath( "/rom/help" )
+
+-- Setup aliases
+shell.setAlias( "ls", "/bin/ls")
+shell.setAlias( "cp", "copy" )
+shell.setAlias( "mv", "move" )
+shell.setAlias( "rm", "delete" )
+shell.setAlias( "clr", "clear" )
+shell.setAlias( "rs", "redstone" )
+shell.setAlias( "sh", "ush")
+if term.isColor() then
+    shell.setAlias( "background", "bg" )
+    shell.setAlias( "foreground", "fg" )
+end
+
+shell.run("/uinit")

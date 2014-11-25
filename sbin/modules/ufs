@@ -1,0 +1,38 @@
+--Uber File System Driver
+
+ufs = {}
+ufs.bs = 4096 --Block size
+ufs.is = 8   --Inode size
+
+function fsopen(path)
+  local info = fs.open(path .. "/INFO", "r")
+  if not info then
+    error("Filesystem is not exists/valid")
+    return
+  end
+  local afs = {}
+  afs.size = tonumber(info.readLine())
+  afs.label = info.readLine()
+  afs.inode = info.readLine()
+  afs.bs = ufs.bs
+  info.close()
+
+  afs.inodes = {}
+  local inodesFiles = ufs.bsafs.inode / (ufs.bs / ufs.is)
+  local inodeFile, inodeFileSize, curInode = 0
+  for i = 1, inodesFiles do
+    inodeFile = fs.open(path .. "/INODE" .. tostring(i), "rb")
+    inodeFileSize = fs.getSize(path .. "/INODE" .. tostring(i))
+    for j = 1, inodeFileSize / ufs.is do
+      curInode = curInode + 1
+      afs.inodes[curInode].address = inodeFile.read() + inodeFile.read() * 256
+      afs.inodes[curInode].size = inodeFile.read() + inodeFile.read() * 256
+      afs.inodes[curInode].perms = inodeFile.read() + inodeFile.read() * 256
+      afs.inodes[curInode].owner = inodeFile.read() + inodeFile.read() * 256
+    end
+    inodeFile.close()
+  end
+  return afs
+end
+
+ufs = applyreadonly(ufs)
