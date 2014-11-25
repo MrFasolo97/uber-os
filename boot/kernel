@@ -162,6 +162,8 @@ local function stop()
   os.pullEventRaw = oldPullEventRaw
 end
 
+kernel = applyreadonly(kernel)
+
 argv = { ... }
 if #argv == 0 then
   start()

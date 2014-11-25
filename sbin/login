@@ -4,16 +4,16 @@ while true do
   write("Username: ")
   local username = read()
   write("Password: ")
-  local password = read("*")
+  local password = read("")
   if users.login(username, password) then
     kernel.log("Logging in as " .. username)
     if #argv == 0 then
-      thread.runFile("/bin/ush", true, true)
+      thread.runFile("/bin/ush", true, true, users.getUIDByUsername(username))
     else
-      thread.runFile(argv[1], true, true)
+      thread.runFile(argv[1], true, true, users.getUIDByUsername(username))
     end
-    term.clear()
-    term.setCursorPos(1, 1)
+    --term.clear()
+    --term.setCursorPos(1, 1)
   else
     print("Invalid login\n")
   end

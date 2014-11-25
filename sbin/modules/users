@@ -4,7 +4,7 @@ lua.include("split")
 
 users = {}
 function users.getActiveUID()
-  return _UID 
+  return thread.getUID(coroutine.running())
 end
 
 function users.getUsernameByUID(uid)
@@ -16,20 +16,43 @@ function users.getUsernameByUID(uid)
   return nil
 end
 
+function users.getUIDByUsername(name)
+  for i = 1, #passwd do
+    if passwd[i].name == name then
+      return passwd[i].uid
+    end
+  end
+  return nil
+end
+
+function users.getShell(uid)
+  for i = 1, #passwd do
+    if passwd[i].uid == uid then
+      return passwd[i].shell
+    end
+  end
+  return "/bin/ush"
+end
+
+function users.getHome(uid)
+  for i = 1, #passwd do
+    if passwd[i].uid == uid then
+      return passwd[i].home
+    end
+  end
+  return "/bin/ush"
+end
+
 function users.login(name, pwd)
   for i = 1, #passwd do
     if (passwd[i].name == name) and
     (passwd[i].pwd == pwd) then
-      _UID = passwd[i].uid
       return true
     end
   end
   return false
 end
 
-function users.logout()
-  _UID = 0
-end
 
 local function updatePasswd()
   if not fs.exists("/etc/passwd") then
@@ -39,7 +62,7 @@ local function updatePasswd()
   local user = passwdFile.readLine()
   local tmp
   while user do
-    tmp = user:split(":")
+    tmp = string.split(user, ":")
     passwd[#passwd + 1] = {
       name = tmp[1],
       pwd = tmp[2],

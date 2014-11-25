@@ -28,8 +28,15 @@ rawset(thread, "newPID", function()
   end
 end)
  
-rawset(thread, "startThread", function(fn, blockTerminate, desc)
+rawset(thread, "startThread", function(fn, blockTerminate, desc, uid)
   local newpid = thread.newPID()
+  if not uid then
+    uid = 0
+  end
+  if not ((newpid == 1) or (uid == thread.getUID(coroutine.running())) or
+    (0 == thread.getUID(coroutine.running()))) then
+    uid = thread.getUID(coroutine.running())
+  end
   table.insert(starting, {
     cr = coroutine.create(fn),
     blockTerminate = blockTerminate or false,
@@ -40,15 +47,16 @@ rawset(thread, "startThread", function(fn, blockTerminate, desc)
     pid = newpid,
     lastevent = kernel.getLastEvent(),
     ppid = thread.getPID(coroutine.running()),
-    desc = desc or ""
+    desc = desc or "",
+    uid = uid
   })
   return newpid
 end)
 
-rawset(thread, "runFile", function(file, blockTerminate, pause)
+rawset(thread, "runFile", function(file, blockTerminate, pause, uid)
   local pid = thread.startThread(function()
     shell.run(file)
-  end, blockTerminate or true, file)
+  end, blockTerminate or true, file, uid or thread.getUID(coroutine.running()))
   if pause then
     while true do
       local event, e1, e2, e3, e4, e5 = kernel.pullEvent()
@@ -76,9 +84,21 @@ rawset(thread, "setLastEvent", function(pid, newLastEvent)
 end)
 
 rawset(thread, "kill", function(pid, level)
+  if pid == 1 then
+    kernel.log("Failed to kill init")
+    return 
+  end
+
   for i = 1, #threads do
     if threads[i].pid == pid then
-      threads[i].kill = level
+      if (threads[i].uid == thread.getUID(coroutine.running())) or
+      (thread.getUID(coroutine.running()) == 1) then
+        threads[i].kill = level
+        return true
+      else
+        kernel.log("Failed to kill process " .. pid .. " - Access Denied")
+        return false
+      end
     end
   end
 end)
@@ -110,6 +130,21 @@ rawset(thread, "getPID", function(cr)
   end
   return 0
 end)
+
+rawset(thread, "getUID", function(cr)
+  for i = 1, #threads do
+    if threads[i].cr == cr then
+      return threads[i].uid
+    end
+  end
+  for i = 1, #starting do
+    if starting[i].cr == cr then
+      return starting[i].uid
+    end
+  end
+  return 0
+end)
+
 
 rawset(thread, "getRunningThreads", function(cr)
   return threads
@@ -178,7 +213,7 @@ else
   thread.startThread(function() 
     kernel.log("Starting init")
     shell.run("/sbin/init")
-  end, true, "init")
+  end, true, "init", uid)
 end
  
 while #threads > 0 or #starting > 0 do

@@ -1,38 +1,126 @@
 --Uber File System Driver
 
-ufs = {}
-ufs.bs = 4096 --Block size
-ufs.is = 8   --Inode size
+lua.include("split")
+local links = {}
+local hidden = {"/rom"}
 
-function fsopen(path)
-  local info = fs.open(path .. "/INFO", "r")
-  if not info then
-    error("Filesystem is not exists/valid")
-    return
-  end
-  local afs = {}
-  afs.size = tonumber(info.readLine())
-  afs.label = info.readLine()
-  afs.inode = info.readLine()
-  afs.bs = ufs.bs
-  info.close()
+local oldfs_isReadOnly = fs.isReadOnly
+local oldfs_list = fs.list
+local oldfs_exists = fs.exists
+local oldfs_isDir = fs.isDir
+local oldfs_isReadOnly = fs.isReadOnly
+local oldfs_getName = fs.getName
+local oldfs_getDrive = fs.getDrive
+local oldfs_getSize = fs.getSize
+local oldfs_getFreeSpace = fs.getFreeSpace
+local oldfs_makeDir = fs.makeDir
+local oldfs_move = fs.move
+local oldfs_copy = fs.copy
+local oldfs_delete = fs.delete
+local oldfs_combine = fs.combine
+local oldfs_open = fs.open
+local oldfs_find = fs.find
+local oldfs_getDir = fs.getDir
+local oldshell_setDir = shell.setDir
 
-  afs.inodes = {}
-  local inodesFiles = ufs.bsafs.inode / (ufs.bs / ufs.is)
-  local inodeFile, inodeFileSize, curInode = 0
-  for i = 1, inodesFiles do
-    inodeFile = fs.open(path .. "/INODE" .. tostring(i), "rb")
-    inodeFileSize = fs.getSize(path .. "/INODE" .. tostring(i))
-    for j = 1, inodeFileSize / ufs.is do
-      curInode = curInode + 1
-      afs.inodes[curInode].address = inodeFile.read() + inodeFile.read() * 256
-      afs.inodes[curInode].size = inodeFile.read() + inodeFile.read() * 256
-      afs.inodes[curInode].perms = inodeFile.read() + inodeFile.read() * 256
-      afs.inodes[curInode].owner = inodeFile.read() + inodeFile.read() * 256
+fs.list = function(path)
+  local tmp = oldfs_list(fs.normalizePath(path, true))
+  for i = 1, #tmp do
+    for j = 1, #hidden do
+      local norm = fs.normalizePath(path, true)
+      if norm == "/" then
+        norm = ""
+      end
+      if (norm .. "/" .. tmp[i] == hidden[j]) then
+        table.remove(tmp, i)
+      end
     end
-    inodeFile.close()
   end
-  return afs
+  return tmp
 end
 
-ufs = applyreadonly(ufs)
+fs.exists = function(path)
+  return oldfs_exists(fs.normalizePath(path, true))
+end
+
+fs.isDir = function(path)
+  return oldfs_isDir(fs.normalizePath(path, true))
+end
+
+fs.isReadOnly = function(path)
+  return oldfs_isReadOnly(fs.normalizePath(path, true))
+end
+
+fs.getName = function(path)
+  return oldfs_getName(fs.normalizePath(path, false))
+end
+
+fs.getDrive = function(path)
+  return oldfs_getDrive(fs.normalizePath(path, true))
+end
+
+fs.getSize = function(path)
+  return oldfs_getSize(fs.normalizePath(path, true))
+end
+
+fs.getFreeSpace = function(path)
+  return oldfs_getFreeSpace(fs.normalizePath(path, true))
+end
+
+fs.makeDir = function(path)
+  oldfs_makeDir(fs.normalizePath(path, true))
+end
+
+fs.move = function(from, to)
+  oldfs_move(fs.normalizePath(from, true), fs.normalizePath(to, true))
+end
+
+fs.copy = function(from, to)
+  oldfs_copy(fs.normalizePath(from, true), fs.normalizePath(to, true))
+end
+
+fs.delete = function(path)
+  oldfs_delete(fs.normalizePath(path, true))  
+end
+
+fs.combine = function(a, b)
+  return oldfs_combine(fs.normalizePath(a, false), fs.normalizePath(b, false))
+end
+
+fs.open = function(path, mode)
+  return oldfs_open(fs.normalizePath(path, true), mode)
+end
+
+fs.getDir = function(path)
+  return oldfs_getDir(fs.normalizePath(path, true))
+end
+
+fs.normalizePath = function(path, resolveLinks, replaceHome)
+  if path == "" then
+    return "/"
+  end
+  if string.sub(path, 1, 1) ~= "/" then
+    path = "/" .. path
+  end
+  if string.sub(path, string.len(path), string.len(path)) == "/" then
+    path = string.sub(path, 1, string.len(path) - 1)
+  end
+  if resolveLinks then
+    local components = string.split(path:sub(2, path:len()), "/")
+    local newpath = ""
+    for i = 1, #components do
+      if links[newpath .. "/" .. components[i]] then
+        newpath = links[newpath .. "/" .. components[i]]
+      else
+        newpath = newpath .. "/" .. components[i]
+      end
+    end
+    path = newpath
+  end
+  if replaceHome then
+    path = string.gsub(path, "^" .. users.getHome(thread.getUID(coroutine.running())), "~")
+  end
+  return path
+end
+
+

@@ -1,10 +1,17 @@
 --UberSHell
 s = ""
 local history = {}
+local background = false
+shell.setDir(users.getHome(thread.getUID(coroutine.running())))
 while s ~= "exit" do
-  thread.runFile(s, false, true)
-  write(users.getUsernameByUID(users.getActiveUID())
-  ..":/" .. shell.dir()  .. "# ")
+  s = s:gsub("^%s*(.-)%s*$", "%1")
+  background = false
+  if string.match(s, "&$") then
+    background = true
+  end
+  thread.runFile(s, false, not background)
+  write(users.getUsernameByUID(thread.getUID(coroutine.running())) .. ":" .. 
+    fs.normalizePath(shell.dir(), false, true)  .. "# ")
   s = read(nil, history)
   table.insert(history, s)
 end
