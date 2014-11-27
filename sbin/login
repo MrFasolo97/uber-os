@@ -1,4 +1,9 @@
 local argv = { ... }
+--[[if argv[1] == "1" then
+  for i = 2, 6 do
+    thread.runFile("/sbin/login " .. tostring(i), true, false, 0)
+  end
+end]]
 print("UberOS Login")
 while true do
   write("Username: ")
@@ -7,11 +12,8 @@ while true do
   local password = read("")
   if users.login(username, password) then
     kernel.log("Logging in as " .. username)
-    if #argv == 0 then
-      thread.runFile("/bin/ush", true, true, users.getUIDByUsername(username))
-    else
-      thread.runFile(argv[1], true, true, users.getUIDByUsername(username))
-    end
+    thread.runFile(users.getShell(users.getUIDByUsername(username)),
+        true, true, users.getUIDByUsername(username))
     --term.clear()
     --term.setCursorPos(1, 1)
   else

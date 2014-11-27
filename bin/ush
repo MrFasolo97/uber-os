@@ -2,7 +2,8 @@
 s = ""
 local history = {}
 local background = false
-shell.setDir(users.getHome(thread.getUID(coroutine.running())))
+local x = users.getHome(thread.getUID(coroutine.running()))
+shell.setDir(string.sub(x, 2, string.len(x)))
 while s ~= "exit" do
   s = s:gsub("^%s*(.-)%s*$", "%1")
   background = false
@@ -10,8 +11,7 @@ while s ~= "exit" do
     background = true
   end
   thread.runFile(s, false, not background)
-  write(users.getUsernameByUID(thread.getUID(coroutine.running())) .. ":" .. 
-    fs.normalizePath(shell.dir(), false, true)  .. "# ")
+  write(users.getUsernameByUID(thread.getUID(coroutine.running())) .. ":/" .. shell.dir()  .. "# ")
   s = read(nil, history)
   table.insert(history, s)
 end

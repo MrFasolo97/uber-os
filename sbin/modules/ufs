@@ -1,126 +1,19 @@
---Uber File System Driver
+--Uber File System Driver. Works with fsd.
 
-lua.include("split")
-local links = {}
-local hidden = {"/rom"}
+ufs = {}
 
-local oldfs_isReadOnly = fs.isReadOnly
-local oldfs_list = fs.list
-local oldfs_exists = fs.exists
-local oldfs_isDir = fs.isDir
-local oldfs_isReadOnly = fs.isReadOnly
-local oldfs_getName = fs.getName
-local oldfs_getDrive = fs.getDrive
-local oldfs_getSize = fs.getSize
-local oldfs_getFreeSpace = fs.getFreeSpace
-local oldfs_makeDir = fs.makeDir
-local oldfs_move = fs.move
-local oldfs_copy = fs.copy
-local oldfs_delete = fs.delete
-local oldfs_combine = fs.combine
-local oldfs_open = fs.open
-local oldfs_find = fs.find
-local oldfs_getDir = fs.getDir
-local oldshell_setDir = shell.setDir
+local oldfs = deepcopy(fs)
 
-fs.list = function(path)
-  local tmp = oldfs_list(fs.normalizePath(path, true))
-  for i = 1, #tmp do
-    for j = 1, #hidden do
-      local norm = fs.normalizePath(path, true)
-      if norm == "/" then
-        norm = ""
-      end
-      if (norm .. "/" .. tmp[i] == hidden[j]) then
-        table.remove(tmp, i)
-      end
+ufs.list = function(path)
+  path = fs.normalizePath(path)
+  if path == "/" then path = "" end
+  local p = oldfs.list(path)
+  for i = 1, #p do
+    if path .. "/" .. p[i] == "/rom" then
+      table.remove(p, i)
     end
   end
-  return tmp
+  return p
 end
 
-fs.exists = function(path)
-  return oldfs_exists(fs.normalizePath(path, true))
-end
-
-fs.isDir = function(path)
-  return oldfs_isDir(fs.normalizePath(path, true))
-end
-
-fs.isReadOnly = function(path)
-  return oldfs_isReadOnly(fs.normalizePath(path, true))
-end
-
-fs.getName = function(path)
-  return oldfs_getName(fs.normalizePath(path, false))
-end
-
-fs.getDrive = function(path)
-  return oldfs_getDrive(fs.normalizePath(path, true))
-end
-
-fs.getSize = function(path)
-  return oldfs_getSize(fs.normalizePath(path, true))
-end
-
-fs.getFreeSpace = function(path)
-  return oldfs_getFreeSpace(fs.normalizePath(path, true))
-end
-
-fs.makeDir = function(path)
-  oldfs_makeDir(fs.normalizePath(path, true))
-end
-
-fs.move = function(from, to)
-  oldfs_move(fs.normalizePath(from, true), fs.normalizePath(to, true))
-end
-
-fs.copy = function(from, to)
-  oldfs_copy(fs.normalizePath(from, true), fs.normalizePath(to, true))
-end
-
-fs.delete = function(path)
-  oldfs_delete(fs.normalizePath(path, true))  
-end
-
-fs.combine = function(a, b)
-  return oldfs_combine(fs.normalizePath(a, false), fs.normalizePath(b, false))
-end
-
-fs.open = function(path, mode)
-  return oldfs_open(fs.normalizePath(path, true), mode)
-end
-
-fs.getDir = function(path)
-  return oldfs_getDir(fs.normalizePath(path, true))
-end
-
-fs.normalizePath = function(path, resolveLinks, replaceHome)
-  if path == "" then
-    return "/"
-  end
-  if string.sub(path, 1, 1) ~= "/" then
-    path = "/" .. path
-  end
-  if string.sub(path, string.len(path), string.len(path)) == "/" then
-    path = string.sub(path, 1, string.len(path) - 1)
-  end
-  if resolveLinks then
-    local components = string.split(path:sub(2, path:len()), "/")
-    local newpath = ""
-    for i = 1, #components do
-      if links[newpath .. "/" .. components[i]] then
-        newpath = links[newpath .. "/" .. components[i]]
-      else
-        newpath = newpath .. "/" .. components[i]
-      end
-    end
-    path = newpath
-  end
-  if replaceHome then
-    path = string.gsub(path, "^" .. users.getHome(thread.getUID(coroutine.running())), "~")
-  end
-  return path
-end
-
-
+ufs = applyreadonly(ufs)

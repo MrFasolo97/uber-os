@@ -92,12 +92,10 @@ rawset(thread, "kill", function(pid, level)
   for i = 1, #threads do
     if threads[i].pid == pid then
       if (threads[i].uid == thread.getUID(coroutine.running())) or
-      (thread.getUID(coroutine.running()) == 1) then
+      (thread.getUID(coroutine.running()) == 0) then
         threads[i].kill = level
-        return true
       else
         kernel.log("Failed to kill process " .. pid .. " - Access Denied")
-        return false
       end
     end
   end

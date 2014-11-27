@@ -30,7 +30,8 @@ end
 local argv = { ... }
 if #argv == 0 then
   run(1)
-  kernel.log("Stopping init")
+  kernel.log("Init done. Running init 0")
+  run(0)
   return
 elseif argv[1] == "--help" then
   usage()

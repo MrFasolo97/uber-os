@@ -1,0 +1,118 @@
+--File System Driver
+
+lua.include("copy")
+lua.include("split")
+
+fsd = {}
+
+kernel.loadModule("ufs")
+
+local oldfs = deepcopy(fs)
+
+local nodes = { ["/"] = {
+  perms = 755,
+  owner = 0
+}, ["/etc/passwd"] = {
+  perms = 600,
+  owner = 0
+}, ["/sbin/modules"] = {
+  perms = 700,
+  owner = 0
+}, ["/root"] = {
+  perms = 700,
+  owner = 0
+}, ["/home/user"] = {
+  perms = 700,
+  owner = 1000
+}}
+
+local mounts = { ["/"] = {
+  fs = "ufs",
+  dev = "/dev/hdd"
+}, ["/dev"] = {
+  fs = "devfs"
+}, ["/sys"] = {
+  fs = "sysfs"
+}, ["/proc"] = {
+  fs = "procfs"
+}
+}
+
+function fsd.normalizePerms(perms)
+  local tmp = tostring(perms)
+  local arr = {}
+  for i = 1, 3 do
+    local n = tonumber(string.sub(tmp, i, i))
+    if n == 0 then arr[i] = "---" end
+    if n == 1 then arr[i] = "--x" end
+    if n == 2 then arr[i] = "-w-" end
+    if n == 3 then arr[i] = "-wx" end
+    if n == 4 then arr[i] = "r--" end
+    if n == 5 then arr[i] = "r-x" end
+    if n == 6 then arr[i] = "rw-" end
+    if n == 7 then arr[i] = "rwx" end
+  end
+  return arr
+end
+
+function fsd.normalizePath(path)
+  if string.sub(path, 1, 1) ~= "/" then
+    path = "/" .. path
+  end
+  if path == "/" then
+    return "/"
+  end
+  if string.sub(path, #path, #path) == "/" then
+    path = string.sub(path, 1, #path - 1)
+  end
+  return path
+end
+
+function fsd.getMount(path)
+  path = fsd.normalizePath(path)
+  local components = string.split(path, "/")
+  for i = 2, #components do
+    components[i] = components[i - 1] .. "/" .. components[i]
+  end
+  components[1] = "/"
+  for i = #components, 1, -1 do
+    for j, v in pairs(mounts) do
+      if components[i] == j then
+        return v
+      end
+    end
+  end
+end
+
+function fsd.getInfo(path)
+  path = fsd.normalizePath(path)
+  if nodes[path] then
+    return nodes[path]
+  end
+  local components = string.split(path, "/")
+  for i = 1, #components do
+    if i > 1 then
+      components[i] = components[i - 1] .. "/" .. components[i]
+    end
+  end
+  components[1] = "/"
+  for i = #components, 1, -1 do
+    if nodes[components[i]] then
+      return nodes[components[i]]
+    end
+  end
+  return nil
+end
+
+for k, v in pairs(oldfs) do
+  fsd[k] = function(...)
+    local mount = fsd.getMount(arg[1])
+    if getfenv()[mount.fs] and getfenv()[mount.fs][k] then
+      return getfenv()[mount.fs][k](unpack(arg))
+    else
+      return oldfs[k](unpack(arg))
+    end
+  end
+end
+
+fsd = applyreadonly(fsd)

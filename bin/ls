@@ -41,7 +41,8 @@ for i = 1, #files do
       for j = string.len(files[i]), maxlen do
         write(" ")
       end
-      print(" rwxrwxrwx root")
+      print(" ", table.concat(fsd.normalizePerms(fsd.getInfo(dir .. "/" .. files[i]).perms), ""), " ", 
+          users.getUsernameByUID(fsd.getInfo(dir .. "/" .. files[i]).owner))
     else
       write(files[i] .. " ")
     end
