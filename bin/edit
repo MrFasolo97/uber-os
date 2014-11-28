@@ -53,13 +53,13 @@ local sStatus = "Press Ctrl to access menu"
 local function load( _sPath )
 	tLines = {}
 	if fs.exists( _sPath ) then
-		local file = io.open( _sPath, "r" )
-		local sLine = file:read()
+		local file = fs.open( _sPath, "r" )
+		local sLine = file.readLine()
 		while sLine do
 			table.insert( tLines, sLine )
-			sLine = file:read()
+			sLine = file.readLine()
 		end
-		file:close()
+		file.close()
 	end
 	
 	if #tLines == 0 then

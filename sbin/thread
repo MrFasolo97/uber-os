@@ -174,8 +174,10 @@ local function tickAll()
     local clone = starting
     starting = {}
     for _,v in ipairs(clone) do
-      tick(v)
       table.insert(threads, v)
+    end
+    for _,v in ipairs(clone) do
+      tick(v)
     end
   end
   local e
@@ -204,7 +206,6 @@ rawset(thread, "setGlobalEventFilter", function(fn)
   eventFilter = fn
   rawset(thread, "setGlobalEventFilter", nil)
 end)
- 
 if type(threadMain) == "function" then
   thread.startThread(threadMain)
 else

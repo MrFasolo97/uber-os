@@ -2,6 +2,7 @@
 
 ugui = {}
 local MainWidget = nil
+local pixelCache = {}
 
 function ugui.init()
   local tw, th = term.getSize()
@@ -17,7 +18,45 @@ function ugui.init()
   onkey = nil,
   onchar = nil,
   wtype = "Main"
-}
+  }
+  for i = 1, tw do
+    pixelCache[i] = {}
+    for j = 1, th do
+      pixelCache[i][j] = {" ", colors.black, colors.white}
+    end
+  end
+  term.setCursorBlink(false)
+end
+
+function ugui.redraw()
+  term.setCursorPos(1, 1)
+  term.setBackgroundColor(colors.black)
+  term.setTextColor(colors.white)
+
+  for i = 1, #pixelCache do
+    for j = 1, #pixelCache[i] do
+      term.setCursorPos(i, j)
+      term.setBackgroundColor(pixelCache[i][j][3])
+      term.setTextColor(pixelCache[i][j][2])
+      term.write(pixelCache[i][j][1])
+    end
+  end
+
+  term.setCursorPos(1, 1)
+  term.setBackgroundColor(colors.black)
+  term.setTextColor(colors.white)
+end
+
+function clearCache()
+  for i = 1, #pixelCache do
+    for j = 1, #pixelCache[i] do
+      pixelCache[i][j] = {" ", colors.black, colors.white}
+    end
+  end
+end
+
+function putPixel(text, back, front, x, y)
+  pixelCache[x][y] = {text, front, back}
 end
 
 function ugui.resolveCoordinates(x, y, widget)
@@ -57,15 +96,12 @@ function ugui.addWidget(x, y, w, h, wtype, parent, ...)
   return widget
 end
 
-function ugui.redraw(widget)
+function ugui.draw(widget)
   widget = widget or MainWidget
   ugui.widgets[widget.wtype].ondraw(widget)
   for i = 1, #widget.children do
-    ugui.redraw(widget.children[i])
+    ugui.draw(widget.children[i])
   end
-  term.setCursorPos(1, 1)
-  term.setBackgroundColor(colors.black)
-  term.setTextColor(colors.white)
 end
 
 function ugui.pullEvent(event, e1, e2, e3, e4, e5)
@@ -91,9 +127,7 @@ ugui.widgets = {
     ondraw = function(self)
       for i = self.x, self.x + self.w do
         for j = self.y, self.y + self.h do
-          term.setCursorPos(i, j)
-          term.setBackgroundColor(ugui.widgets.Main.color())
-          term.write(" ")
+          ugui.putPixel
         end
       end
     end

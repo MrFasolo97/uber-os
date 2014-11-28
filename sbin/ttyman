@@ -1,0 +1,15 @@
+--Tty manager
+while true do
+  local e, e1 = os.pullEventRaw()
+  if (e == "key") and (e1 == 157) then
+    while true do
+      local x, x1 = os.pullEventRaw()
+      if x == "key" then
+        if (x1 >= 59) and (x1 <= 64) then
+          setTty(x1 - 58)
+        end
+        break
+      end
+    end
+  end
+end

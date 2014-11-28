@@ -5,6 +5,8 @@ local absoluteReadOnly = {readonlytable}
 local ttys = {} --6 ttys that actually windows
 local curTty = 0
 
+local oldfs = fs
+
 --Boot flags
 local fDebug = false
 local fSilent = false
@@ -83,10 +85,10 @@ kernel.log = function(msg)
   end
   local logFile 
   if fLog then
-    if fs.exists("/boot/log") then
-      logFile = fs.open("/boot/log", "a")
+    if oldfs.exists("/boot/log") then
+      logFile = oldfs.open("/boot/log", "a")
     else
-      logFile = fs.open("/boot/log", "w")
+      logFile = oldfs.open("/boot/log", "w")
     end
     logFile.write(logmsg .. "\n")
     logFile.close()
@@ -100,7 +102,7 @@ kernel.loadModule = function(module, panic)
     end
   end
   kernel.log("Loading module " .. module)
-  status, err = pcall(shell.run, "/sbin/modules/" .. module)
+  status, err = pcall(shell.run, "/lib/modules/" .. module)
   if status then
     kernel.log("Loading module DONE")
     table.insert(loadedModules, module)
@@ -159,7 +161,7 @@ kernel.registerThreadManager = function(cr)
 end
 
 kernel.LISTMODULES = function()
-  return fs.list("/sbin/modules")
+  return fs.list("/lib/modules")
 end
 
 kernel.LISTFLAGS = function()
@@ -186,7 +188,7 @@ local function start()
   local modules
   if #argv <= 1 then
     kernel.loadModule("lua", true) --Main dependency
-    modules = fs.list("/sbin/modules")
+    modules = fs.list("/lib/modules")
   else
     modules = {}
     for i = 2, #argv do

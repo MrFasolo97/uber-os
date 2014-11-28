@@ -1,0 +1,25 @@
+--Uber Device Manager
+
+kernel.log("Starting udev")
+
+udev = {}
+
+local devices = {}
+devices["hdd"] = "HDD"
+
+function udev.getMnemonics()
+  local result = {}
+  for k, v in pairs(devices) do
+    table.insert(result, k)
+  end
+  return result
+end
+
+function udev.readDevice(dev)
+  local tmp = devices[dev]
+  if dev == "hdd" then
+    return textutils.serialize({type = "HDD", mounted = "/", freeSpace = fs.getFreeSpace("/")})
+  end
+end
+
+udev = applyreadonly(udev)

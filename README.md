@@ -16,11 +16,13 @@ What works
   Shell interpreter
   
   Some utils (ls, cd, edit, ps, kill, clear, modprobe, rm, mv, cp)
+  
+  File privelegies
 
 What doesn't
 ------------
-  File privelegies
-  
+  Symlinks
+
   Kernel modules control
   
   Package manager
