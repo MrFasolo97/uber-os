@@ -1,0 +1,9 @@
+lua.include("ugui")
+ugui.init()
+local button = ugui.addWidget(5, 5, 20, 2, "Button", nil, "Works!")
+local label = ugui.addWidget(7, 7, 3, 0, "Label", button, "Also")
+local checkbox = ugui.addWidget(5, 10, 0, 0, "Checkbox", nil, false, "This too :)")
+ugui.redraw()
+while true do
+  ugui.pullEvent(os.pullEvent())
+end

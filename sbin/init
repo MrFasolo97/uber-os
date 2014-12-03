@@ -30,7 +30,7 @@ end
 local argv = { ... }
 if #argv == 0 then
   run(1)
-  kernel.log("Init done. Running init 0")
+  kernel.panic("Init done. Running init 0")
   run(0)
   return
 elseif argv[1] == "--help" then

@@ -4,40 +4,22 @@ lua.include("copy")
 lua.include("split")
 
 fsd = {}
+local fsdf = {}
 
-kernel.loadModule("ufs")
-kernel.loadModule("devfs")
+local loadFsDriver = function(drv)
+  kernel.log("Loading Filesystem driver " .. drv)
+  shell.run(ROOT_DIR .. "/lib/drivers/fs/" .. drv)
+  kernel.log("Loading Filesystem driver DONE")
+end
+
+loadFsDriver("ufs")
+loadFsDriver("devfs")
 
 local oldfs = deepcopy(fs)
 
-local nodes = { ["/"] = {
-  perms = 755,
-  owner = 0
-}, ["/etc/passwd"] = {
-  perms = 600,
-  owner = 0
-}, ["/lib/modules"] = {
-  perms = 700,
-  owner = 0
-}, ["/root"] = {
-  perms = 700,
-  owner = 0
-}, ["/home/user"] = {
-  perms = 700,
-  owner = 1000
-}}
+local nodes = {}
 
-local mounts = { ["/"] = {
-  fs = "ufs",
-  dev = "/dev/hdd"
-}, ["/dev"] = {
-  fs = "devfs"
-}, ["/sys"] = {
-  fs = "sysfs"
-}, ["/proc"] = {
-  fs = "procfs"
-}
-}
+local mounts = {}
 
 function fsd.normalizePerms(perms)
   local tmp = tostring(perms)
@@ -90,10 +72,11 @@ function fsd.getMount(path)
     components[i] = components[i - 1] .. "/" .. components[i]
   end
   components[1] = "/"
+  local skip = false
   for i = #components, 1, -1 do
     for j, v in pairs(mounts) do
       if components[i] == j then
-        return v, j
+        if skip and (j ~= "/") then skip = false else return v, j end
       end
     end
   end
@@ -119,14 +102,165 @@ function fsd.getInfo(path)
   return nil
 end
 
+function fsd.saveFs(mountPath)
+  local x = getfenv()[fsd.getMount(mountPath).fs].saveFs
+  if x then
+    x(mountPath)
+  end
+end
+
+function fsd.loadFs(mountPath)
+  local x = getfenv()[fsd.getMount(mountPath).fs].loadFs
+  if x then
+    nodes = x(mountPath)
+  end
+end
+
+function fsd.deleteNode(node)
+  if not nodes[node] then return end
+  if nodes[node].onwer == thread.getUID(coroutine.running()) then
+    nodes[node] = nil
+  else
+    error("Access denied!")
+  end
+end
+
+function fsd.setNode(node, owner, perms)
+  if not nodes[node] then
+    nodes[node] = {}
+  end
+  owner = owner or nodes[node].owner
+  perms = perms or nodes[node].perms
+  if nodes[node].owner == thread.getUID(coroutine.running()) then
+    nodes[node].owner = owner
+    nodes[node].perms = perms
+  else
+    error("Access denied!")
+  end
+end
+
+function fsd.mount(dev, fs, path)
+  if thread then
+    if thread.getUID(coroutine.running()) ~= 0 then error("Superuser is required to mount filesystem") end
+  end
+  path = fsd.normalizePath(path)
+  if mounts[path] then error("Filesystem is already mounted") end
+  kernel.log("Mounting " .. dev .. " as " .. fs .. " on " .. path)
+  mounts[path] = {
+    ["fs"] = fs,
+    ["dev"] = dev
+  }
+  fsd.loadFs(path)
+end
+
+function fsd.umountPath(path)
+  if thread then
+    if thread.getUID(coroutine.running()) ~= 0 then error("Superuser is required to unmount filesystem") end
+  end
+  path = fsd.normalizePath(path)
+  kernel.log("Unmounting at " .. path)
+  fsd.saveFs(path)
+  mounts[path] = nil
+end
+
+function fsd.umountDev(dev)
+  if thread then
+    if thread.getUID(coroutine.running()) ~= 0 then error("Superuser is required to unmount filesystem") end
+  end
+  path = fsd.normalizePath(path)
+  kernel.log("Unmounting " .. dev)
+  for k, v in pairs(mounts) do
+    if v.dev == dev then
+      fsd.saveFs(k)
+      mounts[k] = nil
+    end
+  end
+end
+
+------------------------------------------
+
+function fsdf.list(path)
+  path = fsd.normalizePath(path)
+  if fsd.testPerms(path, thread.getUID(coroutine.running()), "x") then
+    --Passing control to Filesystem
+  else
+    error("Access denied!")
+  end
+end
+
+function fsdf.makeDir(path)
+  path = fsd.normalizePath(path)
+  if fsd.testPerms(oldfs.getDir(path), thread.getUID(coroutine.running()), "w") then
+    --Passing control to Filesystem
+  else
+    error("Access denied")
+  end
+end
+
+function fsdf.copy(from, to)
+  from = fsd.normalizePath(from)
+  to = fsd.normalizePath(to)
+  if fsd.testPerms(from, thread.getUID(coroutine.running()), "r") and fsd.testPerms(to  , thread.getUID(coroutine.running()), "w") then
+    --Passing control to Filesystem
+  else
+    error("Access denied!")
+  end
+end
+
+function fsdf.move(from, to)
+  from = fsd.normalizePath(from)
+  to = fsd.normalizePath(to)
+  if fsd.testPerms(oldfs.getDir(from), thread.getUID(coroutine.running()), "w") and fsd.testPerms(oldfs.getDir(to), thread.getUID(coroutine.running()), "w") then
+    --Passing control to Filesystem
+  else
+    error("Access denied!")
+  end
+end
+
+function fsdf.delete(path)
+  path = fsd.normalizePath(path)
+  if fsd.testPerms(oldfs.getDir(path), thread.getUID(coroutine.running()), "w") then
+    --Passing control to Filesystem
+  else
+    error("Access denied!")
+  end
+end
+
+function fsdf.open(path, mode)
+  path = fsd.normalizePath(path)
+  local modes = {r = "r", rb = "r", w = "w", wb = "w", a = "w", ab = "w"}
+  if not modes[mode] then
+    error("Invalid mode!")
+  end
+  if fsd.testPerms(path, thread.getUID(coroutine.running()), modes[mode]) then
+    --Passing control to Filesystem
+  else
+    error("Access denied!")
+  end
+end
+
+--Mounting filesystems
+
+fsd.mount("/dev/hdd", "ufs", "/")
+fsd.mount("", "devfs", "/dev")
+
+--Actually, it should be:
+--fsd.mount("", "tmpfs", "/")
+--fsd.mount("", "devfs", "/dev")
+--fsd.umountPath("/")
+--fsd.mount("/dev/hdd", "ufs", "/")
+
 for k, v in pairs(oldfs) do
   fsd[k] = function(...)
+    if fsdf[k] then fsdf[k](unpack(arg)) end
     local mount, mountPath = fsd.getMount(arg[1])
+    local retVal
     if getfenv()[mount.fs] and getfenv()[mount.fs][k] then
-      return getfenv()[mount.fs][k](mountPath, unpack(arg))
+       retVal = getfenv()[mount.fs][k](mountPath, unpack(arg))
     else
-      return oldfs[k](unpack(arg))
+      retVal = oldfs[k](unpack(arg))
     end
+    return retVal
   end
 end
 

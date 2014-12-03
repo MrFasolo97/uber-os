@@ -21,6 +21,7 @@ for i = 2, #args do
     more = true
   end
 end
+dir = fs.normalizePath(dir)
 files = fs.list(dir)
 local maxlen = 0
 local tmp
@@ -30,24 +31,28 @@ for i = 1, #files do
     maxlen = tmp
   end
 end
+local isDir = "-"
 for i = 1, #files do
   if (files[i]:sub(1, 1) ~= ".") or allFiles then
-    if term.isColor() and fs.isDir(dir .. "/"
-    .. files[i]) then
-      term.setTextColor(colors.green)
+    if fs.isDir(dir .. "/" .. files[i]) then
+      if term.isColor() then
+        term.setTextColor(colors.green)
+      end
+      isDir = "d"
     end
     if more then
       write(files[i])
       for j = string.len(files[i]), maxlen do
         write(" ")
       end
-      print(" ", table.concat(fsd.normalizePerms(fsd.getInfo(dir .. "/" .. files[i]).perms), ""), " ", 
+      print(" ", isDir, table.concat(fsd.normalizePerms(fsd.getInfo(dir .. "/" .. files[i]).perms), ""), " ", 
           users.getUsernameByUID(fsd.getInfo(dir .. "/" .. files[i]).owner))
     else
       write(files[i] .. " ")
     end
     if term.isColor() then
       term.setTextColor(colors.white)
+      isDir = "-"
     end
   end
 end

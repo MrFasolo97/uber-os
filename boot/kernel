@@ -1,4 +1,11 @@
 --UberKernel
+KERNEL_DIR = fs.getDir(shell.getRunningProgram())
+ROOT_DIR   = fs.getDir(KERNEL_DIR)
+
+
+--Unloading CraftOS APIs
+os.unloadAPI("io")
+
 argv = { ... }
 local absoluteReadOnly = {readonlytable}
 
@@ -85,10 +92,10 @@ kernel.log = function(msg)
   end
   local logFile 
   if fLog then
-    if oldfs.exists("/boot/log") then
-      logFile = oldfs.open("/boot/log", "a")
+    if oldfs.exists("/" .. KERNEL_DIR .. "/log") then
+      logFile = oldfs.open("/" .. KERNEL_DIR .. "/log", "a")
     else
-      logFile = oldfs.open("/boot/log", "w")
+      logFile = oldfs.open("/" .. KERNEL_DIR .. "/log", "w")
     end
     logFile.write(logmsg .. "\n")
     logFile.close()
@@ -102,7 +109,7 @@ kernel.loadModule = function(module, panic)
     end
   end
   kernel.log("Loading module " .. module)
-  status, err = pcall(shell.run, "/lib/modules/" .. module)
+  status, err = pcall(shell.run, ROOT_DIR .. "/lib/modules/" .. module)
   if status then
     kernel.log("Loading module DONE")
     table.insert(loadedModules, module)
@@ -169,8 +176,10 @@ kernel.LISTFLAGS = function()
 end
 
 local function start()
-  if fs.exists("/boot/log") then
-    fs.delete("/boot/log")
+  kernel.log("Boot directory = /" .. KERNEL_DIR)
+  kernel.log("Root directory = /" .. ROOT_DIR)
+  if fs.exists("/" .. KERNEL_DIR .. "/log") then
+    fs.delete("/" .. KERNEL_DIR .. "/log")
   end
   os.pullEventRaw = function(a)
     local k = thread.isKilled(coroutine.running())
@@ -188,7 +197,7 @@ local function start()
   local modules
   if #argv <= 1 then
     kernel.loadModule("lua", true) --Main dependency
-    modules = fs.list("/lib/modules")
+    modules = fs.list(ROOT_DIR .. "/lib/modules")
   else
     modules = {}
     for i = 2, #argv do
@@ -202,8 +211,9 @@ local function start()
   end
   if fsd then
     fs = fsd
+    loadfile = newloadfile
   end
-  shell.run("/sbin/thread")
+  shell.run(ROOT_DIR .. "/sbin/thread")
 end
 
 local function stop()

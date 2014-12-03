@@ -8,6 +8,14 @@ thread = {}
 
 kernel.registerThreadManager(coroutine.running())
 
+local newStdin = function()
+  return {isStdin = true}
+end
+
+local newStdout = function()
+  return {isStdout = true}
+end
+
 rawset(thread, "newPID", function()
   if not initRan then
     initRan = true
@@ -28,7 +36,7 @@ rawset(thread, "newPID", function()
   end
 end)
  
-rawset(thread, "startThread", function(fn, blockTerminate, desc, uid)
+rawset(thread, "startThread", function(fn, blockTerminate, desc, uid, stdin, stdout)
   local newpid = thread.newPID()
   if not uid then
     uid = 0
@@ -48,15 +56,17 @@ rawset(thread, "startThread", function(fn, blockTerminate, desc, uid)
     lastevent = kernel.getLastEvent(),
     ppid = thread.getPID(coroutine.running()),
     desc = desc or "",
-    uid = uid
+    uid = uid,
+    stdin = stdin or newStdin(),
+    stdout = stdout or newStdout()
   })
   return newpid
 end)
 
-rawset(thread, "runFile", function(file, blockTerminate, pause, uid)
+rawset(thread, "runFile", function(file, blockTerminate, pause, uid, stdin, stdout)
   local pid = thread.startThread(function()
     shell.run(file)
-  end, blockTerminate or true, file, uid or thread.getUID(coroutine.running()))
+  end, blockTerminate or true, file, uid or thread.getUID(coroutine.running()), stdin, stdout)
   if pause then
     while true do
       local event, e1, e2, e3, e4, e5 = kernel.pullEvent()
@@ -156,7 +166,41 @@ rawset(thread, "status", function (pid)
   end
   return nil
 end)
- 
+
+local oldPrint = print
+local oldWrite = write
+local oldRead = read
+
+print = function( ... )
+  local fOut = thread.status(thread.getPID(coroutine.running())).stdout
+  if fOut.isStdout then
+    oldPrint(unpack(arg))
+  else
+    fOut.writeLine(table.concat(arg, ""))
+  end
+end
+
+write = function(data)
+  local fOut = thread.status(thread.getPID(coroutine.running())).stdout
+  if fOut.isStdout then
+    oldWrite(data)
+  else
+    fOut.write(data)
+  end
+end
+
+read = function(mask, history)
+  local y = thread.status(thread.getPID(coroutine.running()))
+  local fIn = y.stdin
+  local x
+  if fIn.isStdin then
+    x = oldRead(mask, history)
+  else
+    x = fIn.readLine()
+  end
+  return x
+end
+
 local function tick(t, evt, ...)
   if t.dead then return end
   if t.filter ~= nil and evt ~= t.filter then return end
@@ -166,6 +210,12 @@ local function tick(t, evt, ...)
   t.dead = (coroutine.status(t.cr) == "dead")
   if t.dead and t.pid ~= 1 then
     kernel.sendEvent("THREADDEAD", t.pid)
+    if not t.stdout.isStdout then
+      t.stdout.close()
+    end
+    if not t.stdin.isStdin then
+      t.stdin.close()
+    end
   end
 end
  

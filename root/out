@@ -1,0 +1,344 @@
+/lib/ugui.lua = {
+  perms = 755,
+  owner = 0,
+}
+/etc/rc6.d/final = {
+  perms = 755,
+  owner = 0,
+}
+/bin/shutdown = {
+  perms = 755,
+  owner = 0,
+}
+/etc/rc4.d = {
+  perms = 755,
+  owner = 0,
+}
+/home/user = {
+  perms = 700,
+  owner = 1000,
+}
+/root/ugui = {
+  perms = 700,
+  owner = 0,
+}
+/bin/eject = {
+  perms = 755,
+  owner = 0,
+}
+/root/out = {
+  perms = 700,
+  owner = 0,
+}
+/sbin = {
+  perms = 755,
+  owner = 0,
+}
+/bin/alias = {
+  perms = 755,
+  owner = 0,
+}
+/sbin/ttyman = {
+  perms = 755,
+  owner = 0,
+}
+/sbin/udev = {
+  perms = 755,
+  owner = 0,
+}
+/sbin/login = {
+  perms = 755,
+  owner = 0,
+}
+/lib = {
+  perms = 755,
+  owner = 0,
+}
+/bin/label = {
+  perms = 755,
+  owner = 0,
+}
+/bin/rm = {
+  perms = 755,
+  owner = 0,
+}
+/etc/rc1.d/final = {
+  perms = 755,
+  owner = 0,
+}
+/etc/rc1.d/0 = {
+  perms = 755,
+  owner = 0,
+}
+/root/pipe = {
+  perms = 700,
+  owner = 0,
+}
+/etc/rc1.d = {
+  perms = 755,
+  owner = 0,
+}
+/bin/oldls = {
+  perms = 755,
+  owner = 0,
+}
+/lib/copy.lua = {
+  perms = 755,
+  owner = 0,
+}
+/var = {
+  perms = 755,
+  owner = 0,
+}
+/lib/modules/users = {
+  perms = 700,
+  owner = 0,
+}
+/bin/clear = {
+  perms = 755,
+  owner = 0,
+}
+/etc/rc0.d = {
+  perms = 755,
+  owner = 0,
+}
+/root/test = {
+  perms = 600,
+  owner = 0,
+}
+/lib/sha256.lua = {
+  perms = 755,
+  owner = 0,
+}
+/lib/modules/lua = {
+  perms = 700,
+  owner = 0,
+}
+/lib/modules = {
+  perms = 700,
+  owner = 0,
+}
+/dev/hdd = {
+  perms = 755,
+  owner = 0,
+}
+/boot/log = {
+  perms = 755,
+  owner = 0,
+}
+/bin/kill = {
+  perms = 755,
+  owner = 0,
+}
+/lib/split.lua = {
+  perms = 755,
+  owner = 0,
+}
+/bin/cd = {
+  perms = 755,
+  owner = 0,
+}
+/etc/rc5.d = {
+  perms = 755,
+  owner = 0,
+}
+/etc/rc2.d = {
+  perms = 755,
+  owner = 0,
+}
+/bin/reboot = {
+  perms = 755,
+  owner = 0,
+}
+/sbin/init = {
+  perms = 755,
+  owner = 0,
+}
+/etc/passwd = {
+  perms = 600,
+  owner = 0,
+}
+/lib/drivers/fs/ufs = {
+  perms = 755,
+  owner = 0,
+}
+/lib/base64.lua = {
+  perms = 755,
+  owner = 0,
+}
+/bin/lua = {
+  perms = 755,
+  owner = 0,
+}
+/tmp = {
+  perms = 755,
+  owner = 0,
+}
+/lib/drivers = {
+  perms = 755,
+  owner = 0,
+}
+/bin/cp = {
+  perms = 755,
+  owner = 0,
+}
+/tmp/PIPE47043 = {
+  perms = 755,
+  owner = 0,
+}
+/root/txt = {
+  perms = 700,
+  owner = 0,
+}
+/lib/modules/.fsd.swp = {
+  perms = 700,
+  owner = 0,
+}
+/etc/rc3.d = {
+  perms = 755,
+  owner = 0,
+}
+/bin/ps = {
+  perms = 755,
+  owner = 0,
+}
+/lib/aes.lua = {
+  perms = 755,
+  owner = 0,
+}
+/dev = {
+  perms = 755,
+  owner = 0,
+}
+/bin/log = {
+  perms = 755,
+  owner = 0,
+}
+/lib/drivers/fs = {
+  perms = 755,
+  owner = 0,
+}
+/lib/modules/fsd = {
+  perms = 700,
+  owner = 0,
+}
+/bin/vi = {
+  perms = 755,
+  owner = 0,
+}
+/tmp/PIPE10744 = {
+  perms = 755,
+  owner = 0,
+}
+/boot = {
+  perms = 755,
+  owner = 0,
+}
+/bin = {
+  perms = 755,
+  owner = 0,
+}
+/ = {
+  perms = 755,
+  owner = 0,
+}
+/lib/drivers/fs/.ufs.swp = {
+  perms = 755,
+  owner = 0,
+}
+/bin/drive = {
+  perms = 755,
+  owner = 0,
+}
+/bin/mkdir = {
+  perms = 755,
+  owner = 0,
+}
+/sys = {
+  perms = 755,
+  owner = 0,
+}
+/proc = {
+  perms = 755,
+  owner = 0,
+}
+/etc/rc6.d = {
+  perms = 755,
+  owner = 0,
+}
+/etc/rc0.d/final = {
+  perms = 755,
+  owner = 0,
+}
+/bin/ush = {
+  perms = 755,
+  owner = 0,
+}
+/bin/id = {
+  perms = 755,
+  owner = 0,
+}
+/boot/kernel = {
+  perms = 755,
+  owner = 0,
+}
+/sbin/thread = {
+  perms = 755,
+  owner = 0,
+}
+/startup = {
+  perms = 755,
+  owner = 0,
+}
+/lib/blockfile.lua = {
+  perms = 755,
+  owner = 0,
+}
+/home = {
+  perms = 755,
+  owner = 0,
+}
+/lib/drivers/fs/devfs = {
+  perms = 755,
+  owner = 0,
+}
+/bin/exit = {
+  perms = 755,
+  owner = 0,
+}
+/bin/modprobe = {
+  perms = 755,
+  owner = 0,
+}
+/lib/argparse.lua = {
+  perms = 755,
+  owner = 0,
+}
+/bin/edit = {
+  perms = 755,
+  owner = 0,
+}
+/usr = {
+  perms = 755,
+  owner = 0,
+}
+/etc/fstab = {
+  perms = 755,
+  owner = 0,
+}
+/uinit = {
+  perms = 755,
+  owner = 0,
+}
+/etc = {
+  perms = 755,
+  owner = 0,
+}
+/root = {
+  perms = 700,
+  owner = 0,
+}
+/bin/ls = {
+  perms = 755,
+  owner = 0,
+}
