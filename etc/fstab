@@ -1,5 +1,0 @@
-/dev/hdd / ufs defaults 0 0
-/dev/ram /tmp tmpfs defaults 0 0
-/dev/ram /dev devfs defaults 0 0
-/dev/ram /proc procfs defaults 0 0
-/dev/ram /sys sysfs defaults 0 0

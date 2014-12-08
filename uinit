@@ -1,4 +1,0 @@
-term.clear()
-term.setCursorPos(1, 1)
-print("Loading kernel image /boot/kernel")
-shell.run("/boot/kernel start mlua musers mfsd fLog")
