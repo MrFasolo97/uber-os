@@ -9,7 +9,7 @@ local initRan = false
 local daemons = {}
 local kernelCoroutine = coroutine.running()
 local isPanic = false
-thread = {}
+thread = {["kerneld"] = 0}
 
 kernel.registerThreadManager(coroutine.running())
 

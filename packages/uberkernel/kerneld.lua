@@ -12,14 +12,14 @@ if argv[1] == "status" then
 end
 
 if argv[1] == "start" then
-  shell.run("/boot/kernel start")
+  shell.run("/boot/uberkernel start")
 end
 
 if argv[1] == "stop" then
-  shell.run("/boot/kernel stop")
+  shell.run("/boot/uberkernel stop")
 end
 
 if argv[1] == "restart" then
-  shell.run("/boot/kernel restart")
+  shell.run("/boot/uberkernel restart")
 end
 

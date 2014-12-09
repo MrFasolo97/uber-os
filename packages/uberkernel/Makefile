@@ -15,5 +15,5 @@ $(SRC_MODULES) :
 install:
 	cp out/modules/* ../../out/lib/modules
 	cp out/kerneld ../../out/etc/init.d
-	cp out/uberkernel ../../out/boot/uberkernel-0.1
+	cp out/uberkernel ../../out/boot/uberkernel
 	cp out/thread ../../out/sbin

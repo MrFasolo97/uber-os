@@ -15,6 +15,7 @@ end
 loadFsDriver("ufs")
 loadFsDriver("devfs")
 loadFsDriver("romfs")
+loadFsDriver("ccfs")
 
 local oldfs = deepcopy(fs)
 
@@ -100,7 +101,7 @@ function fsd.getInfo(path)
       return nodes[components[i]]
     end
   end
-  return nil
+  return {owner = 0, perms = 777}
 end
 
 function fsd.saveFs(mountPath)

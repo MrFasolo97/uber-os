@@ -1,4 +1,4 @@
-SRC = romfs ufs devfs
+SRC = romfs ufs devfs ccfs
 PWD = $(shell pwd)
 all	:	prepare $(SRC)
 clean:

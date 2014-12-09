@@ -27,6 +27,13 @@ What doesn't
   
   Package manager
 
-How to install:
+Tools used
+-----------
+  https://github.com/stravant/LuaMinify - Lua Minifier
+
+How to install
 ---------------
-Clone the repo into computer
+  If you are on Linux, install "make", "lua" and run "make" in cloned repository. It will generate out folder, with basic   packages intalled and minified. Copy contents to computer. (~/.minecraft/saves/SAVENAME/computer/ID)
+
+Versions
+--------
