@@ -1,0 +1,3 @@
+/dev/hdd / ccfs defaults 0 0
+/dev/ram /dev devfs defaults 0 0
+/dev/rom /sys/rom romfs defaults 0 0

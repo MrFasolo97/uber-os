@@ -91,6 +91,7 @@ end
 local oldPullEvent = os.pullEvent
 local oldPullEventRaw = os.pullEventRaw
 kernel = {}
+kernel.root = ROOT_DIR
 kernel.panic = function(msg)
   write("[" .. os.clock() .. "] Kernel panic: " .. msg)
   if fNoPanic then
@@ -189,7 +190,7 @@ kernel.registerThreadManager = function(cr)
 end
 
 kernel.LISTMODULES = function()
-  return fs.list("/lib/modules")
+  return fs.list(ROOT_DIR .. "/lib/modules")
 end
 
 kernel.LISTFLAGS = function()

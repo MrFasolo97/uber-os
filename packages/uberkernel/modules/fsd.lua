@@ -8,7 +8,7 @@ local fsdf = {}
 
 local loadFsDriver = function(drv)
   kernel.log("Loading Filesystem driver " .. drv)
-  shell.run(ROOT_DIR .. "/lib/drivers/fs/" .. drv)
+  shell.run(kernel.root .. "/lib/drivers/fs/" .. drv)
   kernel.log("Loading Filesystem driver DONE")
 end
 
@@ -156,7 +156,7 @@ function fsd.mount(dev, fs, path)
     ["fs"] = fs,
     ["dev"] = dev
   }
-  fsd.loadFs(path)
+  fsd.loadFs(path, dev)
   return true
 end
 
@@ -248,7 +248,7 @@ end
 
 --Mounting filesystems
 
-local fstab = fs.open("/etc/fstab", "r")
+local fstab = fs.open(kernel.root .. "/etc/fstab", "r")
 for k, v in pairs(string.split(fstab.readAll(), "\n")) do
   local x = string.split(v, " ")
   fsd.mount(x[1], x[3], x[2])

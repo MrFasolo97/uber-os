@@ -1,4 +1,5 @@
 BASE_PACKAGES = corelib coreutils fsdrv init login uberkernel uboot udev ush
+PACKAGES = $(BASE_PACKAGES) libjson luamin ugui
 
 all: clean prepare base configure
 
@@ -16,7 +17,7 @@ base: populatefs $(BASE_PACKAGES)
 populatefs:
 	mkdir -p out/{bin,boot,dev,etc/init.d,home,lib/{modules,drivers},root,sbin,sys/rom,tmp,var/{lib,lock}}
 
-$(BASE_PACKAGES):
+$(PACKAGES):
 	$(MAKE) -C packages/$@ clean
 	$(MAKE) -C packages/$@
 	$(MAKE) -C packages/$@ install

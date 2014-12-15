@@ -192,4 +192,4 @@ local Scope = {
 	end,
 }
 
-return Scope
+scope = Scope
