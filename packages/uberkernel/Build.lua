@@ -1,6 +1,6 @@
 --Build this package from inside UberOS
 lua.include("min")
-local SRC = {"thread", "uberkernel", "kerneld"}
+local SRC = {"uberkernel", "kerneld"}
 local SRC_MODULES = {"fsd", "lua", "users"}
 local PWD = shell.dir()
 local EXTIN = ".lua"
@@ -35,7 +35,6 @@ end
 local function install(root)
   root = root or ""
   pcall(fs.copy, PWD .. "/out/uberkernel", root .. "/boot/uberkernel")
-  pcall(fs.copy, PWD .. "/out/thread", root .. "/sbin/thread")
   pcall(fs.copy, PWD .. "/out/kerneld", root .. "/etc/init.d/kerneld")
   for k, v in pairs(SRC_MODULES) do
      pcall(fs.copy, PWD .. "/out/" .. v, root .. "/lib/modules/" .. v)

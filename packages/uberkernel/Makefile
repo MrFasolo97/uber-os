@@ -1,4 +1,4 @@
-SRC = kerneld uberkernel thread
+SRC = kerneld uberkernel 
 PWD = $(shell pwd)
 SRC_MODULES = fsd lua users
 all	:	prepare $(SRC) $(SRC_MODULES)
@@ -16,4 +16,3 @@ install:
 	cp out/modules/* ../../out/lib/modules
 	cp out/kerneld ../../out/etc/init.d
 	cp out/uberkernel ../../out/boot/uberkernel
-	cp out/thread ../../out/sbin
