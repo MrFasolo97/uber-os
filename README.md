@@ -30,8 +30,10 @@ What doesn't
 Credits
 -------
   https://github.com/stravant/LuaMinify - Lua Minifier
+  
   http://www.computercraft.info/forums2/index.php?/topic/3479-basic-background-thread-api - Base code for thread manager
-  https://github.com/1Ridav/ComputerCraft-GUI - GUI Library (porting)
+  
+  https://github.com/1Ridav/ComputerCraft-GUI - GUI Library (porting):
 
 How to install
 ---------------
