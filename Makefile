@@ -13,6 +13,7 @@ packages: prepare
 groups: prepare
 
 base: populatefs $(BASE_PACKAGES)
+complete: populatefs $(PACKAGES)
 
 populatefs:
 	mkdir -p out/{bin,boot,dev,etc/init.d,home,lib/{modules,drivers},root,sbin,sys/rom,tmp,var/{lib,lock,log}}
