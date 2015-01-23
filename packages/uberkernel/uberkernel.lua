@@ -88,7 +88,7 @@ local function showKernelConsole()
       return
     end
     if s == "help" then
-      oldprint("exit, help, reboot, shutdown, saferb, killbutinit, killall, rbtocraftos, umountall, ps")
+      oldprint("exit, help, reboot, shutdown, saferb, killbutinit, killall, kill, rbtocraftos, umountall, ps")
     end
     if s == "reboot" then os.reboot() end
     if s == "shutdown" then os.shutdown() end
@@ -120,6 +120,17 @@ local function showKernelConsole()
       for k, v in pairs(threads) do
         oldprint(v.pid, " ", v.desc, " ", v.uid)
       end
+    end
+    if string.sub(s, 1, 5) == "kill " then
+      if #s <= 5 then
+        oldprint("Usage: kill <PID>")
+      end
+      local pid = tonumber(string.sub(s, 6, #s))
+      for k, v in pairs(threads) do if v.pid == pid then 
+        kernel.sendEvent("THREADDEAD", pid)
+        table.remove(threads, k)
+        break 
+      end end
     end
     table.insert(history, s)
   end
