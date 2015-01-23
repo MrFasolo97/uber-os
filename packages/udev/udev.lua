@@ -33,15 +33,24 @@ function udev.readDevice(dev)
   end
 end
 
-local peripherals = peripheral.getNames()
-for k, v in pairs(peripherals) do
-  local i = 0
-  local ptype = peripheral.getType(v)
-  while devices[deviceMnemonics[ptype] .. tostring(i)] do
-    i = i + 1
+local function updatePeripherals()
+  local peripherals = peripheral.getNames()
+  for k, v in pairs(peripherals) do
+    local i = 0
+    local ptype = peripheral.getType(v)
+    while devices[deviceMnemonics[ptype] .. tostring(i)] do
+      i = i + 1
+    end
+    devices[deviceMnemonics[ptype] .. tostring(i)] = v
   end
-  devices[deviceMnemonics[ptype] .. tostring(i)] = v
-  kernel.log("udev: found " .. ptype .. " at " .. v)
 end
 
 udev = applyreadonly(udev)
+
+updatePeripherals()
+while true do
+  local e = os.pullEvent()
+  if e:sub(1, 10) == "peripheral" then
+    updatePeripherals()
+  end
+end

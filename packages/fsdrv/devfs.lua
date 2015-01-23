@@ -3,11 +3,11 @@
 local oldfs = deepcopy(fs)
 devfs = {}
 
-function devfs.list(mountPath, path)
+function devfs.list(mountPath, device, path)
   return udev.getMnemonics()
 end
 
-function devfs.exists(mountPath, path)
+function devfs.exists(mountPath, device, path)
   local files = udev.getMnemonics()
   path = oldfs.getName(path)
   for i = 1, #files do
@@ -18,7 +18,7 @@ function devfs.exists(mountPath, path)
   return false
 end
 
-function devfs.open(mountPath, path, mode)
+function devfs.open(mountPath, device, path, mode)
   path = fs.normalizePath(path)
   local text = udev.readDevice(oldfs.getName(path))
   local handle = {

@@ -107,14 +107,17 @@ end
 function fsd.saveFs(mountPath)
   local x = getfenv()[fsd.getMount(mountPath).fs].saveFs
   if x then
-    x(mountPath)
+    x(mountPath, fsd.getMount(mountPath).dev)
   end
 end
 
 function fsd.loadFs(mountPath)
   local x = getfenv()[fsd.getMount(mountPath).fs].loadFs
   if x then
-    nodes = x(mountPath)
+    local tmp = x(mountPath, fsd.getMount(mountPath).dev)
+    for k, v in tmp do
+      nodes[mountPath .. k] = v
+    end
   end
 end
 
@@ -182,6 +185,10 @@ function fsd.umountDev(dev)
       mounts[k] = nil
     end
   end
+end
+
+function fsd.getMounts()
+  return mounts
 end
 
 ------------------------------------------
@@ -265,7 +272,7 @@ for k, v in pairs(oldfs) do
     local mount, mountPath = fsd.getMount(arg[1])
     local retVal
     if getfenv()[mount.fs] and getfenv()[mount.fs][k] then
-       retVal = getfenv()[mount.fs][k](mountPath, unpack(arg))
+       retVal = getfenv()[mount.fs][k](mountPath, fsd.normalizePath(mount.dev), unpack(arg))
     else
       retVal = oldfs[k](unpack(arg))
     end

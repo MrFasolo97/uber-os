@@ -6,8 +6,6 @@ f = fs.open("/etc/motd", "r")
 local motd = f.readAll()
 f.close()
 while true do
-  term.clear()
-  term.setCursorPos(1, 1)
   write(issue)
   write("Username: ")
   local username = read()
@@ -20,5 +18,8 @@ while true do
         true, true, users.getUIDByUsername(username))
   else
     print("Invalid login\n")
+    sleep(3)
   end
+  term.clear()
+  term.setCursorPos(1, 1)
 end

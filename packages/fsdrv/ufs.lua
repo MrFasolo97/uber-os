@@ -20,27 +20,32 @@ local function collectFiles(dir, table)
   return table
 end
 
-ufs.saveFs = function(mountPath)
-  local FSDATA = oldfs.open(fsd.normalizePath(mountPath) .. "/" .. "UFSDATA", "w")
+ufs.saveFs = function(mountPath, device)
+  local p = fsd.normalizePath(device)
+  if p == "/" then p = "" end
+  local FSDATA = oldfs.open(p .. "/UFSDATA", "w")
   local WRITEDATA = base64enc(fserialize(collectFiles(mountPath, {})))
   FSDATA.write(WRITEDATA)
   FSDATA.close()
 end
 
-ufs.loadFs = function(mountPath)
-  local FSDATA = oldfs.open(fsd.normalizePath(mountPath) .. "/" .. "UFSDATA", "r")
+ufs.loadFs = function(mountPath, device)
+  local p = fsd.normalizePath(device)
+  if p == "/" then p = "" end
+  if not oldfs.exists(p .. "/UFSDATA") then ufs.saveFs(mountPath, device) end
+  local FSDATA = oldfs.open(p .. "/UFSDATA", "r")
   local READDATA = textutils.unserialize(base64dec(FSDATA.readAll()))
   FSDATA.close()
   return READDATA
 end
 
-ufs.list = function(mountPath, path)
+ufs.list = function(mountPath, device, path)
   path = fs.normalizePath(path)
-  if not fs.isDir(path) then
+  if not fs.isDir(device .. path) then
     error("Not a directory")
   end
+  local p = oldfs.list(device .. path)
   if path == "/" then path = "" end
-  local p = oldfs.list(path)
   for i = 1, #p do
     if p[i] then
       local x = path .. "/" .. p[i]
@@ -52,9 +57,9 @@ ufs.list = function(mountPath, path)
   return p
 end
 
-ufs.exists = function(mountPath, path)
+ufs.exists = function(mountPath, device, path)
   path = fs.normalizePath(path)
-  if string.sub(path, 1, 4) == "/rom" then
+  if string.sub(device .. path, 1, 4) == "/rom" then
     return false
   end
   if path == "/UFSDATA" then
@@ -63,37 +68,37 @@ ufs.exists = function(mountPath, path)
   return oldfs.exists(path)
 end
 
-ufs.isDir = function(mountPath, path)
+ufs.isDir = function(mountPath, device, path)
   path = fs.normalizePath(path)
-  if string.sub(path .. "/", 1, 5) == "/rom/" then
+  if string.sub(device .. path .. "/", 1, 5) == "/rom/" then
     return false
   end
   if path == "/UFSDATA" then
     return false
   end
-  return oldfs.isDir(path)
+  return oldfs.isDir(device .. path)
 end
 
-ufs.open = function(mountPath, path, mode)
+ufs.open = function(mountPath, device, path, mode)
   if fs.normalizePath(path) == "/UFSDATA" then error("Internal error") return end
-  return oldfs.open(path, mode)
+  return oldfs.open(device .. path, mode)
 end
 
-ufs.makeDir = function(mountPath, path)
-  oldfs.makeDir(path)
+ufs.makeDir = function(mountPath, device, path)
+  oldfs.makeDir(device .. path)
 end
 
-ufs.move = function(mountPath, from, to)
-  oldfs.move(from, to)
+ufs.move = function(mountPath, device, from, to)
+  oldfs.move(device .. from, device .. to)
 end
 
-ufs.copy = function(mountPath, from, to)
-  oldfs.copy(from, to)
+ufs.copy = function(mountPath, device, from, to)
+  oldfs.copy(device .. from, device .. to)
 end
 
 
-ufs.delete = function(mountPath, path)
-  oldfs.delete(path)
+ufs.delete = function(mountPath, device, path)
+  oldfs.delete(device .. path)
 end
 
 ufs = applyreadonly(ufs)

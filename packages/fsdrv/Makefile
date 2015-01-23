@@ -1,4 +1,4 @@
-SRC = romfs ufs devfs ccfs
+SRC = romfs ufs devfs ccfs mkfs_
 PWD = $(shell pwd)
 all	:	prepare $(SRC)
 clean:
@@ -10,4 +10,5 @@ $(SRC) :
 	mv $@_min.lua out/$@
 install:
 	mkdir -p ../../out/lib/drivers/fs
-	cp out/* ../../out/lib/drivers/fs
+	cp out/*fs ../../out/lib/drivers/fs
+	cp out/mkfs_ ../../out/bin/mkfs
