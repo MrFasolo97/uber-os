@@ -53,12 +53,11 @@ function users.login(name, pwd)
   return false
 end
 
-
 local function updatePasswd()
-  if not fs.exists("/etc/passwd") then
+  if not fs.exists(ROOT_DIR .. "/etc/passwd") then
     kernel.panic("/etc/passwd not found!")
   end
-  passwdFile = fs.open("/etc/passwd", "r")
+  local passwdFile = fs.open(ROOT_DIR .. "/etc/passwd", "r")
   local user = passwdFile.readLine()
   local tmp
   while user do
@@ -73,6 +72,21 @@ local function updatePasswd()
     user = passwdFile.readLine()
   end
   passwdFile.close()
+end
+
+function users.newUser(name, pwd, home, shell)
+  if thread.getUID(coroutine.running()) ~= 0 then
+    error("Only root can create users!")
+    return 
+  end
+  local uid = 1000
+  for k, v in pairs(passwd) do
+    if uid <= v.uid then uid = v.uid + 1 end
+  end
+  local passwdFile = fs.open(ROOT_DIR .. "/etc/passwd", "a")
+  passwdFile.write(name .. ":" .. pwd .. ":" .. uid .. ":::" .. home .. ":" .. shell)
+  passwdFile.close()
+  updatePasswd()
 end
 
 updatePasswd()

@@ -23,8 +23,10 @@ end
 term.clear()
 term.setCursorPos(1, 1)
 print("Uber Bootloader v0.1")
-print("Root directory: /" .. fs.getDir(shell.getRunningProgram()))
-local s = "/boot/uberkernel start mlua musers mfsd fLog"
+ROOT_DIR = fs.getDir(shell.getRunningProgram())
+print("Root directory: /" .. ROOT_DIR)
+local s = ROOT_DIR .. "/boot/uberkernel start mlua musers mfsd fLog"
+if s:sub(1, 1) ~= "/" then s = "/" .. s end
 print("Default = " .. s)
 print("")
 local tmp = ""

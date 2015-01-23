@@ -1,6 +1,5 @@
 --UberKernel
 KERNEL_DIR = fs.getDir(shell.getRunningProgram())
-ROOT_DIR   = ""
 local oldprint = print
 local oldwrite = write
 local oldread  = read
@@ -513,8 +512,8 @@ end
 local function start()
   kernel.log("Boot directory = /" .. KERNEL_DIR)
   kernel.log("Root directory = /" .. ROOT_DIR)
-  if fs.exists("/" .. KERNEL_DIR .. "/log") then
-    fs.delete("/" .. KERNEL_DIR .. "/log")
+  if fs.exists("/" .. KERNEL_DIR .. "/var/log/kernel_log") then
+    fs.delete("/" .. KERNEL_DIR .. "/var/log/kernel_log")
   end
   if fs.exists(ROOT_DIR .. "/tmp") and fs.isDir(ROOT_DIR .. "/tmp") then
     for k, v in pairs(fs.list(ROOT_DIR .. "/tmp")) do

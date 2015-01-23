@@ -64,6 +64,10 @@ function fsd.normalizePath(path)
   if string.sub(path, #path, #path) == "/" then
     path = string.sub(path, 1, #path - 1)
   end
+  local x = 1
+  while x > 0 do
+    path, x = string.gsub(path, "//", "/")
+  end
   return path
 end
 
@@ -115,8 +119,10 @@ function fsd.loadFs(mountPath)
   local x = getfenv()[fsd.getMount(mountPath).fs].loadFs
   if x then
     local tmp = x(mountPath, fsd.getMount(mountPath).dev)
-    for k, v in tmp do
+    if mountPath == "/" then mountPath = "" end
+    for k, v in pairs(tmp) do
       nodes[mountPath .. k] = v
+      kernel.log("LOADINGFS: " .. k .. ":" .. v.owner .. ":" .. v.perms)
     end
   end
 end

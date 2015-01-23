@@ -22,6 +22,7 @@ for i = 2, #args do
   end
 end
 dir = fs.normalizePath(dir)
+print("Listing of dir=" .. dir)
 files = fs.list(dir)
 local maxlen = 0
 local tmp

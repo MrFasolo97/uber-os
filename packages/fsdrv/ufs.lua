@@ -8,13 +8,13 @@ lua.include("fixserialize")
 
 local function collectFiles(dir, table)
   if not table then table = {} end
-  dir = fs.normalizePath(dir)  
-  table[dir] = fs.getInfo(dir)
+  dir = fsd.normalizePath(dir)  
+  table[dir] = fsd.getInfo(dir)
   local err, files = pcall(fs.list, dir)
   if not err then return table end
   if dir == "/" then dir = "" end
   for k, v in pairs(files) do
-    table[dir .. "/" .. v] = fs.getInfo(dir .. "/" .. v)
+    table[dir .. "/" .. v] = fsd.getInfo(dir .. "/" .. v)
     if fs.isDir(dir .. "/" .. v) then collectFiles(dir .. "/" .. v, table) end
   end
   return table
@@ -40,7 +40,7 @@ ufs.loadFs = function(mountPath, device)
 end
 
 ufs.list = function(mountPath, device, path)
-  path = fs.normalizePath(path)
+  path = fsd.normalizePath(path)
   if not fs.isDir(device .. path) then
     error("Not a directory")
   end
@@ -58,7 +58,7 @@ ufs.list = function(mountPath, device, path)
 end
 
 ufs.exists = function(mountPath, device, path)
-  path = fs.normalizePath(path)
+  path = fsd.normalizePath(path)
   if string.sub(device .. path, 1, 4) == "/rom" then
     return false
   end
@@ -69,7 +69,7 @@ ufs.exists = function(mountPath, device, path)
 end
 
 ufs.isDir = function(mountPath, device, path)
-  path = fs.normalizePath(path)
+  path = fsd.normalizePath(path)
   if string.sub(device .. path .. "/", 1, 5) == "/rom/" then
     return false
   end
@@ -80,7 +80,7 @@ ufs.isDir = function(mountPath, device, path)
 end
 
 ufs.open = function(mountPath, device, path, mode)
-  if fs.normalizePath(path) == "/UFSDATA" then error("Internal error") return end
+  if fsd.normalizePath(path) == "/UFSDATA" then error("Internal error") return end
   return oldfs.open(device .. path, mode)
 end
 
