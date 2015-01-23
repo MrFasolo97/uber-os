@@ -19,9 +19,18 @@ loadFsDriver("ccfs")
 
 local oldfs = deepcopy(fs)
 
-local nodes = {}
+local nodes = {} --[[
+  NODE[path]:
+  owner = 0 (UID of owner)
+  perms = 755 (permissions)
+  [linkto] = /bin (symlink to)
+]]
 
-local mounts = {}
+local mounts = {} --[[
+  MOUNT[mount point]:
+  fs = ufs (Filesystem)
+  dev = /dev/hdd (device)
+]]
 
 function fsd.normalizePerms(perms)
   local tmp = tostring(perms)
@@ -69,6 +78,38 @@ function fsd.normalizePath(path)
     path, x = string.gsub(path, "//", "/")
   end
   return path
+end
+
+function fsd.resolveLinks(path)
+  path = fsd.normalizePath(path)
+  local components = string.split(path, "/")
+  local newpath = "/"
+  for i = 1, #components do
+    local v = components[i]
+    local node = fsd.getInfo(newpath .. v)
+    if node.linkto then
+      newpath = fsd.normalizePath(node.linkto) .. "/"
+    else
+      newpath = newpath .. v .. "/"
+    end
+  end
+  return fsd.normalizePath(newpath)
+end
+
+function fsd.newLink(name, path)
+  if testPerms(name, thread.getUID(coroutine.running()), "w") then
+    fsd.setNode(name, nil, nil, path)
+  else
+    error("Access denied!")
+  end
+end
+
+function fsd.delLink(name, path)
+  if testPerms(name, thread.getUID(coroutine.running()), "w") then
+    fsd.setNode(name, nil, nil, false)
+  else
+    error("Access denied!")
+  end
 end
 
 function fsd.stripPath(base, full)
@@ -141,15 +182,21 @@ function fsd.deleteNode(node)
   end
 end
 
-function fsd.setNode(node, owner, perms)
+function fsd.setNode(node, owner, perms, linkto)
   if not nodes[node] then
-    nodes[node] = {}
+    nodes[node] = deepcopy(fsd.getInfo(node))
   end
   owner = owner or nodes[node].owner
   perms = perms or nodes[node].perms
-  if nodes[node].owner == thread.getUID(coroutine.running()) then
+  if linkto == false then
+    linkto = nil
+  elseif linkto == nil then
+    linkto = nodes[node].linkto
+  end
+  if fsd.getInfo(node).owner == thread.getUID(coroutine.running()) then
     nodes[node].owner = owner
     nodes[node].perms = perms
+    nodes[node].linkto = linkto
   else
     error("Access denied!")
   end
@@ -284,10 +331,10 @@ for k, v in pairs(oldfs) do
     if fsdf[k] then fsdf[k](unpack(arg)) end
     local mount, mountPath
     if parentHandlers[k] then
-      mount, mountPath = fsd.getMount(arg[1])
+      mount, mountPath = fsd.getMount(fsd.resolveLinks(arg[1]))
       mount, mountPath = fsd.getMount(oldfs.getDir(mountPath))
     else
-      mount, mountPath = fsd.getMount(arg[1])
+      mount, mountPath = fsd.getMount(fsd.resolveLinks(arg[1]))
     end
     local retVal
     if getfenv()[mount.fs] and getfenv()[mount.fs][k] then

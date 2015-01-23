@@ -476,6 +476,7 @@ local threadMan = function()
   end
    
   kernel.log("Exiting thread manager")
+
 end
 
   local oldPullEvent = os.pullEvent
@@ -483,16 +484,14 @@ end
   kernel = {}
   kernel.root = ROOT_DIR
   kernel.panic = function(msg)
-    write("[" .. os.clock() .. "] Kernel panic: " .. msg)
+    write("[" .. os.clock() .. "] Kernel panic: " .. (msg or ""))
     if fNoPanic then
       print(" ... no panic is active! Contining...")
     else
-      if thread then
-        thread.onPanic(kernelCoroutine)
-      else
+      threads = {}
+      starting = {}
       while true do
-        coroutine.yield()
-      end
+        sleep(0)
       end
     end
 end

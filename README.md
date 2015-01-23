@@ -19,10 +19,10 @@ What works
   
   File privelegies
 
-What doesn't
-------------
   Symlinks
 
+What doesn't
+------------
   Kernel modules control
   
   Package manager
