@@ -71,6 +71,12 @@ function fsd.normalizePath(path)
   return path
 end
 
+function fsd.stripPath(base, full)
+  local l
+  l = fsd.normalizePath(string.sub(fsd.normalizePath(full), #fsd.normalizePath(base) + 1, #fsd.normalizePath(full)))
+  return l
+end
+
 function fsd.getMount(path)
   path = fsd.normalizePath(path)
   local components = string.split(path, "/")
@@ -271,10 +277,18 @@ if not mounts["/"] then
   kernel.panic("Unable to mount root filesystem")
 end
 
+local parentHandlers = {} --{["exists"] = true, ["isDir"] = true, ["getDir"] = true}
+
 for k, v in pairs(oldfs) do
   fsd[k] = function(...)
     if fsdf[k] then fsdf[k](unpack(arg)) end
-    local mount, mountPath = fsd.getMount(arg[1])
+    local mount, mountPath
+    if parentHandlers[k] then
+      mount, mountPath = fsd.getMount(arg[1])
+      mount, mountPath = fsd.getMount(oldfs.getDir(mountPath))
+    else
+      mount, mountPath = fsd.getMount(arg[1])
+    end
     local retVal
     if getfenv()[mount.fs] and getfenv()[mount.fs][k] then
        retVal = getfenv()[mount.fs][k](mountPath, fsd.normalizePath(mount.dev), unpack(arg))
