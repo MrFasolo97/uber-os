@@ -1,10 +1,20 @@
 --UberKernel
 KERNEL_DIR = fs.getDir(shell.getRunningProgram())
+local kernelConsole = false
 local oldprint = print
 local oldwrite = write
 local oldread  = read
+local nativefs = fs
 local kernelCoroutine = coroutine.running()
 
+
+--Thread manager
+local threads = {}
+local starting = {}
+local eventFilter = nil
+local initRan = false
+local daemons = {}
+local isPanic = false
 --Unloading CraftOS APIs
 os.unloadAPI("io")
 local olderror = error
@@ -62,18 +72,65 @@ rawset = function(table, index, value)
   end
   oldrawset(table, index, value)
 end
+  
+local function showKernelConsole()
+  term.clear()
+  term.setCursorPos(1, 1)
+  oldprint("Kernel debug console <CTRL>+T")
+  oldprint("Type 'exit' to leave, 'help' for available commands")
+  local s = ""
+  local history = {}
+  while s ~= "exit" do
+    oldwrite("> ")
+    s = oldread(nil, history)
+    if s == "exit" then
+      kernelConsole = false
+      return
+    end
+    if s == "help" then
+      oldprint("exit, help, reboot, shutdown, saferb, killbutinit, killall, rbtocraftos, umountall, ps")
+    end
+    if s == "reboot" then os.reboot() end
+    if s == "shutdown" then os.shutdown() end
+    if s == "saferb" then
+      os.reboot()
+    end
+    if s == "killbutinit" then
+      starting = {}
+      threads = {threads[1]}
+    end
+    if s == "killall" then
+      starting = {}
+      threads = {}
+    end
+    if s == "rbtocraftos" then
+      fs.move(ROOT_DIR .. "/startup", ROOT_DIR .. "/.startup_backup")
+      local x = fs.open(ROOT_DIR .. "/startup", "w")
+      x.write("ROOT_DIR=fs.getDir(shell.getRunningProgram())\
+      fs.delete(ROOT_DIR .. '/startup')\
+      fs.move(ROOT_DIR .. '/.startup_backup', ROOT_DIR .. '/startup')\
+      print('Be careful! UberOS will start on next reboot!')")
+      x.close()
+      os.reboot()
+    end
+    if s == "umountall" then
+      oldprint("WIP")
+    end
+    if s == "ps" then
+      for k, v in pairs(threads) do
+        oldprint(v.pid, " ", v.desc, " ", v.uid)
+      end
+    end
+    table.insert(history, s)
+  end
+  kernelConsole = false
+end
 
 local threadMan = function()
   kernel.log("Starting thread manager")
 
   lua.include("copy")
 
-  local threads = {}
-  local starting = {}
-  local eventFilter = nil
-  local initRan = false
-  local daemons = {}
-  local isPanic = false
   thread = {["kerneld"] = 0}
 
   local newStdin = function()
@@ -323,10 +380,11 @@ local threadMan = function()
   end
 
   local function tick(t, evt, ...)
+    if kernelConsole then showKernelConsole() return end
     if isPanic then while true do coroutine.yield() end end
     if t.dead then return end
     if t.filter ~= nil and evt ~= t.filter then return end
-    if evt == "terminate" and t.blockTerminate then return end
+    if evt == "terminate" then return end
    
     coroutine.resume(t.cr, evt, ...)
     t.dead = (coroutine.status(t.cr) == "dead")
@@ -366,6 +424,9 @@ local threadMan = function()
       e = {eventFilter(coroutine.yield())}
     else
       e = {coroutine.yield()}
+    end
+    if e[1] == "terminate" then
+      kernelConsole = not kernelConsole
     end
     local dead = nil
     for k,v in ipairs(threads) do

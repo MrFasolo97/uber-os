@@ -122,7 +122,6 @@ function fsd.loadFs(mountPath)
     if mountPath == "/" then mountPath = "" end
     for k, v in pairs(tmp) do
       nodes[mountPath .. k] = v
-      kernel.log("LOADINGFS: " .. k .. ":" .. v.owner .. ":" .. v.perms)
     end
   end
 end
