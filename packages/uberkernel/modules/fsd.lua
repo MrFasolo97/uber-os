@@ -64,6 +64,9 @@ function fsd.testPerms(path, user, perm)
 end
 
 function fsd.normalizePath(path)
+  if not path then return "/" end
+  path = string.gsub(path, "/+", "/")
+  if path == "" then return "/" end
   if string.sub(path, 1, 1) ~= "/" then
     path = "/" .. path
   end
@@ -72,10 +75,6 @@ function fsd.normalizePath(path)
   end
   if string.sub(path, #path, #path) == "/" then
     path = string.sub(path, 1, #path - 1)
-  end
-  local x = 1
-  while x > 0 do
-    path, x = string.gsub(path, "//", "/")
   end
   return path
 end
@@ -86,7 +85,7 @@ function fsd.resolveLinks(path)
   local newpath = "/"
   for i = 1, #components do
     local v = components[i]
-    local node = fsd.getInfo(newpath .. v)
+    local node = fsd.getInfo(newpath .. v, true)
     if node.linkto then
       newpath = fsd.normalizePath(node.linkto) .. "/"
     else
@@ -113,6 +112,7 @@ function fsd.delLink(name, path)
 end
 
 function fsd.stripPath(base, full)
+  if base == full then return "/" end
   local l
   l = fsd.normalizePath(string.sub(fsd.normalizePath(full), #fsd.normalizePath(base) + 1, #fsd.normalizePath(full)))
   return l
@@ -135,10 +135,13 @@ function fsd.getMount(path)
   end
 end
 
-function fsd.getInfo(path)
+function fsd.getInfo(path, dontresolve)
   path = fsd.normalizePath(path)
   if nodes[path] then
     return nodes[path]
+  end
+  if not dontresolve then
+    path = fsd.resolveLinks(path)
   end
   local components = string.split(path, "/")
   for i = 1, #components do
@@ -183,6 +186,7 @@ function fsd.deleteNode(node)
 end
 
 function fsd.setNode(node, owner, perms, linkto)
+  node = fs.normalizePath(node)
   if not nodes[node] then
     nodes[node] = deepcopy(fsd.getInfo(node))
   end
@@ -191,7 +195,9 @@ function fsd.setNode(node, owner, perms, linkto)
   if linkto == false then
     linkto = nil
   elseif linkto == nil then
-    linkto = nodes[node].linkto
+    linkto = fs.normalizePath(nodes[node].linkto)
+  else
+    linkto = fs.normalizePath(linkto)
   end
   if fsd.getInfo(node).owner == thread.getUID(coroutine.running()) then
     nodes[node].owner = owner

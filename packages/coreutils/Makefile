@@ -1,4 +1,4 @@
-SRC = alias chown drive exit label lua modprobe ps shutdown cd clear edit id log mv reboot chmod cp eject kill ls mkdir rm mount umount
+SRC = alias chown drive exit label lua modprobe ps shutdown cd clear edit id log mv reboot chmod cp eject kill ls mkdir rm mount umount ln readlink
 PWD = $(shell pwd)
 all	:	prepare $(SRC)
 clean:

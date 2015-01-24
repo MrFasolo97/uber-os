@@ -3,20 +3,17 @@
 ufs = {}
 
 local oldfs = deepcopy(fs)
-lua.include("base64")
-lua.include("fixserialize")
 
 local function collectFiles(dir, stripPath, table)
   if not table then table = {} end
   dir = fsd.normalizePath(dir)  
-  stripPath = fsd.normalizePath(stripPath)
-  local fixPath = fsd.normalizePath(string.sub(dir, #stripPath+1, #dir))
+  local fixPath = fsd.stripPath(stripPath, dir)
   table[dir] = fsd.getInfo(dir)
   local err, files = pcall(fs.list, dir)
   if not err then return table end
   if dir == "/" then dir = "" end
   for k, v in pairs(files) do
-    table[fsd.normalizePath(fixPath .. "/") .. v] = fsd.getInfo(dir .. "/" .. v)
+    table[fsd.normalizePath(fixPath .. "/" .. v)] = fsd.getInfo(dir .. "/" .. v)
     if fs.isDir(dir .. "/" .. v) then collectFiles(dir .. "/" .. v, stripPath, table) end
   end
   return table
@@ -26,7 +23,12 @@ ufs.saveFs = function(mountPath, device)
   local p = fsd.normalizePath(device)
   if p == "/" then p = "" end
   local FSDATA = oldfs.open(p .. "/UFSDATA", "w")
-  local WRITEDATA = base64enc(fserialize(collectFiles(mountPath, mountPath, {})))
+  local WRITEDATA = "" -- = base64enc(fserialize(collectFiles(mountPath, mountPath, {})))
+  for k, v in pairs(collectFiles(mountPath, mountPath, {})) do
+    WRITEDATA = WRITEDATA .. k .. ":" .. v.owner .. ":" .. v.perms .. ":"
+    if v.linkto then WRITEDATA = WRITEDATA .. v.linkto end
+    WRITEDATA = WRITEDATA .. "\n"
+  end
   FSDATA.write(WRITEDATA)
   FSDATA.close()
 end
@@ -36,9 +38,22 @@ ufs.loadFs = function(mountPath, device)
   if p == "/" then p = "" end
   if not oldfs.exists(p .. "/UFSDATA") then ufs.saveFs(mountPath, device) end
   local FSDATA = oldfs.open(p .. "/UFSDATA", "r")
-  local READDATA = textutils.unserialize(base64dec(FSDATA.readAll()))
+  local READDATA = FSDATA.readAll()
   FSDATA.close()
-  return READDATA
+  local splitted = string.split(READDATA, "\n")
+  local res = {}
+  for k, v in pairs(splitted) do
+    local tmp = string.split(v, ":")
+    res[tmp[1]] = {
+      owner = tonumber(tmp[2]),
+      perms = tmp[3],
+      linkto = tmp[4]
+    }
+    if tmp[4] == "" then
+      res[tmp[1]].linkto = nil
+    end
+  end
+  return res
 end
 
 ufs.list = function(mountPath, device, path)
@@ -100,6 +115,7 @@ ufs.makeDir = function(mountPath, device, path)
   path = fsd.resolveLinks(path)
   path = fsd.stripPath(mountPath, path)
   oldfs.makeDir(device .. path)
+  fs.setNode(mountPath .. "/" .. path)
 end
 
 ufs.move = function(mountPath, device, from, to)
@@ -108,6 +124,7 @@ ufs.move = function(mountPath, device, from, to)
   from = fsd.stripPath(mountPath, from)
   to = fsd.stripPath(mountPath, to)
   oldfs.move(device .. from, device .. to)
+  fs.setNode(mountPath .. "/" .. to)
 end
 
 ufs.copy = function(mountPath, device, from, to)
@@ -116,6 +133,7 @@ ufs.copy = function(mountPath, device, from, to)
   from = fsd.stripPath(mountPath, from)
   to = fsd.stripPath(mountPath, to)
   oldfs.copy(device .. from, device .. to)
+  fs.setNode(mountPath .. "/" .. to)
 end
 
 
@@ -123,6 +141,7 @@ ufs.delete = function(mountPath, device, path)
   path = fsd.stripPath(mountPath, path)
   fsd.setNode(path, nil, nil, false)
   oldfs.delete(device .. path)
+  fs.deleteNode(mountPath .. "/" .. path)
 end
 
 ufs = applyreadonly(ufs)

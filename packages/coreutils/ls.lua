@@ -45,14 +45,18 @@ for i = 1, #files do
       if term.isColor() then
         term.setTextColor(colors.cyan)
       end
-      isLink = " -> " .. fs.getInfo(dir .. "/" .. files[i]).linkto
     end
     if more then
       write(files[i])
       for j = string.len(files[i]), maxlen do
         write(" ")
       end
-      print(" ", isDir, table.concat(fsd.normalizePerms(fsd.getInfo(dir .. "/" .. files[i]).perms), ""), " ", 
+      if fs.getInfo(dir .. "/" .. files[i]).linkto then
+        isLink = " -> " .. fs.getInfo(dir .. "/" .. files[i]).linkto
+      else
+        isLink = ""
+      end
+      print(isDir, table.concat(fsd.normalizePerms(fsd.getInfo(dir .. "/" .. files[i]).perms), ""), " ", 
           users.getUsernameByUID(fsd.getInfo(dir .. "/" .. files[i]).owner), isLink)
     else
       write(files[i] .. " ")
