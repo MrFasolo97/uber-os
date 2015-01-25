@@ -195,7 +195,9 @@ function fsd.setNode(node, owner, perms, linkto)
   if linkto == false then
     linkto = nil
   elseif linkto == nil then
-    linkto = fs.normalizePath(nodes[node].linkto)
+    if nodes[node].linkto then
+      linkto = fs.normalizePath(nodes[node].linkto)
+    end
   else
     linkto = fs.normalizePath(linkto)
   end
