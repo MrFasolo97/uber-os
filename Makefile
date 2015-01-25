@@ -1,5 +1,5 @@
 BASE_PACKAGES = corelib coreutils fsdrv init login uberkernel uboot udev ush
-PACKAGES = $(BASE_PACKAGES) libjson luamin 
+PACKAGES = $(BASE_PACKAGES) libjson luamin upt 
 
 all: clean prepare base configure
 
@@ -16,13 +16,16 @@ base: populatefs $(BASE_PACKAGES)
 complete: populatefs $(PACKAGES)
 
 populatefs:
-	mkdir -p out/{bin,boot,dev,etc/init.d,home,lib/{modules,drivers},root,sbin,sys/rom,tmp,var/{lib,lock,log}}
+	mkdir -p out/{bin,boot,dev,etc/init.d,home,lib/{modules,drivers},root,sbin,sys/rom,tmp,var/{lib,lock,log,cache},usr/{bin,lib,local,share,src},mnt}
 
 $(PACKAGES):
 	$(MAKE) -C packages/$@ clean
 	$(MAKE) -C packages/$@
 	$(MAKE) -C packages/$@ install
 	$(MAKE) -C packages/$@ clean
+
+source:
+	cp -r packages/* out/usr/src/
 
 configure: configure-prepare configure-passwd configure-fstab configure-rc
 configure-prepare:

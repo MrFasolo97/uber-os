@@ -118,6 +118,20 @@ function fsd.stripPath(base, full)
   return l
 end
 
+function fsd.recursList(path, cache)
+  if not cache then cache = {} end
+  path = fsd.normalizePath(path)
+  local l = fs.list(path)
+  for k, v in pairs(l) do
+    local p = fsd.normalizePath(path .. "/" .. v)
+    table.insert(cache, p)
+    if fs.isDir(p) then
+      fsd.recursList(p, cache)
+    end
+  end
+  return cache
+end
+
 function fsd.getMount(path)
   path = fsd.normalizePath(path)
   local components = string.split(path, "/")

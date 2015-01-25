@@ -19,6 +19,7 @@ local isPanic = false
 os.unloadAPI("io")
 local olderror = error
 
+
 error = function(msg)
   if not msg then olderror() return end
   if term.isColor() then
