@@ -5,9 +5,9 @@ An Unix like operating system for Minecraft mod ComputerCraft
 
 This operating system is still under heavy development
 
-What works
+Features
 ----------
-  Multithreading system
+  Multithreading system and daemons
   
   User accounts
   
@@ -15,25 +15,21 @@ What works
   
   Shell interpreter
   
-  Some utils (ls, cd, edit, ps, kill, clear, modprobe, rm, mv, cp)
+  Command line utils
   
   File privelegies
 
-  Symlinks
-
-What doesn't
-------------
-  Kernel modules control
+  Symlinks and mount points
+    
+  Package manager (work in progress)
   
-  Package manager
+  Custom filesystem support
 
 Credits
 -------
   https://github.com/stravant/LuaMinify - Lua Minifier
   
   http://www.computercraft.info/forums2/index.php?/topic/3479-basic-background-thread-api - Base code for thread manager
-  
-  https://github.com/1Ridav/ComputerCraft-GUI - GUI Library (porting):
 
 How to install
 ---------------
