@@ -1,6 +1,6 @@
 --Build this package from inside UberOS
 lua.include("min")
-local SRC = {"makepkg", "makeallpkg"}
+local SRC = {"makepkg", "makeallpkg", "gendb"}
 local PWD = shell.dir()
 local DEST = "/bin"
 local EXTIN = ".lua"

@@ -9,9 +9,12 @@ if #argv < 1 then
 end
 
 function listDeps(package, notinstalled)
-  local f = fs.open("/var/lib/upt/" .. package)
-  local DEPENDS = string.split(f.readLine(), " ")
-  f.close()
+  if fs.exists("/usr/src/" .. package .. "/PKGINFO.lua") then shell.run("/usr/src/" .. package .. "/PKGINFO.lua") elseif
+  fs.exists("/usr/pkg/" .. package .. "/PKGINFO.lua") then shell.run("/usr/pkg/" .. package .. "/PKGINFO.lua") else
+    local f = fs.open("/var/lib/upt/" .. package, "r")
+    DEPENDS = string.split(f.readLine(), " ")
+    f.close()
+  end
   local d = {}
   for k, v in pairs(DEPENDS) do
     if notisntalled then
@@ -28,14 +31,17 @@ end
 local function recursCopy(from, to)
   local l = fs.list(from)
   for k, v in pairs(l) do
-    if fs.isDir(from .. "/" .. v) then
-      if fs.exists(to .. "/" .. v) and fs.isDir(to .. "/" .. v) and #fs.list(to .. "/" .. v) == 0 then
-        fs.delete(to .. "/" .. v)
+    if to == "" and v == "PKGINFO.lua" then else
+      if fs.isDir(from .. "/" .. v) then
+        if fs.exists(to .. "/" .. v) then
+        else
+          fs.makeDir(to .. "/" .. v)
+        end
+        recursCopy(from .. "/" .. v, to .. "/" .. v)
+      else
+        if fs.exists(to .. "/" .. v) then fs.delete(to .. "/" .. v) end
+        fs.copy(from .. "/" .. v, to .. "/" .. v)
       end
-      fs.makeDir(to .. "/" .. v)
-      recursCopy(from .. "/" .. v, to .. "/" .. v)
-    else
-      fs.copy(from .. "/" .. v, to .. "/" .. v)
     end
   end
 end
@@ -45,8 +51,8 @@ local function install(packages)
   for i = 1, #packages do
     if fs.exists("/usr/pkg/" .. packages[i]) then
       recursCopy("/usr/pkg/" .. packages[i], "")
-      shell.run("/usr/pkg/" .. packages[i])
-      local flist = fs.recursList("/tmp/" .. packages[i])
+      shell.run("/usr/pkg/" .. packages[i] .. "/PKGINFO.lua")
+      local flist = fs.recursList("/usr/pkg/" .. packages[i])
       local f = fs.open("/var/lib/upt/" .. packages[i], "w")
       f.writeLine(table.concat(DEPENDS, " "))
       f.writeLine(table.concat(VERSION, "."))
@@ -64,7 +70,7 @@ local function install(packages)
         end
       end
       f.close()
-      print("Package " .. packages[i] .. " installed from cache")
+      print("Package " .. packages[i] .. " installed from /usr/pkg")
       return
     end
     if not fs.exists("/usr/src/" .. packages[i]) then
@@ -143,10 +149,32 @@ local function remove(packages)
   end
 end
 
+local function update()
+  print("Updating package list...")
+  local r = http.get("https://raw.githubusercontent.com/TsarN/uber-os/master/repo/repo.db")
+  if not r then error("Failed to get package list!") end
+  local f = fs.open("/var/lib/upt/database", "r")
+  f.write(r.readAll())
+  r.close()
+  f.close()
+  print("Package list updated")
+end
+
 local function get(packages)
   lua.include("libjson")
   if not http then error("Http API not enabled") end
+  local pkglist
+  if not fs.exists("/var/lib/upt/database") then update() end
+  local flist = fs.open("/var/lib/upt/database", "r")
+  pkglist = string.split(flist.readAll(), "\n")
+  flist.close()
   for i = 1, #packages do
+    local flag = true
+    for k, v in pairs(pkglist) do
+      if packages[i] == v then
+        flag = false
+      end
+    end
     if flag then error("Package not found!") end
     print("Downloading package " .. packages[i])
     local r = http.get("https://raw.githubusercontent.com/TsarN/uber-os/master/repo/" .. packages[i] .. ".utar")
@@ -171,6 +199,7 @@ local function getInstall(package)
   get({package})
   fs.open("/var/lib/upt/" .. package, "w").close()
   local d = listDeps(package, true)
+  print("Dependencies required for package " .. package .. ": " .. table.concat(d, ", "))
   for k, v in pairs(d) do
     getInstall(v)
   end

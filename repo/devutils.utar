@@ -1,15 +1,17 @@
 {
-  [ "/bin/makepkg" ] = "local OE={...}\
-if#OE<1 then error(\"Usage: makepkg <PACKAGE>\")end;local E=shell.dir()\
-shell.setDir(\"/usr/src/\"..OE[1])print(\"Building...\")shell.run(\"Build.lua\")fs.makeDir(\"/tmp/\"..\
-OE[1])print(\"Packaging...\")shell.run(\
-\"Build.lua install /tmp/\"..OE[1])\
-fs.copy(\"/usr/src/\"..\
-OE[1]..\"/PKGINFO.lua\",\"/tmp/\"..OE[1]..\"/PKGINFO.lua\")shell.setDir(E)lua.include(\"libarchive\")\
-archive.pack(\"/tmp/\"..\
-OE[1],shell.resolve(OE[1])..\".utar\")fs.delete(\"/tmp/\"..OE[1])print(\"Done!\")",
-  [ "/bin/makeallpkg" ] = "local P=fs.list(\"/usr/src\")for UB,C in pairs(P)do\
-shell.run(\"makepkg \"..C)end",
+  [ "/bin/gendb" ] = "local EZ=fs.list(\"/usr/src\")\
+local OZ=fs.open(shell.resolve(\"repo.db\"),\"w\")for QS,JJ in pairs(EZ)do OZ.writeLine(JJ)end;OZ.close()",
+  [ "/bin/makepkg" ] = "local Z={...}\
+if#Z<1 then error(\"Usage: makepkg <PACKAGE>\")end;local GX=shell.dir()\
+shell.setDir(\"/usr/src/\"..Z[1])print(\"Building...\")shell.run(\"Build.lua\")fs.makeDir(\"/tmp/\"..\
+Z[1])print(\"Packaging...\")shell.run(\
+\"Build.lua install /tmp/\"..Z[1])\
+fs.copy(\"/usr/src/\"..Z[1]..\
+\"/PKGINFO.lua\",\"/tmp/\"..Z[1]..\"/PKGINFO.lua\")shell.setDir(GX)lua.include(\"libarchive\")\
+archive.pack(\
+\"/tmp/\"..Z[1],shell.resolve(Z[1])..\".utar\")fs.delete(\"/tmp/\"..Z[1])print(\"Done!\")",
+  [ "/bin/makeallpkg" ] = "local F=fs.list(\"/usr/src\")for X,Z in pairs(F)do\
+shell.run(\"makepkg \"..Z)end",
   [ "/bin" ] = true,
   [ "/PKGINFO.lua" ] = "DEPENDS = {\"uberkernel\", \"corelib\", \"libarchive\", \"luamin\"}\
 VERSION = {0, 2, 1}",

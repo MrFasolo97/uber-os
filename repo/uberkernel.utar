@@ -1,368 +1,367 @@
 {
   [ "/boot" ] = true,
-  [ "/lib/modules/lua" ] = "lua={}local O={\".\",\"/lib\"}local FB={}\
-function lua.include(G)\
-for i=1,#FB do if FB[i]==G then return true end end\
-for i=1,#O do\
-if fs.exists(O[i]..\"/\"..G..\".lua\")then status=shell.run(O[i]..\
-\"/\"..G..\".lua\")\
+  [ "/lib/modules/lua" ] = "lua={}local QS={\".\",\"/lib\"}local L={}\
+function lua.include(ND)\
+for i=1,#L do if L[i]==ND then return true end end\
+for i=1,#QS do\
+if fs.exists(QS[i]..\"/\"..ND..\".lua\")then status=shell.run(QS[i]..\"/\"..ND..\
+\".lua\")\
 if status then\
-table.insert(FB,G)\
-kernel.log(\"Loaded library: \"..G..\".lua\")return true else\
-kernel.log(\"Failed to load library: \"..G..\".lua\")\
-error(\"Failed to load library: \"..G..\".lua\")end end end end;lua=applyreadonly(lua)",
-  [ "/lib/modules/users" ] = "local UBZ=0;local I={}lua.include(\"split\")users={}function users.getActiveUID()return\
-thread.getUID(coroutine.running())end;function users.getUsernameByUID(X)for i=1,#I do if\
-I[i].uid==X then return I[i].name end end\
-return nil end;function users.getUIDByUsername(D)for i=1,#I do if\
-I[i].name==D then return I[i].uid end end\
-return nil end;function users.getShell(OR)for i=1,#I do if\
-I[i].uid==OR then return I[i].shell end end\
-return\"/bin/ush\"end;function users.getHome(ZT)for i=1,#I do if\
-I[i].uid==ZT then return I[i].home end end\
-return\"/bin/ush\"end;function users.login(K,PB)\
-for i=1,#I do if\
-(I[i].name==K)and(I[i].pwd==PB)then return true end end;return false end\
-local function AN()if not fs.exists(\
-ROOT_DIR..\"/etc/passwd\")then\
+table.insert(L,ND)\
+kernel.log(\"Loaded library: \"..ND..\".lua\")return true else\
+kernel.log(\"Failed to load library: \"..ND..\".lua\")\
+error(\"Failed to load library: \"..ND..\".lua\")end end end end;lua=applyreadonly(lua)",
+  [ "/lib/modules/users" ] = "local NV=0;local YS={}lua.include(\"split\")users={}function users.getActiveUID()return\
+thread.getUID(coroutine.running())end;function users.getUsernameByUID(T)\
+for i=1,#YS do if\
+YS[i].uid==T then return YS[i].name end end;return nil end;function users.getUIDByUsername(I)\
+for i=1,\
+#YS do if YS[i].name==I then return YS[i].uid end end;return nil end;function users.getShell(IH)\
+for i=1,#YS do if\
+YS[i].uid==IH then return YS[i].shell end end;return\"/bin/ush\"end;function users.getHome(EF)\
+for i=1,\
+#YS do if YS[i].uid==EF then return YS[i].home end end;return\"/bin/ush\"end\
+function users.login(LT,D)for i=1,\
+#YS do\
+if(YS[i].name==LT)and(YS[i].pwd==D)then return true end end;return false end\
+local function S()if not fs.exists(ROOT_DIR..\"/etc/passwd\")then\
 kernel.panic(\"/etc/passwd not found!\")end\
-local C=fs.open(ROOT_DIR..\"/etc/passwd\",\"r\")local K=C.readLine()local AP\
-while K do AP=string.split(K,\":\")\
-I[#I+1]={name=AP[1],pwd=AP[2],home=AP[6],shell=AP[7],uid=tonumber(AP[3])}K=C.readLine()end;C.close()end\
-function users.newUser(BO,E,NI,L)\
+local HK=fs.open(ROOT_DIR..\"/etc/passwd\",\"r\")local ML=HK.readLine()local Y\
+while ML do Y=string.split(ML,\":\")\
+YS[#YS+1]={name=Y[1],pwd=Y[2],home=Y[6],shell=Y[7],uid=tonumber(Y[3])}ML=HK.readLine()end;HK.close()end\
+function users.newUser(ZA,GM,NG,QY)\
 if\
-thread.getUID(coroutine.running())~=0 then error(\"Only root can create users!\")return end;local OM=1000\
-for ZD,RC in pairs(I)do if OM<=RC.uid then OM=RC.uid+1 end end;local B=fs.open(ROOT_DIR..\"/etc/passwd\",\"a\")B.write(BO..\
-\":\"..E..\
-\":\"..OM..\":::\"..NI..\":\"..L)\
-B.close()AN()end;AN()users=applyreadonly(users)",
+thread.getUID(coroutine.running())~=0 then error(\"Only root can create users!\")return end;local G=1000\
+for GV,B in pairs(YS)do if G<=B.uid then G=B.uid+1 end end;local TP=fs.open(ROOT_DIR..\"/etc/passwd\",\"a\")TP.write(ZA..\
+\
+\":\"..GM..\":\"..G..\":::\"..NG..\":\"..QY)\
+TP.close()S()end;S()users=applyreadonly(users)",
   [ "/lib" ] = true,
-  [ "/lib/modules/fsd" ] = "lua.include(\"copy\")lua.include(\"split\")fsd={}local SS={}\
-local I=function(AA)kernel.log(\
-\"Loading Filesystem driver \"..AA)\
+  [ "/lib/modules/fsd" ] = "lua.include(\"copy\")lua.include(\"split\")fsd={}local MMU={}\
+local EV=function(OT)kernel.log(\
+\"Loading Filesystem driver \"..OT)\
 shell.run(\
-kernel.root..\"/lib/drivers/fs/\"..AA)kernel.log(\"Loading Filesystem driver DONE\")end;I(\"ufs\")I(\"devfs\")I(\"romfs\")I(\"ccfs\")local DN=deepcopy(fs)\
-local F={}local M={}\
-function fsd.normalizePerms(KP)local KH=tostring(KP)local T={}\
+kernel.root..\"/lib/drivers/fs/\"..OT)kernel.log(\"Loading Filesystem driver DONE\")end;EV(\"ufs\")EV(\"devfs\")EV(\"romfs\")EV(\"ccfs\")\
+local GH=deepcopy(fs)local TAC={}local XE={}\
+function fsd.normalizePerms(QA)local GD=tostring(QA)local AQ={}\
 for i=1,3 do\
-local AJ=tonumber(string.sub(KH,i,i))if AJ==0 then T[i]=\"---\"end;if AJ==1 then T[i]=\"--x\"end\
-if AJ==2 then T[i]=\"-w-\"end;if AJ==3 then T[i]=\"-wx\"end;if AJ==4 then T[i]=\"r--\"end\
-if AJ==5 then T[i]=\"r-x\"end;if AJ==6 then T[i]=\"rw-\"end;if AJ==7 then T[i]=\"rwx\"end end;return T end\
-function fsd.testPerms(QS,KW,TW)local IK=fsd.getInfo(QS)\
-local LXZ=fsd.normalizePerms(IK.perms)\
-if KW==IK.owner then\
-if TW==\"r\"then return string.sub(LXZ[1],1,1)==\"r\"end\
-if TW==\"w\"then return string.sub(LXZ[1],2,2)==\"w\"end\
-if TW==\"x\"then return string.sub(LXZ[1],3,3)==\"x\"end else\
-if TW==\"r\"then return string.sub(LXZ[3],1,1)==\"r\"end\
-if TW==\"w\"then return string.sub(LXZ[3],2,2)==\"w\"end\
-if TW==\"x\"then return string.sub(LXZ[3],3,3)==\"x\"end end end\
-function fsd.normalizePath(UM)if not UM then return\"/\"end;UM=string.gsub(UM,\"/+\",\"/\")if\
-UM==\"\"then return\"/\"end\
-if string.sub(UM,1,1)~=\"/\"then UM=\"/\"..UM end;if UM==\"/\"then return\"/\"end;if string.sub(UM,#UM,#UM)==\"/\"then UM=string.sub(UM,1,\
-#UM-1)end;return UM end\
-function fsd.resolveLinks(S)S=fsd.normalizePath(S)\
-local R=string.split(S,\"/\")local J=\"/\"for i=1,#R do local WP=R[i]local XE=fsd.getInfo(J..WP,true)\
-if XE.linkto then J=\
-fsd.normalizePath(XE.linkto)..\"/\"else J=J..WP..\"/\"end end;return\
-fsd.normalizePath(J)end;function fsd.newLink(JS,N)\
+local Q=tonumber(string.sub(GD,i,i))if Q==0 then AQ[i]=\"---\"end;if Q==1 then AQ[i]=\"--x\"end\
+if Q==2 then AQ[i]=\"-w-\"end;if Q==3 then AQ[i]=\"-wx\"end;if Q==4 then AQ[i]=\"r--\"end\
+if Q==5 then AQ[i]=\"r-x\"end;if Q==6 then AQ[i]=\"rw-\"end;if Q==7 then AQ[i]=\"rwx\"end end;return AQ end\
+function fsd.testPerms(N,OP,KO)local PG=fsd.getInfo(N)\
+local G=fsd.normalizePerms(PG.perms)\
+if OP==PG.owner then\
+if KO==\"r\"then return string.sub(G[1],1,1)==\"r\"end\
+if KO==\"w\"then return string.sub(G[1],2,2)==\"w\"end\
+if KO==\"x\"then return string.sub(G[1],3,3)==\"x\"end else\
+if KO==\"r\"then return string.sub(G[3],1,1)==\"r\"end\
+if KO==\"w\"then return string.sub(G[3],2,2)==\"w\"end\
+if KO==\"x\"then return string.sub(G[3],3,3)==\"x\"end end end\
+function fsd.normalizePath(Y)if not Y then return\"/\"end;Y=string.gsub(Y,\"/+\",\"/\")if Y==\"\"then\
+return\"/\"end;if string.sub(Y,1,1)~=\"/\"then Y=\"/\"..Y end;if Y==\
+\"/\"then return\"/\"end;if string.sub(Y,#Y,#Y)==\"/\"then\
+Y=string.sub(Y,1,#Y-1)end;return Y end\
+function fsd.resolveLinks(EM)EM=fsd.normalizePath(EM)\
+local ZD=string.split(EM,\"/\")local TW=\"/\"for i=1,#ZD do local KO=ZD[i]local U=fsd.getInfo(TW..KO,true)\
+if U.linkto then TW=\
+fsd.normalizePath(U.linkto)..\"/\"else TW=TW..KO..\"/\"end end;return\
+fsd.normalizePath(TW)end;function fsd.newLink(XO,OD)\
 if\
-testPerms(JS,thread.getUID(coroutine.running()),\"w\")then fsd.setNode(JS,nil,nil,N)else error(\"Access denied!\")end end\
-function fsd.delLink(DNV,DB)if\
-testPerms(DNV,thread.getUID(coroutine.running()),\"w\")then fsd.setNode(DNV,nil,nil,false)else\
+testPerms(XO,thread.getUID(coroutine.running()),\"w\")then fsd.setNode(XO,nil,nil,OD)else error(\"Access denied!\")end end;function fsd.delLink(P,K)\
+if\
+testPerms(P,thread.getUID(coroutine.running()),\"w\")then fsd.setNode(P,nil,nil,false)else error(\"Access denied!\")end end\
+function fsd.stripPath(DT,TW)if\
+DT==TW then return\"/\"end;local P\
+P=fsd.normalizePath(string.sub(fsd.normalizePath(TW),#\
+fsd.normalizePath(DT)+1,#fsd.normalizePath(TW)))return P end\
+function fsd.recursList(IA,QM)if not QM then QM={}end;IA=fsd.normalizePath(IA)\
+local Y=fs.list(IA)\
+for BQ,WD in pairs(Y)do local A=fsd.normalizePath(IA..\"/\"..WD)\
+table.insert(QM,A)if fs.isDir(A)then fsd.recursList(A,QM)end end;return QM end\
+function fsd.getMount(KC)KC=fsd.normalizePath(KC)\
+local LG=string.split(KC,\"/\")for i=2,#LG do LG[i]=LG[i-1]..\"/\"..LG[i]end\
+LG[1]=\"/\"local JD=false;for i=#LG,1,-1 do\
+for P,PJ in pairs(XE)do if LG[i]==P then\
+if JD and(P~=\"/\")then JD=false else return PJ,P end end end end end\
+function fsd.getInfo(F,G)F=fsd.normalizePath(F)if TAC[F]then return TAC[F]end;if not G then\
+F=fsd.resolveLinks(F)end;local M=string.split(F,\"/\")for i=1,#M do if i>1 then M[i]=M[i-1]..\
+\"/\"..M[i]end end\
+M[1]=\"/\"\
+for i=#M,1,-1 do if TAC[M[i]]then return TAC[M[i]]end end;return{owner=0,perms=777}end;function fsd.saveFs(TY)\
+local JJH=getfenv()[fsd.getMount(TY).fs].saveFs\
+if JJH then JJH(TY,fsd.getMount(TY).dev)end end\
+function fsd.loadFs(M)\
+local R=getfenv()[fsd.getMount(M).fs].loadFs\
+if R then local CQ=R(M,fsd.getMount(M).dev)if M==\"/\"then M=\"\"end;for S,YE in\
+pairs(CQ)do TAC[M..S]=YE end end end\
+function fsd.deleteNode(OE)if not TAC[OE]then return end\
+if TAC[OE].onwer==\
+thread.getUID(coroutine.running())then TAC[OE]=nil else error(\"Access denied!\")end end\
+function fsd.setNode(JN,D,HC,V)JN=fs.normalizePath(JN)if not TAC[JN]then\
+TAC[JN]=deepcopy(fsd.getInfo(JN))end;D=D or TAC[JN].owner\
+HC=HC or TAC[JN].perms\
+if V==false then V=nil elseif V==nil then if TAC[JN].linkto then\
+V=fs.normalizePath(TAC[JN].linkto)end else V=fs.normalizePath(V)end;if\
+fsd.getInfo(JN).owner==thread.getUID(coroutine.running())then TAC[JN].owner=D;TAC[JN].perms=HC;TAC[JN].linkto=V else\
 error(\"Access denied!\")end end\
-function fsd.stripPath(JG,SY)if JG==SY then return\"/\"end;local LN\
-LN=fsd.normalizePath(string.sub(fsd.normalizePath(SY),\
-#fsd.normalizePath(JG)+1,#fsd.normalizePath(SY)))return LN end\
-function fsd.recursList(UX,H)if not H then H={}end;UX=fsd.normalizePath(UX)\
-local IS=fs.list(UX)\
-for O,RK in pairs(IS)do local T=fsd.normalizePath(UX..\"/\"..RK)\
-table.insert(H,T)if fs.isDir(T)then fsd.recursList(T,H)end end;return H end\
-function fsd.getMount(TB)TB=fsd.normalizePath(TB)\
-local B=string.split(TB,\"/\")for i=2,#B do B[i]=B[i-1]..\"/\"..B[i]end;B[1]=\"/\"\
-local T=false\
-for i=#B,1,-1 do for V,D in pairs(M)do\
-if B[i]==V then if T and(V~=\"/\")then T=false else return D,V end end end end end\
-function fsd.getInfo(GKQ,IK)GKQ=fsd.normalizePath(GKQ)\
-if F[GKQ]then return F[GKQ]end;if not IK then GKQ=fsd.resolveLinks(GKQ)end\
-local J=string.split(GKQ,\"/\")\
-for i=1,#J do if i>1 then J[i]=J[i-1]..\"/\"..J[i]end end;J[1]=\"/\"\
-for i=#J,1,-1 do if F[J[i]]then return F[J[i]]end end;return{owner=0,perms=777}end\
-function fsd.saveFs(S)\
-local GE=getfenv()[fsd.getMount(S).fs].saveFs;if GE then GE(S,fsd.getMount(S).dev)end end\
-function fsd.loadFs(D)\
-local R=getfenv()[fsd.getMount(D).fs].loadFs\
-if R then local Z=R(D,fsd.getMount(D).dev)if D==\"/\"then D=\"\"end;for RPB,KD in\
-pairs(Z)do F[D..RPB]=KD end end end\
-function fsd.deleteNode(GBL)if not F[GBL]then return end\
-if F[GBL].onwer==\
-thread.getUID(coroutine.running())then F[GBL]=nil else error(\"Access denied!\")end end\
-function fsd.setNode(FZ,J,A,T)FZ=fs.normalizePath(FZ)if not F[FZ]then\
-F[FZ]=deepcopy(fsd.getInfo(FZ))end;J=J or F[FZ].owner\
-A=A or F[FZ].perms\
-if T==false then T=nil elseif T==nil then if F[FZ].linkto then\
-T=fs.normalizePath(F[FZ].linkto)end else T=fs.normalizePath(T)end;if\
-fsd.getInfo(FZ).owner==thread.getUID(coroutine.running())then F[FZ].owner=J;F[FZ].perms=A;F[FZ].linkto=T else\
-error(\"Access denied!\")end end\
-function fsd.mount(W,Q,BD)if thread then\
+function fsd.mount(D,IR,V)if thread then\
 if\
 thread.getUID(coroutine.running())~=0 then error(\"Superuser is required to mount filesystem\")end end;if\
-not getfenv()[Q]then\
-kernel.log(\"Unable to mount \"..W..\" as \"..\
-Q..\" on \"..BD..\" : Driver not loaded\")return false end\
-BD=fsd.normalizePath(BD)\
-if M[BD]then error(\"Filesystem is already mounted\")end\
-kernel.log(\"Mounting \"..W..\" as \"..Q..\" on \"..BD)M[BD]={[\"fs\"]=Q,[\"dev\"]=W}fsd.loadFs(BD,W)return true end\
-function fsd.umountPath(MM)\
+not getfenv()[IR]then\
+kernel.log(\"Unable to mount \"..D..\" as \"..\
+IR..\" on \"..V..\" : Driver not loaded\")return false end\
+V=fsd.normalizePath(V)\
+if XE[V]then error(\"Filesystem is already mounted\")end\
+kernel.log(\"Mounting \"..D..\" as \"..IR..\" on \"..V)XE[V]={[\"fs\"]=IR,[\"dev\"]=D}fsd.loadFs(V,D)return true end\
+function fsd.umountPath(K)\
 if thread then if\
 thread.getUID(coroutine.running())~=0 then\
-error(\"Superuser is required to unmount filesystem\")end end;MM=fsd.normalizePath(MM)\
-kernel.log(\"Unmounting at \"..MM)fsd.saveFs(MM)M[MM]=nil end\
-function fsd.umountDev(E)\
+error(\"Superuser is required to unmount filesystem\")end end;K=fsd.normalizePath(K)\
+kernel.log(\"Unmounting at \"..K)fsd.saveFs(K)XE[K]=nil end\
+function fsd.umountDev(KP)\
 if thread then if\
 thread.getUID(coroutine.running())~=0 then\
 error(\"Superuser is required to unmount filesystem\")end end;path=fsd.normalizePath(path)\
-kernel.log(\"Unmounting \"..E)\
-for CY,MQ in pairs(M)do if MQ.dev==E then fsd.saveFs(CY)M[CY]=nil end end end;function fsd.getMounts()return M end;function SS.list(Q)Q=fsd.normalizePath(Q)\
+kernel.log(\"Unmounting \"..KP)\
+for AF,LO in pairs(XE)do if LO.dev==KP then fsd.saveFs(AF)XE[AF]=nil end end end;function fsd.getMounts()return XE end;function MMU.list(F)F=fsd.normalizePath(F)\
 if\
-fsd.testPerms(Q,thread.getUID(coroutine.running()),\"x\")then else error(\"Access denied!\")end end\
-function SS.makeDir(K)\
-K=fsd.normalizePath(K)\
+fsd.testPerms(F,thread.getUID(coroutine.running()),\"x\")then else error(\"Access denied!\")end end\
+function MMU.makeDir(JB)\
+JB=fsd.normalizePath(JB)\
 if\
-fsd.testPerms(DN.getDir(K),thread.getUID(coroutine.running()),\"w\")then else error(\"Access denied\")end end\
-function SS.copy(PD,BT)PD=fsd.normalizePath(PD)BT=fsd.normalizePath(BT)\
+fsd.testPerms(GH.getDir(JB),thread.getUID(coroutine.running()),\"w\")then else error(\"Access denied\")end end\
+function MMU.copy(S,Q)S=fsd.normalizePath(S)Q=fsd.normalizePath(Q)\
 if\
-fsd.testPerms(PD,thread.getUID(coroutine.running()),\"r\")and\
-fsd.testPerms(BT,thread.getUID(coroutine.running()),\"w\")then else\
+fsd.testPerms(S,thread.getUID(coroutine.running()),\"r\")and\
+fsd.testPerms(Q,thread.getUID(coroutine.running()),\"w\")then else\
 error(\"Access denied!\")end end\
-function SS.move(W,WD)W=fsd.normalizePath(W)WD=fsd.normalizePath(WD)\
+function MMU.move(G,D)G=fsd.normalizePath(G)D=fsd.normalizePath(D)\
 if\
-fsd.testPerms(DN.getDir(W),thread.getUID(coroutine.running()),\"w\")and\
-fsd.testPerms(DN.getDir(WD),thread.getUID(coroutine.running()),\"w\")then else\
+fsd.testPerms(GH.getDir(G),thread.getUID(coroutine.running()),\"w\")and\
+fsd.testPerms(GH.getDir(D),thread.getUID(coroutine.running()),\"w\")then else\
 error(\"Access denied!\")end end\
-function SS.delete(Y)Y=fsd.normalizePath(Y)\
+function MMU.delete(MH)MH=fsd.normalizePath(MH)\
 if\
-fsd.testPerms(DN.getDir(Y),thread.getUID(coroutine.running()),\"w\")then else error(\"Access denied!\")end end\
-function SS.open(A,RS)A=fsd.normalizePath(A)\
-local D={r=\"r\",rb=\"r\",w=\"w\",wb=\"w\",a=\"w\",ab=\"w\"}if not D[RS]then error(\"Invalid mode!\")end\
+fsd.testPerms(GH.getDir(MH),thread.getUID(coroutine.running()),\"w\")then else error(\"Access denied!\")end end\
+function MMU.open(M,W)M=fsd.normalizePath(M)\
+local FK={r=\"r\",rb=\"r\",w=\"w\",wb=\"w\",a=\"w\",ab=\"w\"}if not FK[W]then error(\"Invalid mode!\")end\
 if\
-fsd.testPerms(A,thread.getUID(coroutine.running()),D[RS])then else error(\"Access denied!\")end end;local G=fs.open(kernel.root..\"/etc/fstab\",\"r\")for MN,ML in\
-pairs(string.split(G.readAll(),\"\\n\"))do local UQ=string.split(ML,\" \")\
-fsd.mount(UQ[1],UQ[3],UQ[2])end;G.close()\
+fsd.testPerms(M,thread.getUID(coroutine.running()),FK[W])then else error(\"Access denied!\")end end;local J=fs.open(kernel.root..\"/etc/fstab\",\"r\")for U,X in\
+pairs(string.split(J.readAll(),\"\\n\"))do local UK=string.split(X,\" \")\
+fsd.mount(UK[1],UK[3],UK[2])end;J.close()\
 if\
-not M[\"/\"]then kernel.panic(\"Unable to mount root filesystem\")end;local L={}\
-for SD,Z in pairs(DN)do\
-fsd[SD]=function(...)\
-if SS[SD]then SS[SD](unpack(arg))end;local PK,D;if L[SD]then\
-PK,D=fsd.getMount(fsd.resolveLinks(arg[1]))PK,D=fsd.getMount(DN.getDir(D))else\
-PK,D=fsd.getMount(fsd.resolveLinks(arg[1]))end;local GD\
+not XE[\"/\"]then kernel.panic(\"Unable to mount root filesystem\")end;local YZ={}\
+for Z,V in pairs(GH)do\
+fsd[Z]=function(...)\
+if MMU[Z]then MMU[Z](unpack(arg))end;local W,P;if YZ[Z]then\
+W,P=fsd.getMount(fsd.resolveLinks(arg[1]))W,P=fsd.getMount(GH.getDir(P))else\
+W,P=fsd.getMount(fsd.resolveLinks(arg[1]))end;local ZQ\
 if\
-getfenv()[PK.fs]and getfenv()[PK.fs][SD]then\
-GD=getfenv()[PK.fs][SD](D,fsd.normalizePath(PK.dev),unpack(arg))else GD=DN[SD](unpack(arg))end;return GD end end;fsd=applyreadonly(fsd)",
+getfenv()[W.fs]and getfenv()[W.fs][Z]then\
+ZQ=getfenv()[W.fs][Z](P,fsd.normalizePath(W.dev),unpack(arg))else ZQ=GH[Z](unpack(arg))end;return ZQ end end;fsd=applyreadonly(fsd)",
   [ "/boot/uberkernel" ] = "\
-KERNEL_DIR=fs.getDir(shell.getRunningProgram())local QCN=false;local FA=print;local Y=write;local COY=read;local MQ=fs\
-local EU=coroutine.running()local D={}local KT={}local I=nil;local JZ=false;local AEJ={}local YJ=false;os.unloadAPI(\"io\")\
-local TA=error\
-error=function(PUF)if not PUF then TA()return end;if term.isColor()then\
-term.setTextColor(colors.red)print(PUF)term.setTextColor(colors.white)TA()else\
-print(PUF)TA()end end;argv={...}local NJ={readonlytable}local MW=fs;local H=false;local V=false;local RJ=false\
-local KA=false;local FY={}local ZN={}local G=nil\
-function applyreadonly(J)local GK={}\
-setmetatable(GK,{__index=J,__newindex=function(J,IN,CJC)\
-error(\"Attempt to modify read-only table\")end,__metatable=false})NJ[#NJ+1]=GK;return GK end;local R=rawset\
-rawset=function(YBI,YRH,BM)\
-for i=1,#NJ do if(YBI==NJ[i])or(YRH==NJ[i])then\
-error(\"Attempt to modify read-only table\")return end end;R(YBI,YRH,BM)end\
-local function B()term.clear()term.setCursorPos(1,1)\
-FA(\"Kernel debug console <CTRL>+T\")\
-FA(\"Type 'exit' to leave, 'help' for available commands\")local VL=\"\"local GJ={}\
-while VL~=\"exit\"do Y(\"> \")VL=COY(nil,GJ)\
-if VL==\"exit\"then QCN=false;return end;if VL==\"help\"then\
-FA(\"exit, help, reboot, shutdown, saferb, killbutinit, killall, kill, rbtocraftos, umountall, ps\")end;if VL==\"reboot\"then\
-os.reboot()end;if VL==\"shutdown\"then os.shutdown()end;if\
-VL==\"saferb\"then os.reboot()end\
-if VL==\"killbutinit\"then KT={}D={D[1]}end;if VL==\"killall\"then KT={}D={}end\
-if VL==\"rbtocraftos\"then\
+KERNEL_DIR=fs.getDir(shell.getRunningProgram())local IH=false;local SC=print;local X=write;local TTS=read;local F=fs\
+local RS=coroutine.running()local XHG={}local KWF={}local FV=nil;local TLI=false;local FH={}local JO=false;os.unloadAPI(\"io\")\
+local EK=error\
+error=function(ROJ)if not ROJ then EK()return end;if term.isColor()then\
+term.setTextColor(colors.red)print(ROJ)term.setTextColor(colors.white)EK()else\
+print(ROJ)EK()end end;argv={...}local N={readonlytable}local L=fs;local J=false;local YO=false;local R=false\
+local OY=false;local FO={}local UZ={}local Z=nil\
+function applyreadonly(G)local W={}\
+setmetatable(W,{__index=G,__newindex=function(G,S,RC)\
+error(\"Attempt to modify read-only table\")end,__metatable=false})N[#N+1]=W;return W end;local AW=rawset\
+rawset=function(HF,ZU,ZF)\
+for i=1,#N do if(HF==N[i])or(ZU==N[i])then\
+error(\"Attempt to modify read-only table\")return end end;AW(HF,ZU,ZF)end\
+local function U()term.clear()term.setCursorPos(1,1)\
+SC(\"Kernel debug console <CTRL>+T\")\
+SC(\"Type 'exit' to leave, 'help' for available commands\")local XJ=\"\"local JJ={}\
+while XJ~=\"exit\"do X(\"> \")XJ=TTS(nil,JJ)\
+if XJ==\"exit\"then IH=false;return end;if XJ==\"help\"then\
+SC(\"exit, help, reboot, shutdown, saferb, killbutinit, killall, kill, rbtocraftos, umountall, ps\")end;if XJ==\"reboot\"then\
+os.reboot()end;if XJ==\"shutdown\"then os.shutdown()end;if\
+XJ==\"saferb\"then os.reboot()end\
+if XJ==\"killbutinit\"then KWF={}XHG={XHG[1]}end;if XJ==\"killall\"then KWF={}XHG={}end\
+if XJ==\"rbtocraftos\"then\
 fs.move(ROOT_DIR..\"/startup\",\
-ROOT_DIR..\"/.startup_backup\")local LS=fs.open(ROOT_DIR..\"/startup\",\"w\")\
-LS.write(\"ROOT_DIR=fs.getDir(shell.getRunningProgram())\\\
+ROOT_DIR..\"/.startup_backup\")local E=fs.open(ROOT_DIR..\"/startup\",\"w\")\
+E.write(\"ROOT_DIR=fs.getDir(shell.getRunningProgram())\\\
       fs.delete(ROOT_DIR .. '/startup')\\\
       fs.move(ROOT_DIR .. '/.startup_backup', ROOT_DIR .. '/startup')\\\
-      print('Be careful! UberOS will start on next reboot!')\")LS.close()os.reboot()end;if VL==\"umountall\"then FA(\"WIP\")end;if VL==\"ps\"then for VZ,FO in pairs(D)do\
-FA(FO.pid,\" \",FO.desc,\" \",FO.uid)end end\
+      print('Be careful! UberOS will start on next reboot!')\")E.close()os.reboot()end;if XJ==\"umountall\"then SC(\"WIP\")end;if XJ==\"ps\"then for P,PH in pairs(XHG)do\
+SC(PH.pid,\" \",PH.desc,\" \",PH.uid)end end\
 if\
-string.sub(VL,1,5)==\"kill \"then\
-if#VL<=5 then FA(\"Usage: kill <PID>\")end;local T=tonumber(string.sub(VL,6,#VL))\
-for BP,PC in pairs(D)do if\
-PC.pid==T then kernel.sendEvent(\"THREADDEAD\",T)\
-table.remove(D,BP)break end end end;table.insert(GJ,VL)end;QCN=false end\
-local P=function()kernel.log(\"Starting thread manager\")\
+string.sub(XJ,1,5)==\"kill \"then\
+if#XJ<=5 then SC(\"Usage: kill <PID>\")end;local ZP=tonumber(string.sub(XJ,6,#XJ))\
+for K,DF in pairs(XHG)do if\
+DF.pid==ZP then kernel.sendEvent(\"THREADDEAD\",ZP)\
+table.remove(XHG,K)break end end end;table.insert(JJ,XJ)end;IH=false end\
+local NG=function()kernel.log(\"Starting thread manager\")\
 lua.include(\"copy\")thread={[\"kerneld\"]=0}\
-local L=function()return{isStdin=true}end;local PSV=function()return{isStdout=true}end\
-rawset(thread,\"onPanic\",function(QE)if QE==EU then\
-YJ=true end end)\
-rawset(thread,\"newPID\",function()if not JZ then JZ=true;return 1 end;local GR=true\
+local T=function()return{isStdin=true}end;local IO=function()return{isStdout=true}end\
+rawset(thread,\"onPanic\",function(ZOS)if ZOS==RS then\
+JO=true end end)\
+rawset(thread,\"newPID\",function()if not TLI then TLI=true;return 1 end;local M=true\
 while true do\
-local DC=math.random(2,32767)for i=1,#D do if D[i].pid==DC then GR=false;break end end;if GR then return\
-DC end end end)\
-rawset(thread,\"startThread\",function(GS,M,IGG,E,HTQ,A,W)if\
-thread.getUID(coroutine.running())~=0 then W=nil end;local ZYM=thread.newPID()\
-if not E then E=0 end;if not\
-((ZYM==1)or\
-(E==thread.getUID(coroutine.running()))or\
+local WZ=math.random(2,32767)\
+for i=1,#XHG do if XHG[i].pid==WZ then M=false;break end end;if M then return WZ end end end)\
+rawset(thread,\"startThread\",function(FU,QH,SK,GD,I,SX,ETG)if\
+thread.getUID(coroutine.running())~=0 then ETG=nil end;local IG=thread.newPID()\
+if not GD then GD=0 end;if not\
+((IG==1)or\
+(GD==thread.getUID(coroutine.running()))or\
 (0 ==thread.getUID(coroutine.running())))then\
-E=thread.getUID(coroutine.running())end\
-table.insert(KT,{cr=coroutine.create(GS),blockTerminate=\
-M or false,error=nil,dead=false,filter=nil,kill=0,pid=ZYM,lastevent=kernel.getLastEvent(),ppid=thread.getPID(coroutine.running()),desc=\
-IGG or\"\",uid=E,stdin=HTQ or L(),stdout=A or PSV(),daemon=W})return ZYM,KT[#KT]end)\
-rawset(thread,\"runFile\",function(XL,VQJ,TU,HW,EZ,ZE,IOV)\
-local IX,IOF=thread.startThread(function()shell.run(XL)end,VQJ or true,IOV or XL,HW or\
-thread.getUID(coroutine.running()),EZ,ZE,IOV)if IOV and\
-(thread.getUID(coroutine.running())==0)then IOF.ppid=1 end;if TU then\
+GD=thread.getUID(coroutine.running())end\
+table.insert(KWF,{cr=coroutine.create(FU),blockTerminate=\
+QH or false,error=nil,dead=false,filter=nil,kill=0,pid=IG,lastevent=kernel.getLastEvent(),ppid=thread.getPID(coroutine.running()),desc=\
+SK or\"\",uid=GD,stdin=I or T(),stdout=SX or IO(),daemon=ETG})return IG,KWF[#KWF]end)\
+rawset(thread,\"runFile\",function(WD,UE,RU,B,Y,DG,YFR)\
+local GC,YG=thread.startThread(function()shell.run(WD)end,UE or true,YFR or WD,B or\
+thread.getUID(coroutine.running()),Y,DG,YFR)if YFR and\
+(thread.getUID(coroutine.running())==0)then YG.ppid=1 end;if RU then\
 while true do\
-local K,PR,TN,PU,WM,O=kernel.pullEvent()if(K==\"THREADDEAD\")and(PR==IX)then return end end else return IX end end)\
-rawset(thread,\"runDaemon\",function(PU,E)if\
+local UX,LZ,CQ,JS,A,JV=kernel.pullEvent()if(UX==\"THREADDEAD\")and(LZ==GC)then return end end else return GC end end)\
+rawset(thread,\"runDaemon\",function(DF,WT)if\
 thread.getUID(coroutine.running())~=0 then\
-kernel.log(\"Cannot start daemon \"..E..\" - Access denied!\")return end;if AEJ[E]then\
+kernel.log(\"Cannot start daemon \"..WT..\" - Access denied!\")return end;if FH[WT]then\
 kernel.log(\
-\"Daemon \"..E..\" is already running.\")return end\
-local CX=thread.runFile(PU,true,false,nil,nil,nil,E)AEJ[E]=CX\
-fs.open(\"/var/lock/\"..E,\"w\").close()kernel.log(\"Daemon \"..E..\" started\")end)\
-rawset(thread,\"stopDaemon\",function(UV)if\
+\"Daemon \"..WT..\" is already running.\")return end\
+local UW=thread.runFile(DF,true,false,nil,nil,nil,WT)FH[WT]=UW\
+fs.open(\"/var/lock/\"..WT,\"w\").close()kernel.log(\"Daemon \"..WT..\" started\")end)\
+rawset(thread,\"stopDaemon\",function(WQ)if\
 thread.getUID(coroutine.running())~=0 then\
-kernel.log(\"Cannot stop daemon \"..UV..\" - Access denied!\")return end;if not AEJ[UV]then\
+kernel.log(\"Cannot stop daemon \"..WQ..\" - Access denied!\")return end;if not FH[WQ]then\
 kernel.log(\
-\"Daemon \"..UV..\" is not running.\")return end\
-thread.kill(AEJ[UV],2)AEJ[UV]=nil;fs.delete(\"/var/lock/\"..UV)kernel.log(\"Daemon \"..UV..\
-\" stopped\")end)\
-rawset(thread,\"getDaemonStatus\",function(LG)if AEJ[LG]then return\"running\"else return\"stopped\"end end)\
-rawset(thread,\"getLastEvent\",function(RL)if RL==0 then return 0 end\
-local DR=thread.status(RL).lastEvent;if DR then return DR else return 0 end end)\
-rawset(thread,\"setLastEvent\",function(M,UFXL)thread.status(M).lastEvent=UFXL end)\
-rawset(thread,\"kill\",function(J,EH)\
-if J==1 then kernel.log(\"Failed to kill init\")return end\
-for i=1,#D do\
-if D[i].pid==J then\
+\"Daemon \"..WQ..\" is not running.\")return end;thread.kill(FH[WQ],2)FH[WQ]=\
+nil;fs.delete(\"/var/lock/\"..WQ)kernel.log(\"Daemon \"..\
+WQ..\" stopped\")end)\
+rawset(thread,\"getDaemonStatus\",function(M)if FH[M]then return\"running\"else return\"stopped\"end end)\
+rawset(thread,\"getLastEvent\",function(K)if K==0 then return 0 end\
+local UR=thread.status(K).lastEvent;if UR then return UR else return 0 end end)\
+rawset(thread,\"setLastEvent\",function(I,IE)thread.status(I).lastEvent=IE end)\
+rawset(thread,\"kill\",function(PA,EJ)\
+if PA==1 then kernel.log(\"Failed to kill init\")return end\
+for i=1,#XHG do\
+if XHG[i].pid==PA then\
 if\
-(D[i].uid==thread.getUID(coroutine.running()))or\
-(thread.getUID(coroutine.running())==0)then D[i].kill=EH else\
-kernel.log(\
-\"Failed to kill process \"..J..\" - Access Denied\")end end end end)\
-rawset(thread,\"isKilled\",function(ZA)\
-for i=1,#D do if D[i].cr==ZA then return D[i].kill end end\
-for i=1,#KT do if KT[i].cr==ZA then return KT[i].kill end end;return 0 end)\
-rawset(thread,\"getPID\",function(ZJ)\
-for i=1,#D do if D[i].cr==ZJ then return D[i].pid end end\
-for i=1,#KT do if KT[i].cr==ZJ then return KT[i].pid end end;return 0 end)\
-rawset(thread,\"getUID\",function(RX)\
-for i=1,#D do if D[i].cr==RX then return D[i].uid end end\
-for i=1,#KT do if KT[i].cr==RX then return KT[i].uid end end;return 0 end)\
-rawset(thread,\"getRunningThreads\",function(XPH)return D end)\
-rawset(thread,\"status\",function(DY)\
-for i=1,#D do if D[i].pid==DY then return D[i]end end;return nil end)local NE=print;local UF=write;local Z=read\
+(XHG[i].uid==\
+thread.getUID(coroutine.running()))or(\
+thread.getUID(coroutine.running())==0)then XHG[i].kill=EJ else\
+kernel.log(\"Failed to kill process \"..PA..\" - Access Denied\")end end end end)\
+rawset(thread,\"isKilled\",function(H)\
+for i=1,#XHG do if XHG[i].cr==H then return XHG[i].kill end end\
+for i=1,#KWF do if KWF[i].cr==H then return KWF[i].kill end end;return 0 end)\
+rawset(thread,\"getPID\",function(D)\
+for i=1,#XHG do if XHG[i].cr==D then return XHG[i].pid end end\
+for i=1,#KWF do if KWF[i].cr==D then return KWF[i].pid end end;return 0 end)\
+rawset(thread,\"getUID\",function(UQ)\
+for i=1,#XHG do if XHG[i].cr==UQ then return XHG[i].uid end end\
+for i=1,#KWF do if KWF[i].cr==UQ then return KWF[i].uid end end;return 0 end)\
+rawset(thread,\"getRunningThreads\",function(AE)return XHG end)\
+rawset(thread,\"status\",function(DU)\
+for i=1,#XHG do if XHG[i].pid==DU then return XHG[i]end end;return nil end)local TT=print;local ZZ=write;local V=read\
 print=function(...)\
-local F=thread.status(thread.getPID(coroutine.running())).stdout;if F.isStdout then NE(unpack(arg))else\
-F.writeLine(table.concat(arg,\"\"))end end\
-write=function(BZD)\
-local BF=thread.status(thread.getPID(coroutine.running())).stdout;if BF.isStdout then UF(BZD)else BF.write(BZD)end end\
-read=function(UA,TD)\
-local EN=thread.status(thread.getPID(coroutine.running()))local XC=EN.stdin;local HPA\
-if XC.isStdin then HPA=Z(UA,TD)else HPA=XC.readLine()end;return HPA end\
-local function OM(IGI,MT,...)if QCN then B()return end\
-if YJ then while true do coroutine.yield()end end;if IGI.dead then return end\
-if IGI.filter~=nil and MT~=IGI.filter then return end;if MT==\"terminate\"then return end\
-coroutine.resume(IGI.cr,MT,...)\
-IGI.dead=(coroutine.status(IGI.cr)==\"dead\")\
-if IGI.dead and IGI.pid~=1 then local RC=deepcopy(AEJ)\
-for WH,IGR in pairs(AEJ)do if WH==IGI.daemon then\
+local LC=thread.status(thread.getPID(coroutine.running())).stdout;if LC.isStdout then TT(unpack(arg))else\
+LC.writeLine(table.concat(arg,\"\"))end end\
+write=function(JQ)\
+local NO=thread.status(thread.getPID(coroutine.running())).stdout;if NO.isStdout then ZZ(JQ)else NO.write(JQ)end end\
+read=function(RJH,S)\
+local XHV=thread.status(thread.getPID(coroutine.running()))local PK=XHV.stdin;local ZN\
+if PK.isStdin then ZN=V(RJH,S)else ZN=PK.readLine()end;return ZN end\
+local function VO(JBX,XI,...)if IH then U()return end\
+if JO then while true do coroutine.yield()end end;if JBX.dead then return end\
+if JBX.filter~=nil and XI~=JBX.filter then return end;if XI==\"terminate\"then return end\
+coroutine.resume(JBX.cr,XI,...)\
+JBX.dead=(coroutine.status(JBX.cr)==\"dead\")\
+if JBX.dead and JBX.pid~=1 then local S=deepcopy(FH)\
+for GX,QM in pairs(FH)do if GX==JBX.daemon then\
 kernel.log(\
-\"Daemon \"..IGI.daemon..\" stopped\")RC[WH]=nil end end;AEJ=RC;kernel.sendEvent(\"THREADDEAD\",IGI.pid)if not\
-IGI.stdout.isStdout then IGI.stdout.close()end;if not\
-IGI.stdin.isStdin then IGI.stdin.close()end end end\
-local function ZTE()if YJ then while true do coroutine.yield()end end\
+\"Daemon \"..JBX.daemon..\" stopped\")S[GX]=nil end end;FH=S;kernel.sendEvent(\"THREADDEAD\",JBX.pid)if not\
+JBX.stdout.isStdout then JBX.stdout.close()end;if not\
+JBX.stdin.isStdin then JBX.stdin.close()end end end\
+local function E()if JO then while true do coroutine.yield()end end\
 if\
-#KT>0 then local BH=KT;KT={}for YK,FP in ipairs(BH)do table.insert(D,FP)end;for PN,DM in\
-ipairs(BH)do OM(DM)end end;local OA;if I then OA={I(coroutine.yield())}else\
-OA={coroutine.yield()}end\
-if OA[1]==\"terminate\"then QCN=not QCN end;local BC=nil\
-for T,IC in ipairs(D)do OM(IC,unpack(OA))if IC.dead then if BC==nil then BC={}end;table.insert(BC,\
-T-#BC)end end\
-if BC~=nil then for YT,A in ipairs(BC)do table.remove(D,A)end end end\
-rawset(thread,\"setGlobalEventFilter\",function(T)\
-if I~=nil then error(\"This can only be set once!\")end;I=T;rawset(thread,\"setGlobalEventFilter\",nil)end)thread=applyreadonly(thread)\
+#KWF>0 then local TK=KWF;KWF={}\
+for JE,XT in ipairs(TK)do table.insert(XHG,XT)end;for UU,JMS in ipairs(TK)do VO(JMS)end end;local JB;if FV then JB={FV(coroutine.yield())}else\
+JB={coroutine.yield()}end\
+if JB[1]==\"terminate\"then IH=not IH end;local LX=nil\
+for WW,JBC in ipairs(XHG)do VO(JBC,unpack(JB))if JBC.dead then if LX==nil then LX={}end;table.insert(LX,\
+WW-#LX)end end\
+if LX~=nil then for Q,MZ in ipairs(LX)do table.remove(XHG,MZ)end end end\
+rawset(thread,\"setGlobalEventFilter\",function(QE)\
+if FV~=nil then error(\"This can only be set once!\")end;FV=QE;rawset(thread,\"setGlobalEventFilter\",nil)end)thread=applyreadonly(thread)\
 if type(threadMain)==\"function\"then\
 thread.startThread(threadMain)else\
 thread.startThread(function()kernel.log(\"Starting init\")\
-shell.run(\"/sbin/init\")end,true,\"init\",uid)end;while#D>0 or#KT>0 do ZTE()end\
-kernel.log(\"Exiting thread manager\")end;local MC=os.pullEvent;local X=os.pullEventRaw;kernel={}kernel.root=ROOT_DIR\
-kernel.panic=function(YS)\
+shell.run(\"/sbin/init\")end,true,\"init\",uid)end;while#XHG>0 or#KWF>0 do E()end\
+kernel.log(\"Exiting thread manager\")end;local BH=os.pullEvent;local PD=os.pullEventRaw;kernel={}kernel.root=ROOT_DIR\
+kernel.panic=function(B)\
 write(\
-\"[\"..os.clock()..\"] Kernel panic: \".. (YS or\"\"))\
-if RJ then print(\" ... no panic is active! Contining...\")else D={}\
-KT={}while true do sleep(0)end end end\
-kernel.log=function(PJ)local AX=\"[\"..os.clock()..\"] \"..PJ;if not V then\
-Y(AX..\"\\n\")end;local IZF\
-if KA then\
-if\
-MW.exists(ROOT_DIR..\"/var/log/kernel_log\")then\
-IZF=MW.open(ROOT_DIR..\"/var/log/kernel_log\",\"a\")else\
-IZF=MW.open(ROOT_DIR..\"/var/log/kernel_log\",\"w\")end;IZF.write(AX..\"\\n\")IZF.close()end end\
-kernel.loadModule=function(VL,RM)for i=1,#ZN do if ZN[i]==VL then return true end end;kernel.log(\
-\"Loading module \"..VL)status,err=pcall(shell.run,ROOT_DIR..\
-\"/lib/modules/\"..VL)\
+\"[\"..os.clock()..\"] Kernel panic: \".. (B or\"\"))\
+if R then print(\" ... no panic is active! Contining...\")else XHG={}\
+KWF={}while true do sleep(0)end end end\
+kernel.log=function(HY)local A=\"[\"..os.clock()..\"] \"..HY;if not YO then\
+X(A..\"\\n\")end;local MU\
+if OY then\
+if L.exists(ROOT_DIR..\"/var/log/kernel_log\")then MU=L.open(\
+ROOT_DIR..\"/var/log/kernel_log\",\"a\")else MU=L.open(\
+ROOT_DIR..\"/var/log/kernel_log\",\"w\")end;MU.write(A..\"\\n\")MU.close()end end\
+kernel.loadModule=function(KF,M)for i=1,#UZ do if UZ[i]==KF then return true end end;kernel.log(\
+\"Loading module \"..KF)status,err=pcall(shell.run,ROOT_DIR..\
+\"/lib/modules/\"..KF)\
 if status then\
-kernel.log(\"Loading module DONE\")table.insert(ZN,VL)return true else\
-kernel.log(\"Loading module FAILED\")if RM then\
-kernel.panic(\"Failed to load module \"..VL..\"\\nError: \"..err)else\
-error(\"Failed to load module\"..VL..\"\\nError: \"..err)end end end;kernel.getLastEvent=function()return#FY end\
-kernel.pullEvent=function()local Q=#FY;while\
-#FY<=Q do\
-Q=thread.getLastEvent(thread.getPID(coroutine.running()))sleep(0.05)end;thread.setLastEvent(thread.getPID(coroutine.running()),\
-Q+1)\
+kernel.log(\"Loading module DONE\")table.insert(UZ,KF)return true else\
+kernel.log(\"Loading module FAILED\")if M then\
+kernel.panic(\"Failed to load module \"..KF..\"\\nError: \"..err)else\
+error(\"Failed to load module\"..KF..\"\\nError: \"..err)end end end;kernel.getLastEvent=function()return#FO end\
+kernel.pullEvent=function()local RE=#FO;while#FO<=\
+RE do\
+RE=thread.getLastEvent(thread.getPID(coroutine.running()))sleep(0.05)end;thread.setLastEvent(thread.getPID(coroutine.running()),\
+RE+1)\
 return\
-FY[Q+1].event,FY[Q+1].a,FY[Q+1].b,FY[Q+1].c,FY[Q+1].d,FY[Q+1].e end\
-kernel.sendEvent=function(FI,O,JP,FD,DS,J)\
-if FI==\"THREADDEAD\"then if coroutine.running()~=EU then\
+FO[RE+1].event,FO[RE+1].a,FO[RE+1].b,FO[RE+1].c,FO[RE+1].d,FO[RE+1].e end\
+kernel.sendEvent=function(T,YT,MT,G,Q,W)\
+if T==\"THREADDEAD\"then if coroutine.running()~=RS then\
 kernel.log(\"Fake THREADDEAD event\")return false end end\
-FY[#FY+1]={[\"event\"]=FI,[\"a\"]=O,[\"b\"]=JP,[\"c\"]=FD,[\"d\"]=DS,[\"e\"]=J}return true end;kernel.LISTMODULES=function()\
+FO[#FO+1]={[\"event\"]=T,[\"a\"]=YT,[\"b\"]=MT,[\"c\"]=G,[\"d\"]=Q,[\"e\"]=W}return true end;kernel.LISTMODULES=function()\
 return fs.list(ROOT_DIR..\"/lib/modules\")end\
 kernel.LISTFLAGS=function()return\
 {\"Debug\",\"Silent\",\"NoPanic\",\"Log\"}end\
-local function C()\
+local function GE()\
 kernel.log(\"Boot directory = /\"..KERNEL_DIR)\
 kernel.log(\"Root directory = /\"..ROOT_DIR)if\
 fs.exists(\"/\"..KERNEL_DIR..\"/var/log/kernel_log\")then\
 fs.delete(\"/\"..KERNEL_DIR..\"/var/log/kernel_log\")end\
 if\
-fs.exists(ROOT_DIR..\"/tmp\")and fs.isDir(ROOT_DIR..\"/tmp\")then for FD,YIC in pairs(fs.list(ROOT_DIR..\
+fs.exists(ROOT_DIR..\"/tmp\")and fs.isDir(ROOT_DIR..\"/tmp\")then for EH,IU in pairs(fs.list(ROOT_DIR..\
 \"/tmp\"))do\
-fs.delete(ROOT_DIR..\"/tmp/\"..YIC)end\
-for M,HK in\
-pairs(fs.list(ROOT_DIR..\"/var/lock\"))do fs.delete(ROOT_DIR..\"/tmp/\"..HK)end end\
-local RR=\".:\"..ROOT_DIR..\"/bin:\"..\
-ROOT_DIR..\"/sbin:\"..ROOT_DIR..\"/etc/init.d\"shell.setPath(RR)shell.setPath=nil\
+fs.delete(ROOT_DIR..\"/tmp/\"..IU)end\
+for LN,C in\
+pairs(fs.list(ROOT_DIR..\"/var/lock\"))do fs.delete(ROOT_DIR..\"/tmp/\"..C)end end\
+local TH=\".:\"..ROOT_DIR..\"/bin:\"..\
+ROOT_DIR..\"/sbin:\"..ROOT_DIR..\"/etc/init.d\"shell.setPath(TH)shell.setPath=nil\
 shell.setAlias(\"ls\",ROOT_DIR..\"/bin/ls\")shell.setAlias(\"cp\",ROOT_DIR..\"/bin/cp\")shell.setAlias(\"mv\",\
 ROOT_DIR..\"/bin/mv\")shell.setAlias(\"rm\",ROOT_DIR..\
 \"/bin/rm\")\
 shell.setAlias(\"clr\",ROOT_DIR..\"/bin/clear\")shell.setAlias(\"sh\",ROOT_DIR..\"/bin/ush\")\
-os.pullEventRaw=function(F)\
+os.pullEventRaw=function(QW)\
 if\
-thread then local M=thread.isKilled(coroutine.running())if\
-M>=2 then\
-kernel.log(\"Killed process. PID = \"..thread.getPID(coroutine.running()))error()end\
-if M==1 then return\"terminate\"end end;return X(F)end;os.pullEvent=os.pullEventRaw;local KF\
+thread then local GJ=thread.isKilled(coroutine.running())if\
+GJ>=2 then\
+kernel.log(\"Killed process. PID = \"..thread.getPID(coroutine.running()))error()end;if GJ==1 then\
+return\"terminate\"end end;return PD(QW)end;os.pullEvent=os.pullEventRaw;local MH\
 if#argv<=1 then\
-kernel.loadModule(\"lua\",true)KF=fs.list(ROOT_DIR..\"/lib/modules\")else KF={}\
+kernel.loadModule(\"lua\",true)MH=fs.list(ROOT_DIR..\"/lib/modules\")else MH={}\
 for i=2,#argv do if\
 string.sub(argv[i],1,1)==\"m\"then\
-table.insert(KF,string.sub(argv[i],2,#argv[i]))end end end;for i=1,#KF do kernel.loadModule(KF[i],true)end;if fsd then\
-fs=fsd;loadfile=newloadfile end;P()end;local function PH()os.pullEvent=MC;os.pullEventRaw=X end\
+table.insert(MH,string.sub(argv[i],2,#argv[i]))end end end;for i=1,#MH do kernel.loadModule(MH[i],true)end;if fsd then\
+fs=fsd;loadfile=newloadfile end;NG()end;local function O()os.pullEvent=BH;os.pullEventRaw=PD end\
 kernel=applyreadonly(kernel)if#argv==0 then return end\
 if argv[1]==\"start\"then\
 if#argv>1 then\
 for i=2,#argv do if argv[i]==\"fDebug\"then\
-H=true end;if argv[i]==\"fNoPanic\"then RJ=true end;if\
-argv[i]==\"fLog\"then KA=true end;if argv[i]==\"fSilent\"then V=true end end end;C()return end;if argv[1]==\"unload\"then PH()return end;if argv[1]==\"restart\"then\
+J=true end;if argv[i]==\"fNoPanic\"then R=true end;if\
+argv[i]==\"fLog\"then OY=true end;if argv[i]==\"fSilent\"then YO=true end end end;GE()return end;if argv[1]==\"unload\"then O()return end;if argv[1]==\"restart\"then\
 os.reboot()end\
 if argv[1]==\"stop\"then os.shutdown()end",
   [ "/PKGINFO.lua" ] = "DEPENDS = {\"corelib\"}\

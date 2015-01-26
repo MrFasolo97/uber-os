@@ -1,4 +1,4 @@
-SRC = makepkg makeallpkg
+SRC = makepkg makeallpkg gendb
 PWD = $(shell pwd)
 all	:	prepare $(SRC)
 clean:
