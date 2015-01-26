@@ -1,11 +1,13 @@
 {
   [ "/bin" ] = true,
-  [ "/bin/utar" ] = "local P={...}lua.include(\"libarchive\")if#P<1 then\
-error(\"Usage: utar pack|unpack\")end;if P[1]==\"pack\"then if#P<3 then\
+  [ "/bin/utar" ] = "local AT={...}lua.include(\"libarchive\")if#AT<1 then\
+error(\"Usage: utar pack|unpack\")end;if AT[1]==\"pack\"then if#AT<3 then\
 error(\"Usage: utar pack <SOURCE> <ARCHIVE NAME>\")end\
-archive.pack(shell.resolve(P[1]),shell.resolve(P[2]))end\
-if P[1]==\
-\"unpack\"then if#P<3 then\
+archive.pack(shell.resolve(AT[1]),shell.resolve(AT[2]))end\
+if\
+AT[1]==\"unpack\"then if#AT<3 then\
 error(\"Usage: utar unpack <ARCHIVE NAME> <DESTINATION>\")end\
-archive.unpack(shell.resolve(P[1]),shell.resolve(P[2]))end",
+archive.unpack(shell.resolve(AT[1]),shell.resolve(AT[2]))end",
+  [ "/PKGINFO.lua" ] = "DEPENDS = {\"uberkernel\", \"corelib\", \"libarchive\"}\
+VERSION = {0, 2, 1}",
 }

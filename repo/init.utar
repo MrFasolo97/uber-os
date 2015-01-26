@@ -1,20 +1,22 @@
 {
+  [ "/PKGINFO.lua" ] = "DEPENDS = {\"uberkernel\", \"corelib\"}\
+VERSION = {0, 2, 1}",
   [ "/sbin/init" ] = "lua.include(\"split\")function usage()\
 print(\"Usage: init [runlevel]\")end\
-function run(A)\
-kernel.log(\"New runlevel: \"..A)local NQ=fs.open(\"/etc/rc.d/rc\"..A,\"r\")\
-local AY=string.split(NQ.readAll(),\"\\n\")NQ.close()\
-table.sort(AY,function(BD,JT)return tonumber(string.sub(BD,2,3))<\
-tonumber(string.sub(JT,2,3))end)\
-for YP,W in pairs(AY)do if string.sub(W,1,1)==\"R\"then\
-shell.run(\"/etc/init.d/\"..string.sub(W,4,#W)..\
-\" start\")end;if string.sub(W,1,1)==\"S\"then\
+function run(L)\
+kernel.log(\"New runlevel: \"..L)local F=fs.open(\"/etc/rc.d/rc\"..L,\"r\")\
+local HJ=string.split(F.readAll(),\"\\n\")F.close()\
+table.sort(HJ,function(G,SU)return tonumber(string.sub(G,2,3))<\
+tonumber(string.sub(SU,2,3))end)\
+for NQ,K in pairs(HJ)do if string.sub(K,1,1)==\"R\"then\
+shell.run(\"/etc/init.d/\"..string.sub(K,4,#K)..\
+\" start\")end;if string.sub(K,1,1)==\"S\"then\
 shell.run(\
-\"/etc/init.d/\"..string.sub(W,4,#W)..\" stop\")end;if string.sub(W,1,1)==\"K\"then\
+\"/etc/init.d/\"..string.sub(K,4,#K)..\" stop\")end;if string.sub(K,1,1)==\"K\"then\
 shell.run(\
-\"/etc/init.d/\"..string.sub(W,4,#W)..\"restart\")end end;while true do kernel.pullEvent()end end;local M={...}\
-if#M==0 then run(1)\
-kernel.panic(\"Init done. Running init 0\")run(0)return elseif M[1]==\"--help\"then usage()\
-kernel.log(\"Stopping init\")return else run(M[1])end",
+\"/etc/init.d/\"..string.sub(K,4,#K)..\"restart\")end end;while true do kernel.pullEvent()end end;local D={...}\
+if#D==0 then run(1)\
+kernel.panic(\"Init done. Running init 0\")run(0)return elseif D[1]==\"--help\"then usage()\
+kernel.log(\"Stopping init\")return else run(D[1])end",
   [ "/sbin" ] = true,
 }

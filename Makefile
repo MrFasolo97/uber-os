@@ -16,7 +16,7 @@ base: populatefs $(BASE_PACKAGES)
 complete: populatefs $(PACKAGES)
 
 populatefs:
-	mkdir -p out/{bin,boot,dev,etc/init.d,home,lib/{modules,drivers},root,sbin,sys/rom,tmp,var/{lib,lock,log,cache},usr/{bin,lib,local,share,src},mnt}
+	mkdir -p out/{bin,boot,dev,etc/init.d,home,lib/{modules,drivers},root,sbin,sys/rom,tmp,var/{lib,lock,log,cache},usr/{bin,lib,local,share,pkg,src},mnt}
 
 $(PACKAGES):
 	$(MAKE) -C packages/$@ clean
@@ -26,6 +26,8 @@ $(PACKAGES):
 
 source:
 	cp -r packages/* out/usr/src/
+	rm -rf out/usr/src/Build.lua
+	rm -rf out/usr/src/CONFIG
 
 configure: configure-prepare configure-passwd configure-fstab configure-rc
 configure-prepare:

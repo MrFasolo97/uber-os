@@ -9,8 +9,9 @@ if #argv < 1 then
 end
 
 function listDeps(package, notinstalled)
-  notinstalled = true
-  shell.run("/usr/src/" .. package .. "/PKGINFO.lua")
+  local f = fs.open("/var/lib/upt/" .. package)
+  local DEPENDS = string.split(f.readLine(), " ")
+  f.close()
   local d = {}
   for k, v in pairs(DEPENDS) do
     if notisntalled then
@@ -24,9 +25,48 @@ function listDeps(package, notinstalled)
   return d
 end
 
+local function recursCopy(from, to)
+  local l = fs.list(from)
+  for k, v in pairs(l) do
+    if fs.isDir(from .. "/" .. v) then
+      if fs.exists(to .. "/" .. v) and fs.isDir(to .. "/" .. v) and #fs.list(to .. "/" .. v) == 0 then
+        fs.delete(to .. "/" .. v)
+      end
+      fs.makeDir(to .. "/" .. v)
+      recursCopy(from .. "/" .. v, to .. "/" .. v)
+    else
+      fs.copy(from .. "/" .. v, to .. "/" .. v)
+    end
+  end
+end
+
 local function install(packages)
   local oldDir = shell.dir()
   for i = 1, #packages do
+    if fs.exists("/usr/pkg/" .. packages[i]) then
+      recursCopy("/usr/pkg/" .. packages[i], "")
+      shell.run("/usr/pkg/" .. packages[i])
+      local flist = fs.recursList("/tmp/" .. packages[i])
+      local f = fs.open("/var/lib/upt/" .. packages[i], "w")
+      f.writeLine(table.concat(DEPENDS, " "))
+      f.writeLine(table.concat(VERSION, "."))
+      for j = #flist, 1, -1 do
+        local x = fsd.stripPath("/tmp/" .. packages[i], flist[j])
+        if not fs.isDir(x) then
+          f.write(x .. "\n")
+        end
+      end
+      f.write("//DIRLIST\n")
+      for j = #flist, 1, -1 do
+        local x = fsd.stripPath("/tmp/" .. packages[i], flist[j])
+        if fs.isDir(x) then
+          f.write(x .. "\n")
+        end
+      end
+      f.close()
+      print("Package " .. packages[i] .. " installed from cache")
+      return
+    end
     if not fs.exists("/usr/src/" .. packages[i]) then
       error("Package " .. packages[i] .. " not found!")
     end
@@ -48,14 +88,14 @@ local function install(packages)
     shell.run("/usr/src/" .. packages[i] .."/Build.lua install")
     print("Registring package " .. packages[i])
     local flist = fs.recursList("/tmp/" .. packages[i])
-    --print(textutils.serialize(flist)) 
     local f = fs.open("/var/lib/upt/" .. packages[i], "w")
+    f.writeLine(table.concat(DEPENDS, " "))
+    f.writeLine(table.concat(VERSION, "."))
     for j = #flist, 1, -1 do
       local x = fsd.stripPath("/tmp/" .. packages[i], flist[j])
       if not fs.isDir(x) then
         f.write(x .. "\n")
       end
-      --print("Not a dir: " .. x)
     end
     f.write("//DIRLIST\n")
     for j = #flist, 1, -1 do
@@ -63,7 +103,6 @@ local function install(packages)
       if fs.isDir(x) then
         f.write(x .. "\n")
       end
-      --print("A dir: " .. x)
     end
     f.close()
     fs.delete("/tmp/" .. packages[i])
@@ -79,6 +118,8 @@ local function remove(packages)
     end
     print("Removing package " .. packages[i])
     local f = fs.open("/var/lib/upt/" .. packages[i], "r")
+    f.readLine()
+    f.readLine()
     local x = f.readLine()
     local d = false
     while x do
@@ -117,9 +158,9 @@ local function get(packages)
     r.close()
     print("Unpacking package " .. packages[i])
     lua.include("libarchive")
-    if fs.exists("/usr/src/" .. packages[i]) then fs.delete("/usr/src/" .. packages[i]) end
-    fs.makeDir("/usr/src/" .. packages[i])
-    archive.unpack("/tmp/" .. packages[i], "/usr/src/" .. packages[i])
+    if fs.exists("/usr/pkg/" .. packages[i]) then fs.delete("/usr/pkg/" .. packages[i]) end
+    fs.makeDir("/usr/pkg/" .. packages[i])
+    archive.unpack("/tmp/" .. packages[i], "/usr/pkg/" .. packages[i])
     fs.delete("/tmp/" .. packages[i])
     print("Downloading package " .. packages[i] .. " done!")
   end

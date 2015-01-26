@@ -1,4 +1,4 @@
-SRC = makepkg
+SRC = makepkg makeallpkg
 PWD = $(shell pwd)
 all	:	prepare $(SRC)
 clean:

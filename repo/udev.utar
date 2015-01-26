@@ -9,18 +9,19 @@ thread.runDaemon(\"/sbin/udev\",\"udevd\")end;if argv[1]==\"stop\"then\
 thread.stopDaemon(\"udevd\")end\
 if argv[1]==\"restart\"then\
 thread.stopDaemon(\"udevd\")thread.runDaemon(\"/sbin/udev\",\"udevd\")end",
-  [ "/sbin/udev" ] = "udev={}local PR={}PR[\"hdd\"]=\"HDD\"\
-local WV={[\"modem\"]=\"net\",[\"computer\"]=\"cmp\",[\"turtle\"]=\"trt\",[\"drive\"]=\"fdd\",[\"monitor\"]=\"disp\",[\"printer\"]=\"prn\"}function udev.getMnemonics()local IQ={}\
-for NQ,E in pairs(PR)do table.insert(IQ,NQ)end;return IQ end\
-function udev.readDevice(OK)\
-local Z=PR[OK]if OK==\"hdd\"then\
+  [ "/sbin/udev" ] = "udev={}local F={}F[\"hdd\"]=\"HDD\"\
+local Z={[\"modem\"]=\"net\",[\"computer\"]=\"cmp\",[\"turtle\"]=\"trt\",[\"drive\"]=\"fdd\",[\"monitor\"]=\"disp\",[\"printer\"]=\"prn\"}function udev.getMnemonics()local CK={}\
+for OS,EA in pairs(F)do table.insert(CK,OS)end;return CK end\
+function udev.readDevice(Y)local QH=F[Y]if Y==\
+\"hdd\"then\
 return textutils.serialize({type=\"DISK\",mounted=\"/\"})end\
-if string.sub(OK,1,3)==\"fdd\"then return\
-textutils.serialize({type=\"DISK\",mounted=disk.getMountPath(Z)})end end\
-local function WS()local BG=peripheral.getNames()\
-for T,Q in pairs(BG)do local CM=0\
-local J=peripheral.getType(Q)while PR[WV[J]..tostring(CM)]do CM=CM+1 end;PR[WV[J]..\
-tostring(CM)]=Q end end;udev=applyreadonly(udev)WS()\
-while true do local WH=os.pullEvent()if\
-WH:sub(1,10)==\"peripheral\"then WS()end end",
+if string.sub(Y,1,3)==\"fdd\"then return\
+textutils.serialize({type=\"DISK\",mounted=disk.getMountPath(QH)})end end\
+local function A()local IY=peripheral.getNames()for LL,XW in pairs(IY)do local J=0\
+local W=peripheral.getType(XW)while F[Z[W]..tostring(J)]do J=J+1 end\
+F[Z[W]..tostring(J)]=XW end end;udev=applyreadonly(udev)A()\
+while true do local B=os.pullEvent()if B:sub(1,10)==\
+\"peripheral\"then A()end end",
+  [ "/PKGINFO.lua" ] = "DEPENDS = {\"uberkernel\", \"corelib\"}\
+VERSION = {0, 2, 1}",
 }

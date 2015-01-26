@@ -1,295 +1,298 @@
 {
-  [ "/bin/cd" ] = "local S={...}\
-if#S<1 then print(\"Usage: cd <path>\")return end;local L=shell.resolve(S[1])if fs.isDir(L)then shell.setDir(L)else\
-print(\"Not a directory\")return end",
-  [ "/bin/alias" ] = "local CL={...}if#CL>2 then print(\"Usage: alias <alias> <program>\")\
-return end;local XM=CL[1]local L=CL[2]\
-if XM and L then\
-shell.setAlias(XM,L)elseif XM then shell.clearAlias(XM)else local EV=shell.aliases()local P={}for XM,G in pairs(EV)do\
-table.insert(P,XM)end;table.sort(P)\
-textutils.pagedTabulate(P)end",
-  [ "/bin/drive" ] = "local EY={...}local IR=shell.dir()if EY[1]~=nil then\
-IR=shell.resolve(EY[1])end\
-if fs.exists(IR)then\
-write(fs.getDrive(IR)..\" (\")local N=fs.getFreeSpace(IR)\
-if N>1024*1024 then\
+  [ "/bin/drive" ] = "local G={...}local IT=shell.dir()if G[1]~=nil then\
+IT=shell.resolve(G[1])end\
+if fs.exists(IT)then\
+write(fs.getDrive(IT)..\" (\")local E=fs.getFreeSpace(IT)\
+if E>1024*1024 then\
 print((\
-math.floor(N/ (100*1000))/10)..\"MB remaining)\")elseif N>1024 then\
-print(math.floor(N/1000)..\"KB remaining)\")else print(N..\"B remaining)\")end else print(\"No such path\")end",
-  [ "/bin/id" ] = "local W=nil;local S={...}if#S>0 then W=tostring(S[1])end\
-if W==nil then\
-print(\
-\"This is computer #\"..os.getComputerID())local CY=os.getComputerLabel()if CY then\
-print(\"This computer is labelled \\\"\"..CY..\"\\\"\")end else local CV=disk.hasData(W)if not CV then\
-print(\"No disk in drive \"..W)return end\
-print(\"The disk is #\"..disk.getID(W))local JE=disk.getLabel(W)if JE then\
-print(\"The disk is labelled \\\"\"..JE..\"\\\"\")end end",
-  [ "/bin/label" ] = "\
-local function HZ()print(\"Usages:\")print(\"label get\")\
-print(\"label get <drive>\")print(\"label set <text>\")\
-print(\"label set <drive> <text>\")print(\"label clear\")print(\"label clear <drive>\")end\
-local function U(CM)\
-if peripheral.getType(CM)==\"drive\"then local FC=disk.hasData(CM)if not\
-FC then print(\"No disk in \"..CM..\" drive\")\
-return false end else\
-print(\"No disk drive named \"..CM)return false end;return true end\
-local function YGR(NB)\
-if NB~=nil then\
-if U(NB)then local D=disk.getLabel(NB)if D then\
-print(\"Disk label is \\\"\"..D..\"\\\"\")else print(\"No Disk label\")end end else local ZZ=os.getComputerLabel()\
-if ZZ then\
-print(\"Computer label is \\\"\"..ZZ..\"\\\"\")else print(\"No Computer label\")end end end\
-local function YD(SS,Q)\
-if SS~=nil then\
-if U(SS)then disk.setLabel(SS,Q)local W=disk.getLabel(SS)if W then print(\
-\"Disk label set to \\\"\"..W..\"\\\"\")else\
-print(\"Disk label cleared\")end end else os.setComputerLabel(Q)local W=os.getComputerLabel()if W then print(\
-\"Computer label set to \\\"\"..W..\"\\\"\")else\
-print(\"Computer label cleared\")end end end;local S={...}local O=S[1]\
-if O==\"get\"then\
-if#S==1 then YGR(nil)elseif#S==2 then YGR(S[2])else HZ()end elseif O==\"set\"then\
-if#S==2 then YD(nil,S[2])elseif#S==3 then YD(S[2],S[3])else HZ()end elseif O==\"clear\"then\
-if#S==1 then YD(nil,nil)elseif#S==2 then YD(S[2],nil)else HZ()end else HZ()end",
+math.floor(E/ (100*1000))/10)..\"MB remaining)\")elseif E>1024 then\
+print(math.floor(E/1000)..\"KB remaining)\")else print(E..\"B remaining)\")end else print(\"No such path\")end",
   [ "/bin" ] = true,
-  [ "/bin/edit" ] = "local JY={...}\
-if#JY==0 then print(\"Usage: edit <path>\")return end;local HF=shell.resolve(JY[1])local IS=fs.isReadOnly(HF)if\
-fs.exists(HF)and fs.isDir(HF)then\
-print(\"Cannot edit a directory.\")return end;local V,T=1,1\
-local D,XJ=term.getSize()local M,ZD=0,0;local KI={}local QU=true;local MQJ,IHC,RWV,C,ZV\
-if term.isColour()then ZV=colours.black\
-C=colours.white;MQJ=colours.yellow;IHC=colours.yellow;RWV=colours.green\
-stringColour=colours.red else ZV=colours.black;C=colours.white;MQJ=colours.white\
-IHC=colours.white;RWV=colours.white;stringColour=colours.white end;local RB=false;local Z=1;local RW;if IS then RW={\"Exit\",\"Print\"}else\
-RW={\"Save\",\"Exit\",\"Print\"}end;local UB=\"Press Ctrl to access menu\"\
-local function SO(X)KI={}\
-if\
-fs.exists(X)then local NI=fs.open(X,\"r\")local TA=NI.readLine()while TA do\
-table.insert(KI,TA)TA=NI.readLine()end;NI.close()end;if#KI==0 then table.insert(KI,\"\")end end\
-local function XS(TH)\
-local MK=HF:sub(1,HF:len()-fs.getName(HF):len())if not fs.exists(MK)then fs.makeDir(MK)end;local B=nil\
-local function WT()\
-B=fs.open(TH,\"w\")if B then for RO,HT in ipairs(KI)do B.write(HT..\"\\n\")end else\
-error(\"Failed to open \"..TH)end end;local H=pcall(WT)if B then B.close()end;return H end\
-local W={[\"and\"]=true,[\"break\"]=true,[\"do\"]=true,[\"else\"]=true,[\"elseif\"]=true,[\"end\"]=true,[\"false\"]=true,[\"for\"]=true,[\"function\"]=true,[\"if\"]=true,[\"in\"]=true,[\"local\"]=true,[\"nil\"]=true,[\"not\"]=true,[\"or\"]=true,[\"repeat\"]=true,[\"return\"]=true,[\"then\"]=true,[\"true\"]=true,[\"until\"]=true,[\"while\"]=true}\
-local function GK(A,VQS,F)local Q=string.match(A,VQS)\
-if Q then\
-if type(F)==\"number\"then\
-term.setTextColour(F)else term.setTextColour(F(Q))end;term.write(Q)term.setTextColour(C)return string.sub(A,\
-string.len(Q)+1)end;return nil end\
-local function HS(TAV)\
-while string.len(TAV)>0 do\
-TAV=\
-\
-\
-\
-\
-GK(TAV,\"^%-%-%[%[.-%]%]\",RWV)or GK(TAV,\"^%-%-.*\",RWV)or GK(TAV,\"^\\\".-[^\\\\]\\\"\",stringColour)or GK(TAV,\"^\\'.-[^\\\\]\\'\",stringColour)or GK(TAV,\"^%[%[.-%]%]\",stringColour)or\
-GK(TAV,\"^[%w_]+\",function(L)if W[L]then return IHC end;return C end)or GK(TAV,\"^[^%w_]\",C)end end\
-local function K()\
-for T=1,XJ-1 do term.setCursorPos(1-M,T)term.clearLine()\
-local VK=KI[T+ZD]if VK~=nil then HS(VK)end end;term.setCursorPos(V-M,T-ZD)end\
-local function HK(RY)local F=KI[RY]term.setCursorPos(1-M,RY-ZD)\
-term.clearLine()HS(F)term.setCursorPos(V-M,RY-ZD)end\
-local function O()term.setCursorPos(1,XJ)term.clearLine()\
-term.setCursorPos(D-string.len(\
-\"Ln \"..T)+1,XJ)term.setTextColour(MQJ)term.write(\"Ln \")\
-term.setTextColour(C)term.write(T)term.setCursorPos(1,XJ)\
-if RB then\
-term.setTextColour(C)\
-for IW,WR in pairs(RW)do\
-if IW==Z then term.setTextColour(MQJ)term.write(\"[\")\
-term.setTextColour(C)term.write(WR)term.setTextColour(MQJ)\
-term.write(\"]\")term.setTextColour(C)else\
-term.write(\" \"..WR..\" \")end end else term.setTextColour(MQJ)term.write(UB)\
-term.setTextColour(C)end;term.setCursorPos(V-M,T-ZD)end\
-local ZX={Save=function()\
-if IS then UB=\"Access denied\"else local CAO,TEN=XS(HF)if CAO then UB=\"Saved to \"..HF else\
-UB=\"Error saving to \"..HF end end;O()end,Print=function()\
-local F=peripheral.find(\"printer\")if not F then UB=\"No printer attached\"return end;local YL=0\
-local MF=fs.getName(HF)\
-if F.getInkLevel()<1 then UB=\"Printer out of ink\"return elseif\
-F.getPaperLevel()<1 then UB=\"Printer out of paper\"return end;local EK=term.current()\
-local CY={getCursorPos=F.getCursorPos,setCursorPos=F.setCursorPos,getSize=F.getPageSize,write=F.write}\
-CY.scroll=function()if YL==1 then\
-F.setPageTitle(MF..\" (page \"..YL..\")\")end\
-while not F.newPage()do\
-if F.getInkLevel()<1 then\
-UB=\"Printer out of ink, please refill\"elseif F.getPaperLevel()<1 then UB=\"Printer out of paper, please refill\"else\
-UB=\"Printer output tray full, please empty\"end;term.redirect(EK)O()term.redirect(CY)\
-local GU=os.startTimer(0.5)sleep(0.5)end;YL=YL+1;if YL==1 then F.setPageTitle(MF)else\
-F.setPageTitle(MF..\" (page \"..YL..\")\")end end;RB=false;term.redirect(CY)\
-local PB,JG=pcall(function()term.scroll()for X,XCU in ipairs(KI)do\
-print(XCU)end end)term.redirect(EK)if not PB then print(JG)end;while not F.endPage()do\
-UB=\"Printer output tray full, please empty\"O()sleep(0.5)end;RB=true\
-if YL>1 then UB=\"Printed \"..\
-YL..\" Pages\"else UB=\"Printed 1 Page\"end;O()end,Exit=function()\
-QU=false end}local function QX(UG)ZX[RW[UG]]()\
-if RB then RB=false;term.setCursorBlink(true)end;O()end\
-local function E(V,T)local RBO=V-M;local WN=T-ZD\
-local U=false\
-if RBO<1 then M=V-1;RBO=1;U=true elseif RBO>D then M=V-D;RBO=D;U=true end\
-if WN<1 then ZD=T-1;WN=1;U=true elseif WN>XJ-1 then ZD=T- (XJ-1)WN=XJ-1;U=true end;if U then K()end;term.setCursorPos(RBO,WN)O()end;SO(HF)term.setBackgroundColour(ZV)term.clear()\
-term.setCursorPos(V,T)term.setCursorBlink(true)K()O()\
-while QU do local A,SM,U,Q=os.pullEvent()\
-if\
-A==\"key\"then\
-if SM==keys.up then\
-if not RB then if T>1 then T=T-1\
-V=math.min(V,string.len(KI[T])+1)E(V,T)end end elseif SM==keys.down then\
-if not RB then if T<#KI then T=T+1\
-V=math.min(V,string.len(KI[T])+1)E(V,T)end end elseif SM==keys.tab then\
-if not RB and not IS then KI[T]=\"  \"..KI[T]V=V+2;E(V,T)HK(T)end elseif SM==keys.pageUp then if not RB then\
-if T- (XJ-1)>=1 then T=T- (XJ-1)else T=1 end;V=math.min(V,string.len(KI[T])+1)\
-E(V,T)end elseif SM==keys.pageDown then\
-if not RB then if T+ (XJ-\
-1)<=#KI then T=T+ (XJ-1)else T=#KI end;V=math.min(V,\
-string.len(KI[T])+1)E(V,T)end elseif SM==keys.home then if not RB then V=1;E(V,T)end elseif SM==keys[\"end\"]then if not RB then V=\
-string.len(KI[T])+1;E(V,T)end elseif SM==keys.left then\
-if not RB then\
-if V>1 then\
-V=V-1 elseif V==1 and T>1 then V=string.len(KI[T-1])+1;T=T-1 end;E(V,T)else Z=Z-1;if Z<1 then Z=#RW end;O()end elseif SM==keys.right then\
-if not RB then\
-if V<string.len(KI[T])+1 then V=V+1 elseif V==\
-string.len(KI[T])+1 and T<#KI then V=1;T=T+1 end;E(V,T)else Z=Z+1;if Z>#RW then Z=1 end;O()end elseif SM==keys.delete then\
-if not RB and not IS then table.remove(KI,T)T=T-1;K()end elseif SM==keys.backspace then\
-if not RB and not IS then\
-if V>1 then local TU=KI[T]KI[T]=string.sub(TU,1,V-2)..\
-string.sub(TU,V)HK(T)V=V-1;E(V,T)elseif T>1 then\
-local AET=string.len(KI[T-1])KI[T-1]=KI[T-1]..KI[T]table.remove(KI,T)K()\
-V=AET+1;T=T-1;E(V,T)end end elseif SM==keys.enter then\
-if not RB and not IS then local XE=KI[T]\
-local NX,P=string.find(XE,\"^[ ]+\")if not P then P=0 end;KI[T]=string.sub(XE,1,V-1)\
-table.insert(KI,T+1,\
-string.rep(' ',P)..string.sub(XE,V))K()V=P+1;T=T+1;E(V,T)elseif RB then QX(Z)end elseif SM==keys.leftCtrl or SM==keys.rightCtrl then RB=not RB;if RB then\
-term.setCursorBlink(false)else term.setCursorBlink(true)end\
-O()end elseif A==\"char\"then\
-if not RB and not IS then local ZO=KI[T]KI[T]=string.sub(ZO,1,V-1)..SM..\
-string.sub(ZO,V)HK(T)V=V+1\
-E(V,T)elseif RB then\
-for G,BG in ipairs(RW)do if\
-string.lower(string.sub(BG,1,1))==string.lower(SM)then QX(G)break end end end elseif A==\"paste\"then\
-if not RB and not IS then local CN=KI[T]KI[T]=string.sub(CN,1,V-1)..SM..\
-string.sub(CN,V)HK(T)V=V+\
-string.len(SM)E(V,T)end elseif A==\"mouse_click\"then\
-if not RB then\
-if SM==1 then local BK,ZP=U,Q;if ZP<XJ then\
-T=math.min(math.max(ZD+ZP,1),#KI)\
-V=math.min(math.max(M+BK,1),string.len(KI[T])+1)E(V,T)end end end elseif A==\"mouse_scroll\"then if not RB then\
-if SM==-1 then if ZD>0 then ZD=ZD-1;K()end elseif SM==1 then\
-local TW=#KI- (XJ-1)if ZD<TW then ZD=ZD+1;K()end end end elseif\
-A==\"term_resize\"then D,XJ=term.getSize()E(V,T)O()K()end end;term.clear()term.setCursorBlink(false)\
-term.setCursorPos(1,1)",
-  [ "/bin/log" ] = "shell.run(\"edit /boot/log\")",
-  [ "/bin/readlink" ] = "local DK={...}\
-if#DK<1 then error(\"Usage: readlink <LINK>\")end\
-local N=fs.getInfo(shell.resolve(DK[1])).linkto;if N then print(N)else error(\"Not a link!\")end",
-  [ "/bin/exit" ] = "shell.exit()",
-  [ "/bin/mv" ] = "local YR={...}if#YR<2 then\
-print(\"Usage: mv <source> <destination>\")return end;local D=shell.resolve(YR[1])\
-local XJ=shell.resolve(YR[2])local PY=fs.find(D)\
-if#PY>0 then\
-for P,SY in ipairs(PY)do\
-if fs.isDir(XJ)then\
-fs.move(SY,fs.combine(XJ,fs.getName(SY)))elseif#PY==1 then fs.move(SY,XJ)else\
+  [ "/bin/id" ] = "local OV=nil;local L={...}if#L>0 then OV=tostring(L[1])end\
+if OV==nil then\
+print(\
+\"This is computer #\"..os.getComputerID())local I=os.getComputerLabel()if I then\
+print(\"This computer is labelled \\\"\"..I..\"\\\"\")end else local T=disk.hasData(OV)if not T then\
+print(\"No disk in drive \"..OV)return end\
+print(\"The disk is #\"..disk.getID(OV))local AL=disk.getLabel(OV)if AL then\
+print(\"The disk is labelled \\\"\"..AL..\"\\\"\")end end",
+  [ "/bin/readlink" ] = "local Y={...}\
+if#Y<1 then error(\"Usage: readlink <LINK>\")end\
+local UB=fs.getInfo(shell.resolve(Y[1])).linkto;if UB then print(UB)else error(\"Not a link!\")end",
+  [ "/bin/mv" ] = "local TY={...}if#TY<2 then\
+print(\"Usage: mv <source> <destination>\")return end;local D=shell.resolve(TY[1])\
+local Z=shell.resolve(TY[2])local W=fs.find(D)\
+if#W>0 then\
+for HW,XG in ipairs(W)do\
+if fs.isDir(Z)then\
+fs.move(XG,fs.combine(Z,fs.getName(XG)))elseif#W==1 then fs.move(XG,Z)else\
 printError(\"Cannot overwrite file multiple times\")return end end else printError(\"No matching files\")end",
   [ "/bin/modprobe" ] = "argv={...}if#argv==0 then\
 print(\"Usage: modprobe <module1> [module2] ...\")return end;for i=1,#argv do\
 kernel.loadModule(argv[i],false)end",
-  [ "/bin/ls" ] = "local RR={...}local GH=shell.dir()local W={}\
-if#RR>0 then if RR[1]:sub(1,1)==\"-\"then\
-W=RR[1]else GH=RR[1]end;if#RR==2 then GH=RR[2]end end;local R=false;local OF=false;for i=2,#W do if W:sub(i,i)==\"a\"then R=true end;if\
-W:sub(i,i)==\"l\"then OF=true end end\
-GH=fs.normalizePath(GH)files=fs.list(GH)local C=0;local YC;for i=1,#files do YC=string.len(files[i])if\
-YC>C then C=YC end end;local SN=\"-\"local X=\"\"\
+  [ "/bin/ls" ] = "local E={...}local YO=shell.dir()local TP={}\
+if#E>0 then if E[1]:sub(1,1)==\"-\"then\
+TP=E[1]else YO=E[1]end;if#E==2 then YO=E[2]end end;local SE=false;local SB=false\
+for i=2,#TP do if TP:sub(i,i)==\"a\"then SE=true end;if\
+TP:sub(i,i)==\"l\"then SB=true end end;YO=fs.normalizePath(YO)files=fs.list(YO)local HY=0;local OM;for i=1,#files do\
+OM=string.len(files[i])if OM>HY then HY=OM end end;local H=\"-\"local T=\"\"\
 for i=1,#files do\
 if(\
-files[i]:sub(1,1)~=\".\")or R then if\
-fs.isDir(GH..\"/\"..files[i])then\
-if term.isColor()then term.setTextColor(colors.blue)end;SN=\"d\"end\
-if fs.getInfo(GH..\
+files[i]:sub(1,1)~=\".\")or SE then if\
+fs.isDir(YO..\"/\"..files[i])then\
+if term.isColor()then term.setTextColor(colors.blue)end;H=\"d\"end\
+if fs.getInfo(YO..\
 \"/\"..files[i]).linkto then if term.isColor()then\
 term.setTextColor(colors.cyan)end end\
-if OF then write(files[i])\
-for j=string.len(files[i]),C do write(\" \")end;if fs.getInfo(GH..\"/\"..files[i]).linkto then\
-X=\" -> \"..fs.getInfo(GH..\"/\"..\
-files[i]).linkto else X=\"\"end\
-print(SN,table.concat(fsd.normalizePerms(fsd.getInfo(\
-GH..\"/\"..files[i]).perms),\"\"),\" \",users.getUsernameByUID(fsd.getInfo(\
-GH..\"/\"..files[i]).owner),X)else write(files[i]..\" \")end\
-if term.isColor()then term.setTextColor(colors.white)end;SN=\"-\"X=\"\"end end;if not OF then print()end",
-  [ "/bin/chmod" ] = "local U={...}if#U<2 then\
-print(\"Usage: chmod <mode> <file1> [file2] ...\")return end\
-for i=2,#U do fsd.setNode(fsd.normalizePath(shell.resolve(U[i])),\
-nil,U[1])end",
-  [ "/bin/rm" ] = "local CO={...}\
-if#CO<1 then print(\"Usage: rm <path>\")return end;local G=shell.resolve(CO[1])local E=fs.find(G)\
-if#E>0 then for LU,GNM in ipairs(E)do\
-fs.delete(GNM)end else printError(\"No matching files\")end",
+if SB then write(files[i])\
+for j=string.len(files[i]),HY do write(\" \")end;if fs.getInfo(YO..\"/\"..files[i]).linkto then\
+T=\" -> \"..fs.getInfo(YO..\"/\"..\
+files[i]).linkto else T=\"\"end\
+print(H,table.concat(fsd.normalizePerms(fsd.getInfo(\
+YO..\"/\"..files[i]).perms),\"\"),\" \",users.getUsernameByUID(fsd.getInfo(\
+YO..\"/\"..files[i]).owner),T)else write(files[i]..\" \")end\
+if term.isColor()then term.setTextColor(colors.white)end;H=\"-\"T=\"\"end end;if not SB then print()end",
+  [ "/bin/rm" ] = "local H={...}\
+if#H<1 then print(\"Usage: rm <path>\")return end;local XV=shell.resolve(H[1])local L=fs.find(XV)\
+if#L>0 then for U,W in ipairs(L)do\
+fs.delete(W)end else printError(\"No matching files\")end",
   [ "/bin/clear" ] = "term.clear()term.setCursorPos(1,1)",
-  [ "/bin/shutdown" ] = "\
-if term.isColour()then term.setTextColour(colours.yellow)end;print(\"Goodbye\")\
-term.setTextColour(colours.white)sleep(1)os.shutdown()",
-  [ "/bin/mkdir" ] = "local MQ={...}\
-if#MQ<1 then print(\"Usage: mkdir <path>\")return end;local QH=shell.resolve(MQ[1])fs.makeDir(QH)",
-  [ "/bin/lua" ] = "local H={...}if#H>0 then\
-print(\"This is an interactive Lua prompt.\")print(\"To run a lua program, just type its name.\")\
-return end;local E=true;local O={}\
-local I={[\"exit\"]=function()\
-E=false end,[\"_echo\"]=function(...)return...end}setmetatable(I,{__index=getfenv()})if term.isColour()then\
-term.setTextColour(colours.yellow)end\
-print(\"Interactive Lua prompt.\")print(\"Call exit() to exit.\")\
-term.setTextColour(colours.white)\
-while E do write(\"lua> \")local OZA=read(nil,O)table.insert(O,OZA)local M=0\
-local IZ,L=loadstring(OZA,\"lua\")\
-local BT,P=loadstring(\"return _echo(\"..OZA..\");\",\"lua\")\
-if not IZ then if BT then IZ=BT;L=nil;M=1 end else if BT then IZ=BT end end\
-if IZ then setfenv(IZ,I)local G={pcall(IZ)}\
-if G[1]then local Z=1\
-while(G[Z+1]~=nil)or\
-(Z<=M)do local XP=G[Z+1]if type(XP)==\"table\"then\
-local RQ,LT=pcall(textutils.serialise,XP)if RQ then print(LT)else print(tostring(XP))end else\
-print(tostring(XP))end\
-Z=Z+1 end else printError(G[2])end else printError(L)end end",
-  [ "/bin/eject" ] = "local SO={...}\
-if#SO==0 then print(\"Usage: eject <drive>\")return end;local H=SO[1]local O=disk.isPresent(H)if not O then\
-print(\"Nothing in \"..H..\" drive\")return end;disk.eject(H)",
-  [ "/bin/ln" ] = "local B={...}\
-if#B<2 then error(\"Usage ln <TARGET> <LINK_NAME>\")end\
-if\
-fs.exists(fs.normalizePath(shell.resolve(B[2])))then error(\"Link already exists!\")end\
-if not\
-fs.exists(fs.normalizePath(shell.resolve(B[1])))then error(\"Target does not exists!\")end\
-if\
-fs.isDir(fs.normalizePath(shell.resolve(B[1])))then\
-fs.makeDir(fs.normalizePath(shell.resolve(B[2])))else\
-fs.open(fs.normalizePath(shell.resolve(B[2])),\"w\").close()end\
-fs.setNode(shell.resolve(B[2]),nil,nil,shell.resolve(B[1]))",
-  [ "/bin/chown" ] = "local ZS={...}if#ZS<2 then\
-print(\"Usage: chown <owner> <file1> [file2] ...\")return end;for i=2,#ZS do\
-fsd.setNode(fsd.normalizePath(shell.resolve(ZS[i])),users.getUIDByUsername(ZS[1]),\
-nil)end",
   [ "/bin/reboot" ] = "\
 if term.isColour()then term.setTextColour(colours.yellow)end;print(\"Goodbye\")\
 term.setTextColour(colours.white)sleep(1)os.reboot()",
-  [ "/bin/cp" ] = "local AQ={...}if#AQ<2 then\
-print(\"Usage: cp <source> <destination>\")return end;local DJ=shell.resolve(AQ[1])\
-local X=shell.resolve(AQ[2])local CV=fs.find(DJ)\
-if#CV>0 then\
-for XU,S in ipairs(CV)do\
-if fs.isDir(X)then\
-fs.copy(S,fs.combine(X,fs.getName(S)))elseif#CV==1 then fs.copy(S,X)else\
+  [ "/bin/ln" ] = "local X={...}\
+if#X<2 then error(\"Usage ln <TARGET> <LINK_NAME>\")end\
+if\
+fs.exists(fs.normalizePath(shell.resolve(X[2])))then error(\"Link already exists!\")end\
+if not\
+fs.exists(fs.normalizePath(shell.resolve(X[1])))then error(\"Target does not exists!\")end\
+if\
+fs.isDir(fs.normalizePath(shell.resolve(X[1])))then\
+fs.makeDir(fs.normalizePath(shell.resolve(X[2])))else\
+fs.open(fs.normalizePath(shell.resolve(X[2])),\"w\").close()end\
+fs.setNode(shell.resolve(X[2]),nil,nil,shell.resolve(X[1]))",
+  [ "/bin/cp" ] = "local Q={...}if#Q<2 then print(\"Usage: cp <source> <destination>\")\
+return end;local K=shell.resolve(Q[1])\
+local S=shell.resolve(Q[2])local I=fs.find(K)\
+if#I>0 then\
+for NS,L in ipairs(I)do\
+if fs.isDir(S)then\
+fs.copy(L,fs.combine(S,fs.getName(L)))elseif#I==1 then fs.copy(L,S)else\
 printError(\"Cannot overwrite file multiple times\")return end end else printError(\"No matching files\")end",
-  [ "/bin/umount" ] = "local SD={...}\
-if#SD<1 then error(\"Usage: umount <PATH>\")end;fs.umountPath(SD[1])",
-  [ "/bin/ps" ] = "local V=thread.getRunningThreads()local Z={}for X,H in pairs(V)do\
-table.insert(Z,{H.pid,H.desc,users.getUsernameByUID(H.uid)})end\
-textutils.tabulate({\"PID\",\"CMD\",\"USER\"},unpack(Z))",
+  [ "/PKGINFO.lua" ] = "DEPENDS = {\"uberkernel\", \"corelib\"}\
+VERSION = {0, 2, 1}",
   [ "/bin/kill" ] = "argv={...}if#argv==0 then\
-print(\"Usage: kill <PID> [TERM|KILL]\")return end;local E,S\
-if#argv==1 then S=\"KILL\"else S=argv[2]end;if S==\"KILL\"then E=2 end;if S==\"TERM\"then E=1 end\
-thread.kill(tonumber(argv[1]),E)",
-  [ "/bin/mount" ] = "local Q={...}if#Q<3 then\
-error(\"Usage: mount <DEV> <FS> <MOUNTPOINT>\")end;local NS=fs.open(Q[1],\"r\")\
-local GG=textutils.unserialize(NS.readAll())NS.close()\
-fs.mount(\"/\"..GG.mounted,Q[2],Q[3])",
+print(\"Usage: kill <PID> [TERM|KILL]\")return end;local NZ,P\
+if#argv==1 then P=\"KILL\"else P=argv[2]end;if P==\"KILL\"then NZ=2 end;if P==\"TERM\"then NZ=1 end\
+thread.kill(tonumber(argv[1]),NZ)",
+  [ "/bin/cd" ] = "local C={...}\
+if#C<1 then print(\"Usage: cd <path>\")return end;local B=shell.resolve(C[1])if fs.isDir(B)then shell.setDir(B)else\
+print(\"Not a directory\")return end",
+  [ "/bin/mount" ] = "local I={...}if#I<3 then\
+error(\"Usage: mount <DEV> <FS> <MOUNTPOINT>\")end;local C=fs.open(I[1],\"r\")\
+local K=textutils.unserialize(C.readAll())C.close()fs.mount(\"/\"..K.mounted,I[2],I[3])",
+  [ "/bin/chmod" ] = "local DN={...}if#DN<2 then\
+print(\"Usage: chmod <mode> <file1> [file2] ...\")return end\
+for i=2,#DN do fsd.setNode(fsd.normalizePath(shell.resolve(DN[i])),\
+nil,DN[1])end",
+  [ "/bin/shutdown" ] = "\
+if term.isColour()then term.setTextColour(colours.yellow)end;print(\"Goodbye\")\
+term.setTextColour(colours.white)sleep(1)os.shutdown()",
+  [ "/bin/alias" ] = "local BZ={...}if#BZ>2 then print(\"Usage: alias <alias> <program>\")\
+return end;local HW=BZ[1]local DW=BZ[2]\
+if HW and DW then\
+shell.setAlias(HW,DW)elseif HW then shell.clearAlias(HW)else local CK=shell.aliases()local QC={}for HW,ZG in\
+pairs(CK)do table.insert(QC,HW)end\
+table.sort(QC)textutils.pagedTabulate(QC)end",
+  [ "/bin/eject" ] = "local ZK={...}\
+if#ZK==0 then print(\"Usage: eject <drive>\")return end;local VQ=ZK[1]local P=disk.isPresent(VQ)if not P then\
+print(\"Nothing in \"..VQ..\" drive\")return end;disk.eject(VQ)",
+  [ "/bin/ps" ] = "local WH=thread.getRunningThreads()local Y={}for KZ,YY in pairs(WH)do\
+table.insert(Y,{YY.pid,YY.desc,users.getUsernameByUID(YY.uid)})end\
+textutils.tabulate({\"PID\",\"CMD\",\"USER\"},unpack(Y))",
+  [ "/bin/chown" ] = "local XV={...}if#XV<2 then\
+print(\"Usage: chown <owner> <file1> [file2] ...\")return end;for i=2,#XV do\
+fsd.setNode(fsd.normalizePath(shell.resolve(XV[i])),users.getUIDByUsername(XV[1]),\
+nil)end",
+  [ "/bin/label" ] = "\
+local function A()print(\"Usages:\")print(\"label get\")\
+print(\"label get <drive>\")print(\"label set <text>\")\
+print(\"label set <drive> <text>\")print(\"label clear\")print(\"label clear <drive>\")end\
+local function MUS(VX)\
+if peripheral.getType(VX)==\"drive\"then local K=disk.hasData(VX)if\
+not K then print(\"No disk in \"..VX..\" drive\")\
+return false end else\
+print(\"No disk drive named \"..VX)return false end;return true end\
+local function GX(ZO)\
+if ZO~=nil then\
+if MUS(ZO)then local HO=disk.getLabel(ZO)if HO then\
+print(\"Disk label is \\\"\"..HO..\"\\\"\")else print(\"No Disk label\")end end else local CI=os.getComputerLabel()\
+if CI then\
+print(\"Computer label is \\\"\"..CI..\"\\\"\")else print(\"No Computer label\")end end end\
+local function V(K,SF)\
+if K~=nil then\
+if MUS(K)then disk.setLabel(K,SF)local E=disk.getLabel(K)if E then print(\
+\"Disk label set to \\\"\"..E..\"\\\"\")else\
+print(\"Disk label cleared\")end end else os.setComputerLabel(SF)local Z=os.getComputerLabel()if Z then print(\
+\"Computer label set to \\\"\"..Z..\"\\\"\")else\
+print(\"Computer label cleared\")end end end;local T={...}local HU=T[1]\
+if HU==\"get\"then\
+if#T==1 then GX(nil)elseif#T==2 then GX(T[2])else A()end elseif HU==\"set\"then\
+if#T==2 then V(nil,T[2])elseif#T==3 then V(T[2],T[3])else A()end elseif HU==\"clear\"then\
+if#T==1 then V(nil,nil)elseif#T==2 then V(T[2],nil)else A()end else A()end",
+  [ "/bin/lua" ] = "local W={...}if#W>0 then\
+print(\"This is an interactive Lua prompt.\")print(\"To run a lua program, just type its name.\")\
+return end;local HO=true;local J={}\
+local D={[\"exit\"]=function()\
+HO=false end,[\"_echo\"]=function(...)return...end}setmetatable(D,{__index=getfenv()})if term.isColour()then\
+term.setTextColour(colours.yellow)end\
+print(\"Interactive Lua prompt.\")print(\"Call exit() to exit.\")\
+term.setTextColour(colours.white)\
+while HO do write(\"lua> \")local H=read(nil,J)table.insert(J,H)local A=0\
+local SM,DV=loadstring(H,\"lua\")\
+local B,I=loadstring(\"return _echo(\"..H..\");\",\"lua\")\
+if not SM then if B then SM=B;DV=nil;A=1 end else if B then SM=B end end\
+if SM then setfenv(SM,D)local QA={pcall(SM)}\
+if QA[1]then local IWG=1\
+while\
+(QA[IWG+1]~=nil)or(IWG<=A)do local Z=QA[IWG+1]if type(Z)==\"table\"then\
+local ZSO,GO=pcall(textutils.serialise,Z)if ZSO then print(GO)else print(tostring(Z))end else\
+print(tostring(Z))end\
+IWG=IWG+1 end else printError(QA[2])end else printError(DV)end end",
+  [ "/bin/umount" ] = "local OU={...}\
+if#OU<1 then error(\"Usage: umount <PATH>\")end;fs.umountPath(OU[1])",
+  [ "/bin/mkdir" ] = "local J={...}\
+if#J<1 then print(\"Usage: mkdir <path>\")return end;local FW=shell.resolve(J[1])fs.makeDir(FW)",
+  [ "/bin/exit" ] = "shell.exit()",
+  [ "/bin/log" ] = "shell.run(\"edit /boot/log\")",
+  [ "/bin/edit" ] = "local ES={...}\
+if#ES==0 then print(\"Usage: edit <path>\")return end;local UV=shell.resolve(ES[1])local YOH=fs.isReadOnly(UV)if\
+fs.exists(UV)and fs.isDir(UV)then\
+print(\"Cannot edit a directory.\")return end;local FP,ER=1,1\
+local RK,HD=term.getSize()local G,F=0,0;local O={}local FF=true;local W,YRO,FC,B,QUE\
+if term.isColour()then QUE=colours.black\
+B=colours.white;W=colours.yellow;YRO=colours.yellow;FC=colours.green\
+stringColour=colours.red else QUE=colours.black;B=colours.white;W=colours.white\
+YRO=colours.white;FC=colours.white;stringColour=colours.white end;local XX=false;local OAK=1;local JE;if YOH then JE={\"Exit\",\"Print\"}else\
+JE={\"Save\",\"Exit\",\"Print\"}end;local K=\"Press Ctrl to access menu\"\
+local function IQ(LN)O={}\
+if\
+fs.exists(LN)then local WMS=fs.open(LN,\"r\")local D=WMS.readLine()while D do\
+table.insert(O,D)D=WMS.readLine()end;WMS.close()end;if#O==0 then table.insert(O,\"\")end end\
+local function DL(M)\
+local NO=UV:sub(1,UV:len()-fs.getName(UV):len())if not fs.exists(NO)then fs.makeDir(NO)end;local GL=nil\
+local function SP()\
+GL=fs.open(M,\"w\")if GL then for MD,QK in ipairs(O)do GL.write(QK..\"\\n\")end else\
+error(\"Failed to open \"..M)end end;local CV=pcall(SP)if GL then GL.close()end;return CV end\
+local LQ={[\"and\"]=true,[\"break\"]=true,[\"do\"]=true,[\"else\"]=true,[\"elseif\"]=true,[\"end\"]=true,[\"false\"]=true,[\"for\"]=true,[\"function\"]=true,[\"if\"]=true,[\"in\"]=true,[\"local\"]=true,[\"nil\"]=true,[\"not\"]=true,[\"or\"]=true,[\"repeat\"]=true,[\"return\"]=true,[\"then\"]=true,[\"true\"]=true,[\"until\"]=true,[\"while\"]=true}\
+local function MP(UG,V,H)local M=string.match(UG,V)\
+if M then\
+if type(H)==\"number\"then\
+term.setTextColour(H)else term.setTextColour(H(M))end;term.write(M)term.setTextColour(B)return string.sub(UG,\
+string.len(M)+1)end;return nil end\
+local function JJ(GP)\
+while string.len(GP)>0 do\
+GP=\
+\
+\
+\
+\
+MP(GP,\"^%-%-%[%[.-%]%]\",FC)or MP(GP,\"^%-%-.*\",FC)or MP(GP,\"^\\\".-[^\\\\]\\\"\",stringColour)or MP(GP,\"^\\'.-[^\\\\]\\'\",stringColour)or MP(GP,\"^%[%[.-%]%]\",stringColour)or\
+MP(GP,\"^[%w_]+\",function(M)if LQ[M]then return YRO end;return B end)or MP(GP,\"^[^%w_]\",B)end end\
+local function E()\
+for ER=1,HD-1 do term.setCursorPos(1-G,ER)term.clearLine()\
+local GH=O[ER+F]if GH~=nil then JJ(GH)end end;term.setCursorPos(FP-G,ER-F)end\
+local function T(UR)local UC=O[UR]term.setCursorPos(1-G,UR-F)\
+term.clearLine()JJ(UC)term.setCursorPos(FP-G,UR-F)end\
+local function VD()term.setCursorPos(1,HD)term.clearLine()\
+term.setCursorPos(RK-string.len(\
+\"Ln \"..ER)+1,HD)term.setTextColour(W)term.write(\"Ln \")\
+term.setTextColour(B)term.write(ER)term.setCursorPos(1,HD)\
+if XX then\
+term.setTextColour(B)\
+for KS,Z in pairs(JE)do\
+if KS==OAK then term.setTextColour(W)term.write(\"[\")\
+term.setTextColour(B)term.write(Z)term.setTextColour(W)\
+term.write(\"]\")term.setTextColour(B)else term.write(\" \"..Z..\" \")end end else term.setTextColour(W)term.write(K)\
+term.setTextColour(B)end;term.setCursorPos(FP-G,ER-F)end\
+local TC={Save=function()\
+if YOH then K=\"Access denied\"else local EF,WC=DL(UV)if EF then K=\"Saved to \"..UV else\
+K=\"Error saving to \"..UV end end;VD()end,Print=function()\
+local VI=peripheral.find(\"printer\")if not VI then K=\"No printer attached\"return end;local HM=0\
+local C=fs.getName(UV)\
+if VI.getInkLevel()<1 then K=\"Printer out of ink\"return elseif\
+VI.getPaperLevel()<1 then K=\"Printer out of paper\"return end;local X=term.current()\
+local OM={getCursorPos=VI.getCursorPos,setCursorPos=VI.setCursorPos,getSize=VI.getPageSize,write=VI.write}\
+OM.scroll=function()if HM==1 then\
+VI.setPageTitle(C..\" (page \"..HM..\")\")end\
+while not VI.newPage()do\
+if VI.getInkLevel()<1 then\
+K=\"Printer out of ink, please refill\"elseif VI.getPaperLevel()<1 then K=\"Printer out of paper, please refill\"else\
+K=\"Printer output tray full, please empty\"end;term.redirect(X)VD()term.redirect(OM)\
+local L=os.startTimer(0.5)sleep(0.5)end;HM=HM+1;if HM==1 then VI.setPageTitle(C)else\
+VI.setPageTitle(C..\" (page \"..HM..\")\")end end;XX=false;term.redirect(OM)\
+local I,HC=pcall(function()term.scroll()for A,IT in ipairs(O)do\
+print(IT)end end)term.redirect(X)if not I then print(HC)end;while not VI.endPage()do\
+K=\"Printer output tray full, please empty\"VD()sleep(0.5)end;XX=true\
+if HM>1 then K=\
+\"Printed \"..HM..\" Pages\"else K=\"Printed 1 Page\"end;VD()end,Exit=function()\
+FF=false end}local function SI(J)TC[JE[J]]()\
+if XX then XX=false;term.setCursorBlink(true)end;VD()end\
+local function FFCS(FP,ER)local RD=FP-G;local A=ER-F\
+local UM=false\
+if RD<1 then G=FP-1;RD=1;UM=true elseif RD>RK then G=FP-RK;RD=RK;UM=true end\
+if A<1 then F=ER-1;A=1;UM=true elseif A>HD-1 then F=ER- (HD-1)A=HD-1;UM=true end;if UM then E()end;term.setCursorPos(RD,A)VD()end;IQ(UV)term.setBackgroundColour(QUE)term.clear()\
+term.setCursorPos(FP,ER)term.setCursorBlink(true)E()VD()\
+while FF do\
+local U,EBZ,MR,S=os.pullEvent()\
+if U==\"key\"then\
+if EBZ==keys.up then\
+if not XX then if ER>1 then ER=ER-1\
+FP=math.min(FP,string.len(O[ER])+1)FFCS(FP,ER)end end elseif EBZ==keys.down then\
+if not XX then if ER<#O then ER=ER+1\
+FP=math.min(FP,string.len(O[ER])+1)FFCS(FP,ER)end end elseif EBZ==keys.tab then if not XX and not YOH then O[ER]=\"  \"..O[ER]FP=FP+2\
+FFCS(FP,ER)T(ER)end elseif EBZ==keys.pageUp then\
+if not XX then if\
+ER- (HD-1)>=1 then ER=ER- (HD-1)else ER=1 end;FP=math.min(FP,\
+string.len(O[ER])+1)FFCS(FP,ER)end elseif EBZ==keys.pageDown then if not XX then\
+if ER+ (HD-1)<=#O then ER=ER+ (HD-1)else ER=#O end;FP=math.min(FP,string.len(O[ER])+1)\
+FFCS(FP,ER)end elseif EBZ==keys.home then if\
+not XX then FP=1;FFCS(FP,ER)end elseif EBZ==keys[\"end\"]then if not XX then FP=\
+string.len(O[ER])+1;FFCS(FP,ER)end elseif\
+EBZ==keys.left then\
+if not XX then if FP>1 then FP=FP-1 elseif FP==1 and ER>1 then\
+FP=string.len(O[ER-1])+1;ER=ER-1 end;FFCS(FP,ER)else\
+OAK=OAK-1;if OAK<1 then OAK=#JE end;VD()end elseif EBZ==keys.right then\
+if not XX then\
+if FP<string.len(O[ER])+1 then FP=FP+1 elseif FP==\
+string.len(O[ER])+1 and ER<#O then FP=1;ER=ER+1 end;FFCS(FP,ER)else OAK=OAK+1;if OAK>#JE then OAK=1 end;VD()end elseif EBZ==keys.delete then\
+if not XX and not YOH then table.remove(O,ER)ER=ER-1;E()end elseif EBZ==keys.backspace then\
+if not XX and not YOH then\
+if FP>1 then local BM=O[ER]O[ER]=\
+string.sub(BM,1,FP-2)..string.sub(BM,FP)T(ER)\
+FP=FP-1;FFCS(FP,ER)elseif ER>1 then local GVK=string.len(O[ER-1])O[ER-1]=O[ER-1]..\
+O[ER]table.remove(O,ER)E()FP=GVK+1;ER=ER-1\
+FFCS(FP,ER)end end elseif EBZ==keys.enter then\
+if not XX and not YOH then local KVR=O[ER]\
+local KI,X=string.find(KVR,\"^[ ]+\")if not X then X=0 end;O[ER]=string.sub(KVR,1,FP-1)\
+table.insert(O,ER+1,\
+string.rep(' ',X)..string.sub(KVR,FP))E()FP=X+1;ER=ER+1;FFCS(FP,ER)elseif XX then SI(OAK)end elseif EBZ==keys.leftCtrl or EBZ==keys.rightCtrl then XX=not XX;if XX then\
+term.setCursorBlink(false)else term.setCursorBlink(true)end\
+VD()end elseif U==\"char\"then\
+if not XX and not YOH then local DLDW=O[ER]O[ER]=string.sub(DLDW,1,FP-1)..EBZ..\
+string.sub(DLDW,FP)T(ER)\
+FP=FP+1;FFCS(FP,ER)elseif XX then\
+for JQ,TK in ipairs(JE)do if string.lower(string.sub(TK,1,1))==\
+string.lower(EBZ)then SI(JQ)break end end end elseif U==\"paste\"then\
+if not XX and not YOH then local ERD=O[ER]O[ER]=string.sub(ERD,1,FP-1)..EBZ..\
+string.sub(ERD,FP)T(ER)FP=FP+\
+string.len(EBZ)FFCS(FP,ER)end elseif U==\"mouse_click\"then\
+if not XX then\
+if EBZ==1 then local KPI,M=MR,S;if M<HD then\
+ER=math.min(math.max(F+M,1),#O)\
+FP=math.min(math.max(G+KPI,1),string.len(O[ER])+1)FFCS(FP,ER)end end end elseif U==\"mouse_scroll\"then if not XX then\
+if EBZ==-1 then if F>0 then F=F-1;E()end elseif EBZ==1 then\
+local TN=#O- (HD-1)if F<TN then F=F+1;E()end end end elseif\
+U==\"term_resize\"then RK,HD=term.getSize()FFCS(FP,ER)VD()E()end end;term.clear()term.setCursorBlink(false)\
+term.setCursorPos(1,1)",
 }

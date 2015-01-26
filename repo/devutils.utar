@@ -1,11 +1,16 @@
 {
+  [ "/bin/makepkg" ] = "local OE={...}\
+if#OE<1 then error(\"Usage: makepkg <PACKAGE>\")end;local E=shell.dir()\
+shell.setDir(\"/usr/src/\"..OE[1])print(\"Building...\")shell.run(\"Build.lua\")fs.makeDir(\"/tmp/\"..\
+OE[1])print(\"Packaging...\")shell.run(\
+\"Build.lua install /tmp/\"..OE[1])\
+fs.copy(\"/usr/src/\"..\
+OE[1]..\"/PKGINFO.lua\",\"/tmp/\"..OE[1]..\"/PKGINFO.lua\")shell.setDir(E)lua.include(\"libarchive\")\
+archive.pack(\"/tmp/\"..\
+OE[1],shell.resolve(OE[1])..\".utar\")fs.delete(\"/tmp/\"..OE[1])print(\"Done!\")",
+  [ "/bin/makeallpkg" ] = "local P=fs.list(\"/usr/src\")for UB,C in pairs(P)do\
+shell.run(\"makepkg \"..C)end",
   [ "/bin" ] = true,
-  [ "/bin/makepkg" ] = "local J={...}\
-if#J<1 then error(\"Usage: makepkg <PACKAGE>\")end;local IK=shell.dir()\
-shell.setDir(\"/usr/src/\"..J[1])print(\"Building...\")shell.run(\"Build.lua\")fs.makeDir(\"/tmp/\"..\
-J[1])print(\"Packaging...\")shell.run(\
-\"Build.lua install /tmp/\"..J[1])\
-shell.setDir(IK)lua.include(\"libarchive\")archive.pack(\"/tmp/\"..J[1],\
-shell.resolve(J[1])..\".utar\")fs.delete(\
-\"/tmp/\"..J[1])print(\"Done!\")",
+  [ "/PKGINFO.lua" ] = "DEPENDS = {\"uberkernel\", \"corelib\", \"libarchive\", \"luamin\"}\
+VERSION = {0, 2, 1}",
 }

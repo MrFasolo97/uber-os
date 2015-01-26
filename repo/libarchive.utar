@@ -1,14 +1,17 @@
 {
+  [ "/PKGINFO.lua" ] = "DEPENDS = {\"uberkernel\"}\
+VERSION = {0, 2, 1}",
   [ "/lib/libarchive.lua" ] = "archive={}\
-archive.pack=function(L,J)local IX=fs.recursList(L)for YV,P in pairs(IX)do\
-IX[YV]=fs.stripPath(L,P)end;local Y={}for CU,PT in pairs(IX)do\
-if not fs.isDir(L..PT)then\
-local FM=fs.open(L..PT,\"r\")Y[PT]=FM.readAll()FM.close()else Y[PT]=true end end\
-local E=fs.open(J,\"w\")E.write(textutils.serialize(Y))E.close()end\
-archive.unpack=function(Y,AX)local Q=fs.open(Y,\"r\")local KK=Q.readAll()Q.close()\
-local LA=textutils.unserialize(KK)for WM,PP in pairs(LA)do\
-if type(PP)==\"boolean\"then fs.makeDir(AX..WM)end end\
-for M,DM in pairs(LA)do if type(DM)~=\"boolean\"then\
-local IN=fs.open(AX..M,\"w\")IN.write(DM)IN.close()end end end;archive=applyreadonly(archive)",
+archive.pack=function(SS,EV)local SY=fs.recursList(SS)for Y,X in pairs(SY)do\
+SY[Y]=fs.stripPath(SS,X)end;local TD={}for MI,Z in pairs(SY)do\
+if not fs.isDir(SS..Z)then\
+local FD=fs.open(SS..Z,\"r\")TD[Z]=FD.readAll()FD.close()else TD[Z]=true end end\
+local LG=fs.open(EV,\"w\")LG.write(textutils.serialize(TD))\
+LG.close()end\
+archive.unpack=function(FV,EW)local B=fs.open(FV,\"r\")local L=B.readAll()B.close()\
+local SA=textutils.unserialize(L)for X,G in pairs(SA)do\
+if type(G)==\"boolean\"then fs.makeDir(EW..X)end end\
+for I,J in pairs(SA)do if type(J)~=\"boolean\"then\
+local G=fs.open(EW..I,\"w\")G.write(J)G.close()end end end;archive=applyreadonly(archive)",
   [ "/lib" ] = true,
 }

@@ -1,18 +1,20 @@
 {
-  [ "/uboot" ] = "local SK=os.pullEvent;os.pullEvent=os.pullEventRaw\
-local function JL(LG)local HC=\"\"for i=1,#LG do\
+  [ "/uboot" ] = "local I=os.pullEvent;os.pullEvent=os.pullEventRaw\
+local function YF(C)local V=\"\"for i=1,#C do\
 if\
-string.sub(LG,i,i)~=\" \"then HC=HC..string.sub(LG,i,i)else break end end\
-if not fs.exists(HC)or\
-fs.isDir(HC)then print(\"Path invalid!\")return false end;term.clear()term.setCursorPos(1,1)os.pullEvent=SK\
-shell.run(LG)return true end;term.clear()term.setCursorPos(1,1)\
+string.sub(C,i,i)~=\" \"then V=V..string.sub(C,i,i)else break end end\
+if\
+not fs.exists(V)or fs.isDir(V)then print(\"Path invalid!\")return false end;term.clear()term.setCursorPos(1,1)os.pullEvent=I\
+shell.run(C)return true end;term.clear()term.setCursorPos(1,1)\
 print(\"Uber Bootloader v0.1\")\
-ROOT_DIR=fs.getDir(shell.getRunningProgram())print(\"Root directory: /\"..ROOT_DIR)local L=ROOT_DIR..\
+ROOT_DIR=fs.getDir(shell.getRunningProgram())print(\"Root directory: /\"..ROOT_DIR)local CL=ROOT_DIR..\
 \"/boot/uberkernel start mlua musers mfsd fLog\"if\
-L:sub(1,1)~=\"/\"then L=\"/\"..L end;print(\"Default = \"..L)\
-print(\"\")local DJ=\"\"while true do write(\"boot: \")DJ=read()\
-if DJ==\"\"then\
-print(\"Booting default ...\")if JL(L)then return end else if JL(DJ)then return end end end",
+CL:sub(1,1)~=\"/\"then CL=\"/\"..CL end;print(\"Default = \"..CL)\
+print(\"\")local BD=\"\"while true do write(\"boot: \")BD=read()\
+if BD==\"\"then\
+print(\"Booting default ...\")if YF(CL)then return end else if YF(BD)then return end end end",
+  [ "/PKGINFO.lua" ] = "DEPENDS = {}\
+VERSION = {0, 2, 1}",
   [ "/startup" ] = "\
 shell.run(fs.getDir(shell.getRunningProgram())..\"/uboot\")",
 }
