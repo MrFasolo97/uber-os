@@ -1,0 +1,54 @@
+{
+  [ "/lib/base64.lua" ] = "local O='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'\
+function base64enc(R)\
+return\
+(\
+(\
+R:gsub('.',function(LK)\
+local X,O='',LK:byte()for i=8,1,-1 do X=X..\
+(O%2^i-O%2^ (i-1)>0 and'1'or'0')end;return X end)..'0000'):gsub('%d%d%d?%d?%d?%d?',function(M)if(\
+#M<6)then return''end;local L=0;for i=1,6 do L=L+\
+(M:sub(i,i)=='1'and 2^ (6-i)or 0)end;return\
+O:sub(L+1,L+1)end).. ({'','==','='})[#R%3+1])end\
+function base64dec(R)R=string.gsub(R,'[^'..O..'=]','')\
+return\
+(R:gsub('.',function(TG)if\
+(TG=='=')then return''end;local G,UQ='',(O:find(TG)-1)for i=6,1,-1 do G=G..\
+(UQ%2^i-UQ%\
+2^ (i-1)>0 and'1'or'0')end;return G end):gsub('%d%d%d?%d?%d?%d?%d?%d?',function(V)if(\
+#V~=8)then return''end;local Z=0\
+for i=1,8 do Z=Z+ (\
+V:sub(i,i)=='1'and 2^ (8-i)or 0)end;return string.char(Z)end))end",
+  [ "/lib/fixserialize.lua" ] = "\
+local function V(S,X,UV)local O=type(S)\
+if O==\"table\"then if X[S]~=nil then\
+error(\"Cannot serialize table with recursive entries\",0)end;X[S]=true\
+if next(S)==nil then return\"{}\"else\
+local J=\"{\\n\"local IG=UV..\"  \"local NO={}for UN,NA in ipairs(S)do NO[UN]=true\
+J=J..IG..V(NA,X,IG)..\",\\n\"end\
+for XL,ER in pairs(S)do\
+if not NO[XL]then local Z;if type(XL)==\"string\"and\
+string.match(XL,\"^[%a_][%a%d_]*$\")then\
+Z=XL..\" = \"..V(ER,X,IG)..\",\\n\"else\
+Z=\"[ \"..V(XL,X,IG)..\" ] = \"..V(ER,X,IG)..\",\\n\"end;J=J..\
+IG..Z end end;J=J..UV..\"}\"X[S]=nil;return J end elseif O==\"string\"then return string.format(\"%q\",S)elseif\
+O==\"number\"or O==\"boolean\"or O==\"nil\"then return tostring(S)else\
+error(\"Cannot serialize type \"..O,0)end end;function fserialize(Q)local EF={}return V(Q,EF,\"\")end",
+  [ "/lib" ] = true,
+  [ "/lib/copy.lua" ] = "\
+function deepcopy(R)local Z=type(R)local A;if Z=='table'then A={}for JX,B in next,R,nil do\
+A[deepcopy(JX)]=deepcopy(B)end\
+setmetatable(A,deepcopy(getmetatable(R)))else A=R end;return A end",
+  [ "/lib/split.lua" ] = "\
+function split(D,SV)local AN=1;local L={}local M=table.insert;if not SV then SV='%s+'end\
+if SV==''then return{D}end\
+while true do local DN,S=D:find(SV,AN)\
+if not DN then local LG=D:sub(AN)if LG~=''then M(L,LG)end;if#L==\
+1 and L[1]==''then return{}else return L end end;M(L,D:sub(AN,DN-1))AN=S+1 end end\
+function string:split(KI)\
+if type(KI)==\"string\"then local LT={}local BM=1\
+local FT,XD=string.find(self,KI,BM)\
+while FT do\
+table.insert(LT,string.sub(self,BM,FT-1))BM=XD+1;FT,XD=string.find(self,KI,BM)end;table.insert(LT,string.sub(self,BM))return LT elseif\
+type(KI)==\"number\"then return self:gmatch((\".?\"):rep(KI))end end",
+}

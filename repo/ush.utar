@@ -1,0 +1,17 @@
+{
+  [ "/bin" ] = true,
+  [ "/bin/ush" ] = "s=\"\"local OL={}local B=false\
+local BL=users.getHome(thread.getUID(coroutine.running()))\
+shell.setDir(string.sub(BL,2,string.len(BL)))\
+local O=users.getUsernameByUID(thread.getUID(coroutine.running()))local OC=thread.getUID(coroutine.running())\
+while\
+s~=\"exit\"do\
+if s~=\"\"then s=s:gsub(\"^%s*(.-)%s*$\",\"%1\")B=false\
+if string.match(s,\"&$\")then\
+B=true;s=string.sub(1,#s-1)s=s:gsub(\"^%s*(.-)%s*$\",\"%1\")end;local SME=string.split(s,\"&&\")\
+for BE,D in pairs(SME)do thread.runFile(D:gsub(\"^%s*(.-)%s*$\",\"%1\"),false,\
+not B)end end;if OC==0 then\
+write(O..\":/\"..shell.dir()..\"# \")else\
+write(O..\":/\"..shell.dir()..\"$ \")end;s=read(nil,OL)\
+table.insert(OL,s)end",
+}

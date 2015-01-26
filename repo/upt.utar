@@ -1,0 +1,73 @@
+{
+  [ "/bin" ] = true,
+  [ "/bin/upt" ] = "local A={...}lua.include(\"luamin\")if#A<1 then\
+error(\"Usage: upt install|remove|get|get-install\")end\
+function listDeps(X,CQ)CQ=true\
+shell.run(\"/usr/src/\"..X..\"/PKGINFO.lua\")local L={}\
+for RUY,IR in pairs(DEPENDS)do if notisntalled then if\
+not fs.exists(\"/var/lib/upt/\"..IR)then table.insert(L,IR)end else\
+table.insert(L,IR)end end;return L end\
+local function MG(PR)local U=shell.dir()\
+for i=1,#PR do if\
+not fs.exists(\"/usr/src/\"..PR[i])then\
+error(\"Package \"..PR[i]..\" not found!\")end\
+print(\"Building package \"..PR[i])shell.setDir(\"/usr/src/\"..PR[i])\
+shell.run(\"/usr/src/\"..\
+PR[i]..\"/PKGINFO.lua\")print(\"Checking dependencies...\")for CV,P in pairs(DEPENDS)do if not\
+fs.exists(\"/var/lib/upt/\"..P)then\
+error(\"Dependency \"..P..\" not satisfied!\")end\
+print(\"Dependency \"..P..\" ok\")end\
+print(\"All dependencies satisfied\")\
+shell.run(\"/usr/src/\"..PR[i]..\"/Build.lua\")fs.makeDir(\"/tmp/\"..PR[i])\
+print(\"Installing package \"..PR[i])\
+shell.run(\"/usr/src/\"..PR[i]..\"/Build.lua install /tmp/\"..PR[i])\
+shell.run(\"/usr/src/\"..PR[i]..\"/Build.lua install\")print(\"Registring package \"..PR[i])local ST=fs.recursList(\
+\"/tmp/\"..PR[i])\
+local MI=fs.open(\"/var/lib/upt/\"..PR[i],\"w\")\
+for j=#ST,1,-1 do local YO=fsd.stripPath(\"/tmp/\"..PR[i],ST[j])if not\
+fs.isDir(YO)then MI.write(YO..\"\\n\")end end;MI.write(\"//DIRLIST\\n\")\
+for j=#ST,1,-1 do\
+local V=fsd.stripPath(\"/tmp/\"..PR[i],ST[j])if fs.isDir(V)then MI.write(V..\"\\n\")end end;MI.close()fs.delete(\"/tmp/\"..PR[i])\
+print(\"Installing package \"..\
+PR[i]..\" done!\")end;shell.setDir(U)end\
+local function WG(RA)\
+for i=1,#RA do\
+if not fs.exists(\"/var/lib/upt/\"..RA[i])then error(\"Package \"..\
+RA[i]..\" not found!\")end;print(\"Removing package \"..RA[i])local FM=fs.open(\"/var/lib/upt/\"..\
+RA[i],\"r\")\
+local Y=FM.readLine()local Z=false\
+while Y do\
+if Y==\"//DIRLIST\"then Y=FM.readLine()Z=true;if not Y then break end end;if not Z then fs.delete(Y)else\
+if#fs.list(Y)==0 then fs.delete(Y)end end;Y=FM.readLine()end;FM.close()\
+fs.delete(\"/var/lib/upt/\"..RA[i])\
+print(\"Removing package \"..RA[i]..\" done!\")end end\
+local function T(PB)lua.include(\"libjson\")if not http then\
+error(\"Http API not enabled\")end\
+for i=1,#PB do\
+if flag then error(\"Package not found!\")end;print(\"Downloading package \"..PB[i])\
+local D=http.get(\
+\"https://raw.githubusercontent.com/TsarN/uber-os/master/repo/\"..PB[i]..\".utar\")if not D then\
+error(\"Failed to download \"..\
+PB[i]..\"! Make sure, that you have raw.githubusercontent.com whitelisted or try again later.\")end;print(\
+\"Saving package \"..PB[i])\
+local I=fs.open(\"/tmp/\"..PB[i],\"w\")I.write(D.readAll())I.close()D.close()print(\"Unpacking package \"..\
+PB[i])\
+lua.include(\"libarchive\")if fs.exists(\"/usr/src/\"..PB[i])then\
+fs.delete(\"/usr/src/\"..PB[i])end\
+fs.makeDir(\"/usr/src/\"..PB[i])\
+archive.unpack(\"/tmp/\"..PB[i],\"/usr/src/\"..PB[i])fs.delete(\"/tmp/\"..PB[i])\
+print(\"Downloading package \"..PB[i]..\" done!\")end end\
+local function R(HY)if fs.exists(\"/var/lib/upt/\"..HY)then return end\
+T({HY})\
+fs.open(\"/var/lib/upt/\"..HY,\"w\").close()local X=listDeps(HY,true)for MQ,L in pairs(X)do R(L)end;MG({HY})end;local OM={}for i=2,#A do table.insert(OM,A[i])end\
+if\
+A[1]==\"install\"then if#A<2 then\
+error(\"Usage: upt install <package1> [package2] ...\")end;MG(OM)end\
+if A[1]==\"remove\"then if#A<2 then\
+error(\"Usage: upt remove <package1> [package2] ...\")end;WG(OM)end\
+if A[1]==\"get\"then if#A<2 then\
+error(\"Usage: upt get <package1> [package2] ...\")end;T(OM)end\
+if A[1]==\"get-install\"then if#A<2 then\
+error(\"Usage: upt get-install <package1> [package2] ...\")end;for AMT,IU in pairs(OM)do\
+fs.delete(\"/var/lib/upt/\"..IU)R(IU)end end",
+}

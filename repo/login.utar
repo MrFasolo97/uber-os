@@ -1,0 +1,20 @@
+{
+  [ "/etc" ] = true,
+  [ "/etc/init.d" ] = true,
+  [ "/sbin" ] = true,
+  [ "/etc/init.d/logind" ] = "argv={...}if#argv==0 then\
+print(\"logind start|stop|restart|status\")return end;if argv[1]==\"status\"then\
+print(thread.getDaemonStatus(\"logind\"))end;if argv[1]==\"start\"then\
+thread.runDaemon(\"/sbin/login\",\"logind\")end;if argv[1]==\"stop\"then\
+thread.stopDaemon(\"logind\")end\
+if argv[1]==\"restart\"then\
+thread.stopDaemon(\"logind\")thread.runDaemon(\"/sbin/login\",\"logind\")end",
+  [ "/sbin/login" ] = "local E={...}local Q=fs.open(\"/etc/issue\",\"r\")local I=Q.readAll()\
+Q.close()Q=fs.open(\"/etc/motd\",\"r\")local RY=Q.readAll()Q.close()\
+while true do\
+write(I)write(\"Username: \")local VJ=read()write(\"Password: \")\
+local OH=read(\"\")\
+if users.login(VJ,OH)then\
+kernel.log(\"Logging in as \"..VJ)write(RY)\
+thread.runFile(users.getShell(users.getUIDByUsername(VJ)),true,true,users.getUIDByUsername(VJ))else print(\"Invalid login\\n\")sleep(3)end;term.clear()term.setCursorPos(1,1)end",
+}

@@ -1,0 +1,454 @@
+{
+  [ "/lib/min.lua" ] = "lua.include('parselua')lua.include('util')\
+local TBK=lua_parser.ParseLua;local LC=util.lookupify\
+local VG=LC{'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'}\
+local TDM=LC{'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'}\
+local V=LC{'0','1','2','3','4','5','6','7','8','9'}\
+local O=LC{'+','-','*','/','^','%',',','{','}','[',']','(',')',';','#'}\
+local function NM(MD)local XZ,OG;local G=0\
+local function KX(LP,Q,VB)if G>150 then G=0;return LP..\"\\n\"..Q end;VB=VB or' 'local OVP,QD=LP:sub(\
+-1,-1),Q:sub(1,1)\
+if\
+TDM[OVP]or VG[OVP]or OVP=='_'then\
+if not\
+(TDM[QD]or VG[QD]or QD=='_'or V[QD])then return LP..Q elseif QD=='('then\
+print(\"==============>>>\",OVP,QD)return LP..VB..Q else return LP..VB..Q end elseif V[OVP]then\
+if QD=='('then return LP..Q elseif O[QD]then return LP..Q else return LP..VB..Q end elseif OVP==''then return LP..Q else\
+if QD=='('then return LP..VB..Q else return LP..Q end end end\
+OG=function(B,L)local L=L or 0;local DZ=0;local X=false;local XK=\"\"\
+if B.AstType=='VarExpr'then if B.Variable then\
+XK=XK..B.Variable.Name else XK=XK..B.Name end elseif B.AstType=='NumberExpr'then XK=XK..\
+B.Value.Data elseif B.AstType=='StringExpr'then XK=XK..B.Value.Data elseif\
+B.AstType=='BooleanExpr'then XK=XK..tostring(B.Value)elseif\
+B.AstType=='NilExpr'then XK=KX(XK,\"nil\")elseif B.AstType=='BinopExpr'then DZ=B.OperatorPrecedence\
+XK=KX(XK,OG(B.Lhs,DZ))XK=KX(XK,B.Op)XK=KX(XK,OG(B.Rhs))if\
+B.Op=='^'or B.Op=='..'then DZ=DZ-1 end;if DZ<L then X=false else X=true end elseif\
+B.AstType=='UnopExpr'then XK=KX(XK,B.Op)XK=KX(XK,OG(B.Rhs))elseif B.AstType=='DotsExpr'then\
+XK=XK..\"...\"elseif B.AstType=='CallExpr'then XK=XK..OG(B.Base)XK=XK..\"(\"\
+for i=1,#B.Arguments do XK=XK..\
+OG(B.Arguments[i])if i~=#B.Arguments then XK=XK..\",\"end end;XK=XK..\")\"elseif B.AstType=='TableCallExpr'then XK=XK..OG(B.Base)XK=XK..\
+OG(B.Arguments[1])elseif B.AstType=='StringCallExpr'then\
+XK=XK..OG(B.Base)XK=XK..B.Arguments[1].Data elseif B.AstType=='IndexExpr'then\
+XK=XK..\
+OG(B.Base)..\"[\"..OG(B.Index)..\"]\"elseif B.AstType=='MemberExpr'then XK=XK..\
+OG(B.Base)..B.Indexer..B.Ident.Data elseif B.AstType=='Function'then\
+B.scope:ObfuscateVariables()XK=XK..\"function(\"\
+if#B.Arguments>0 then\
+for i=1,#B.Arguments do XK=XK..\
+B.Arguments[i].Name;if i~=#B.Arguments then XK=XK..\",\"elseif B.VarArg then\
+XK=XK..\",...\"end end elseif B.VarArg then XK=XK..\"...\"end;XK=XK..\")\"XK=KX(XK,XZ(B.Body))XK=KX(XK,\"end\")elseif B.AstType==\
+'ConstructorExpr'then XK=XK..\"{\"\
+for i=1,#B.EntryList do local CJ=B.EntryList[i]\
+if\
+CJ.Type=='Key'then\
+XK=XK..\"[\"..OG(CJ.Key)..\"]=\"..OG(CJ.Value)elseif CJ.Type=='Value'then XK=XK..OG(CJ.Value)elseif CJ.Type=='KeyString'then XK=XK..CJ.Key..\"=\"..\
+OG(CJ.Value)end;if i~=#B.EntryList then XK=XK..\",\"end end;XK=XK..\"}\"elseif B.AstType=='Parentheses'then\
+XK=XK..\"(\"..OG(B.Inner)..\")\"end;if not X then\
+XK=string.rep('(',B.ParenCount or 0)..XK\
+XK=XK..string.rep(')',B.ParenCount or 0)end;G=G+#XK;return XK end\
+local GH=function(YE)local ST=''\
+if YE.AstType=='AssignmentStatement'then\
+for i=1,#YE.Lhs do\
+ST=ST..OG(YE.Lhs[i])if i~=#YE.Lhs then ST=ST..\",\"end end\
+if#YE.Rhs>0 then ST=ST..\"=\"for i=1,#YE.Rhs do ST=ST..OG(YE.Rhs[i])if i~=\
+#YE.Rhs then ST=ST..\",\"end end end elseif YE.AstType=='CallStatement'then ST=OG(YE.Expression)elseif\
+YE.AstType=='LocalStatement'then ST=ST..\"local \"\
+for i=1,#YE.LocalList do\
+ST=ST..YE.LocalList[i].Name;if i~=#YE.LocalList then ST=ST..\",\"end end;if#YE.InitList>0 then ST=ST..\"=\"\
+for i=1,#YE.InitList do\
+ST=ST..OG(YE.InitList[i])if i~=#YE.InitList then ST=ST..\",\"end end end elseif YE.AstType==\
+'IfStatement'then\
+ST=KX(\"if\",OG(YE.Clauses[1].Condition))ST=KX(ST,\"then\")\
+ST=KX(ST,XZ(YE.Clauses[1].Body))\
+for i=2,#YE.Clauses do local TY=YE.Clauses[i]\
+if TY.Condition then ST=KX(ST,\"elseif\")\
+ST=KX(ST,OG(TY.Condition))ST=KX(ST,\"then\")else ST=KX(ST,\"else\")end;ST=KX(ST,XZ(TY.Body))end;ST=KX(ST,\"end\")elseif YE.AstType=='WhileStatement'then\
+ST=KX(\"while\",OG(YE.Condition))ST=KX(ST,\"do\")ST=KX(ST,XZ(YE.Body))ST=KX(ST,\"end\")elseif\
+YE.AstType=='DoStatement'then ST=KX(ST,\"do\")ST=KX(ST,XZ(YE.Body))\
+ST=KX(ST,\"end\")elseif YE.AstType=='ReturnStatement'then ST=\"return\"\
+for i=1,#YE.Arguments do\
+ST=KX(ST,OG(YE.Arguments[i]))if i~=#YE.Arguments then ST=ST..\",\"end end elseif YE.AstType=='BreakStatement'then ST=\"break\"elseif YE.AstType=='RepeatStatement'then\
+ST=\"repeat\"ST=KX(ST,XZ(YE.Body))ST=KX(ST,\"until\")\
+ST=KX(ST,OG(YE.Condition))elseif YE.AstType=='Function'then YE.scope:ObfuscateVariables()if\
+YE.IsLocal then ST=\"local\"end;ST=KX(ST,\"function \")if YE.IsLocal then\
+ST=ST..YE.Name.Name else ST=ST..OG(YE.Name)end;ST=ST..\"(\"\
+if#\
+YE.Arguments>0 then for i=1,#YE.Arguments do\
+ST=ST..YE.Arguments[i].Name\
+if i~=#YE.Arguments then ST=ST..\",\"elseif YE.VarArg then ST=ST..\",...\"end end elseif YE.VarArg then\
+ST=ST..\"...\"end;ST=ST..\")\"ST=KX(ST,XZ(YE.Body))ST=KX(ST,\"end\")elseif YE.AstType==\
+'GenericForStatement'then YE.scope:ObfuscateVariables()ST=\"for \"\
+for i=1,#\
+YE.VariableList do ST=ST..YE.VariableList[i].Name;if i~=#\
+YE.VariableList then ST=ST..\",\"end end;ST=ST..\" in\"\
+for i=1,#YE.Generators do\
+ST=KX(ST,OG(YE.Generators[i]))if i~=#YE.Generators then ST=KX(ST,',')end end;ST=KX(ST,\"do\")ST=KX(ST,XZ(YE.Body))ST=KX(ST,\"end\")elseif\
+YE.AstType=='NumericForStatement'then ST=\"for \"\
+ST=ST..YE.Variable.Name..\"=\"\
+ST=ST..OG(YE.Start)..\",\"..OG(YE.End)if YE.Step then ST=ST..\",\"..OG(YE.Step)end\
+ST=KX(ST,\"do\")ST=KX(ST,XZ(YE.Body))ST=KX(ST,\"end\")elseif\
+YE.AstType=='LabelStatement'then\
+ST=getIndentation()..\"::\"..YE.Label..\"::\"elseif YE.AstType=='GotoStatement'then\
+ST=getIndentation()..\"goto \"..YE.Label elseif YE.AstType=='Comment'then elseif YE.AstType=='Eof'then else\
+print(\"Unknown AST Type: \"..YE.AstType)end;G=G+#ST;return ST end\
+XZ=function(K)local A=''K.scope:ObfuscateVariables()for ER,LP in pairs(K.Body)do\
+A=KX(A,GH(LP),';')end;return A end;MD.scope:ObfuscateVariables()return XZ(MD)end\
+minify=function(I)local J,C;J,C=lua_parser.ParseLua(I)\
+if J then return NM(C)else return false end end",
+  [ "/lib" ] = true,
+  [ "/lib/parselua.lua" ] = "lua.include(\"util\")lua.include(\"scope\")\
+local PC=util.lookupify;local M=PC{' ','\\n','\\t','\\r'}\
+local C={['\\r']='\\\\r',['\\n']='\\\\n',['\\t']='\\\\t',['\"']='\\\\\"',[\"'\"]=\"\\\\'\"}\
+local BK=PC{'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'}\
+local GE=PC{'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'}\
+local PV=PC{'0','1','2','3','4','5','6','7','8','9'}\
+local VH=PC{'0','1','2','3','4','5','6','7','8','9','A','a','B','b','C','c','D','d','E','e','F','f'}\
+local J=PC{'+','-','*','/','^','%',',','{','}','[',']','(',')',';','#'}\
+local Z=PC{'and','break','do','else','elseif','end','false','for','function','goto','if','in','local','nil','not','or','repeat','return','then','true','until','while'}\
+local function L(TF)local EC={}\
+local PH,O=pcall(function()local G=1;local HO=1;local TD=1;local function OJ()local AA=TF:sub(G,G)\
+if AA=='\\n'then TD=1;HO=HO+1 else TD=TD+1 end;G=G+1;return AA end;local function X(GA)GA=GA or 0;return TF:sub(\
+G+GA,G+GA)end\
+local function TJ(WS)local Y=X()for i=1,#WS do if Y==\
+WS:sub(i,i)then return OJ()end end end;local function R(GV)\
+return error(\">> :\"..HO..\":\"..TD..\": \"..GV,0)end\
+local function REN()local LT=G\
+if X()=='['then local BC=0;local D=1;while X(BC+1)=='='do BC=BC+\
+1 end\
+if X(BC+1)=='['then for _=0,BC+1 do OJ()end;local OOH=G\
+while true do if X()==''then\
+R(\
+\"Expected `]\"..string.rep('=',BC)..\"]` near <eof>.\",3)end;local W=true\
+if X()==']'then for i=1,BC do\
+if X(i)~='='then W=false end end;if X(BC+1)~=']'then W=false end else\
+if X()=='['then\
+local F=true;for i=1,BC do if X(i)~='='then F=false;break end end;if\
+X(BC+1)=='['and F then D=D+1;for i=1,(BC+2)do OJ()end end end;W=false end\
+if W then D=D-1;if D==0 then break else for i=1,BC+2 do OJ()end end else OJ()end end;local AJ=TF:sub(OOH,G-1)for i=0,BC+1 do OJ()end;local E=TF:sub(LT,G-1)\
+return AJ,E else return nil end else return nil end end\
+while true do local AX={}local GQ=''local KF=false\
+while true do local HY=X()\
+if\
+HY=='#'and X(1)=='!'and HO==1 then OJ()OJ()GQ=\"#!\"\
+while X()~='\\n'and X()~=''do GQ=GQ..OJ()end\
+local CE={Type='Comment',CommentType='Shebang',Data=GQ,Line=HO,Char=TD}\
+CE.Print=function()\
+return\"<\"..\
+\
+(CE.Type..string.rep(' ',7-#CE.Type))..\"  \".. (CE.Data or'')..\" >\"end;GQ=\"\"table.insert(AX,CE)end\
+if HY==' 'or HY=='\\t'then local BG=OJ()\
+table.insert(AX,{Type='Whitespace',Line=HO,Char=TD,Data=BG})elseif HY=='\\n'or HY=='\\r'then local WJ=OJ()\
+if GQ~=\"\"then\
+local JOA={Type='Comment',CommentType=KF and'LongComment'or'Comment',Data=GQ,Line=HO,Char=TD}\
+JOA.Print=function()\
+return\"<\"..\
+\
+(JOA.Type..string.rep(' ',7-#JOA.Type))..\"  \".. (JOA.Data or'')..\" >\"end;table.insert(AX,JOA)GQ=\"\"end\
+table.insert(AX,{Type='Whitespace',Line=HO,Char=TD,Data=WJ})elseif HY=='-'and X(1)=='-'then OJ()OJ()GQ=GQ..'--'local V,JH=REN()\
+if JH then GQ=GQ..JH\
+KF=true else while X()~='\\n'and X()~=''do GQ=GQ..OJ()end end else break end end\
+if GQ~=\"\"then\
+local RZ={Type='Comment',CommentType=KF and'LongComment'or'Com mnment',Data=GQ,Line=HO,Char=TD}\
+RZ.Print=function()\
+return\"<\"..\
+\
+(RZ.Type..string.rep(' ',7-#RZ.Type))..\"  \".. (RZ.Data or'')..\" >\"end;table.insert(AX,RZ)end;local BM=HO;local CLY=TD;local ZJ=\":\"..HO..\":\"..TD..\":> \"\
+local D=X()local K=nil\
+if D==''then K={Type='Eof'}elseif GE[D]or BK[D]or D=='_'then local MY=G;repeat OJ()D=X()until\
+not(\
+GE[D]or BK[D]or PV[D]or D=='_')local P=TF:sub(MY,G-1)if Z[P]then\
+K={Type='Keyword',Data=P}else K={Type='Ident',Data=P}end elseif PV[D]or(X()=='.'and\
+PV[X(1)])then local WU=G\
+if D=='0'and X(1)=='x'then OJ()OJ()while\
+VH[X()]do OJ()end\
+if TJ('Pp')then TJ('+-')while PV[X()]do OJ()end end else while PV[X()]do OJ()end;if TJ('.')then while PV[X()]do OJ()end end;if\
+TJ('Ee')then TJ('+-')while PV[X()]do OJ()end end end;K={Type='Number',Data=TF:sub(WU,G-1)}elseif\
+D=='\\''or D=='\\\"'then local P=G;local JV=OJ()local Y=G\
+while true do local D=OJ()if D=='\\\\'then OJ()elseif D==JV then break elseif D==''then\
+R(\"Unfinished string near <eof>\")end end;local NRX=TF:sub(Y,G-2)local GN=TF:sub(P,G-1)\
+K={Type='String',Data=GN,Constant=NRX}elseif D=='['then local P,QD=REN()if QD then K={Type='String',Data=QD,Constant=P}else OJ()\
+K={Type='Symbol',Data='['}end elseif TJ('>=<')then if TJ('=')then\
+K={Type='Symbol',Data=D..'='}else K={Type='Symbol',Data=D}end elseif TJ('~')then if\
+TJ('=')then K={Type='Symbol',Data='~='}else\
+R(\"Unexpected symbol `~` in source.\",2)end elseif TJ('.')then if TJ('.')then if TJ('.')then\
+K={Type='Symbol',Data='...'}else K={Type='Symbol',Data='..'}end else\
+K={Type='Symbol',Data='.'}end elseif TJ(':')then\
+if\
+TJ(':')then K={Type='Symbol',Data='::'}else K={Type='Symbol',Data=':'}end elseif J[D]then OJ()K={Type='Symbol',Data=D}else local IJ,EI=REN()if IJ then\
+K={Type='String',Data=EI,Constant=IJ}else\
+R(\"Unexpected Symbol `\"..D..\"` in source.\",2)end end;K.LeadingWhite=AX;K.Line=BM;K.Char=CLY\
+K.Print=function()\
+return\"<\".. (K.Type..\
+string.rep(' ',7-#K.Type))..\
+\"  \".. (K.Data or'')..\" >\"end;EC[#EC+1]=K;if K.Type=='Eof'then break end end end)if not PH then return false,O end;local RT={}local N={}local ZEF=1\
+function RT:getp()return ZEF end;function RT:setp(JF)ZEF=JF end;function RT:getTokenList()return EC end\
+function RT:Peek(LG)LG=LG or 0;return EC[math.min(\
+#EC,ZEF+LG)]end;function RT:Get(UQ)local QM=EC[ZEF]ZEF=math.min(ZEF+1,#EC)if UQ then\
+table.insert(UQ,QM)end;return QM end;function RT:Is(CJ)return\
+RT:Peek().Type==CJ end\
+function RT:Save()N[#N+1]=ZEF end;function RT:Commit()N[#N]=nil end\
+function RT:Restore()ZEF=N[#N]N[#N]=nil end\
+function RT:ConsumeSymbol(NI,S)local NO=self:Peek()\
+if NO.Type=='Symbol'then\
+if NI then if NO.Data==NI then\
+self:Get(S)return true else return nil end else self:Get(S)return NO end else return nil end end\
+function RT:ConsumeKeyword(AG,Y)local XH=self:Peek()if\
+XH.Type=='Keyword'and XH.Data==AG then self:Get(Y)return true else return nil end end;function RT:IsKeyword(KB)local NUL=RT:Peek()\
+return NUL.Type=='Keyword'and NUL.Data==KB end\
+function RT:IsSymbol(FM)local X=RT:Peek()return X.Type==\
+'Symbol'and X.Data==FM end;function RT:IsEof()return RT:Peek().Type=='Eof'end;return true,\
+RT end\
+local function H(PCS)local WX,E\
+if type(PCS)~='table'then WX,E=L(PCS)else WX,E=true,PCS end;if not WX then return false,E end\
+local function UX(TK)\
+local S=\">> :\"..E:Peek().Line..\":\"..E:Peek().Char..\
+\": \"..TK..\"\\n\"local DL=0\
+if type(PCS)=='string'then\
+for R in PCS:gmatch(\"[^\\n]*\\n?\")do if R:sub(-1,-1)=='\\n'then R=R:sub(1,\
+-2)end;DL=DL+1\
+if DL==E:Peek().Line then S=S..\">> `\"..\
+R:gsub('\\t','    ')..\"`\\n\"\
+for i=1,E:Peek().Char\
+do local W=R:sub(i,i)if W=='\\t'then S=S..'    'else S=S..' 'end end;S=S..\"   ^^^^\"break end end end;return S end;local EZ=0;local G={'_','a','b','c','d'}\
+local function OJ(GD)local S=scope:new(GD)\
+S.RenameVars=S.ObfuscateLocals;S.ObfuscateVariables=S.ObfuscateLocals\
+S.Print=function()return\"<scope>\"end;return S end;local I;local ZN;local TB,HC,NU,D\
+local function Y(HYY,UQ)local GS=OJ(HYY)if not E:ConsumeSymbol('(',UQ)then return false,\
+UX(\"`(` expected.\")end;local KH={}local B=false\
+while not\
+E:ConsumeSymbol(')',UQ)do\
+if E:Is('Ident')then\
+local UH=GS:CreateLocal(E:Get(UQ).Data)KH[#KH+1]=UH;if not E:ConsumeSymbol(',',UQ)then\
+if\
+E:ConsumeSymbol(')',UQ)then break else return false,UX(\"`)` expected.\")end end elseif\
+E:ConsumeSymbol('...',UQ)then B=true\
+if not E:ConsumeSymbol(')',UQ)then return false,\
+UX(\"`...` must be the last argument of a function.\")end;break else return false,UX(\"Argument name or `...` expected\")end end;local WX,S=ZN(GS)if not WX then return false,S end\
+if\
+not E:ConsumeKeyword('end',UQ)then return false,UX(\"`end` expected after function body\")end;local SH={}SH.AstType='Function'SH.scope=GS;SH.Arguments=KH;SH.Body=S\
+SH.VarArg=B;SH.Tokens=UQ;return true,SH end\
+function NU(OB)local MJX={}\
+if E:ConsumeSymbol('(',MJX)then local WX,R=I(OB)if not WX then return false,R end\
+if not\
+E:ConsumeSymbol(')',MJX)then return false,UX(\"`)` Expected.\")end\
+if false then R.ParenCount=(R.ParenCount or 0)+1;return true,R else\
+local AZ={}AZ.AstType='Parentheses'AZ.Inner=R;AZ.Tokens=MJX;return true,AZ end elseif E:Is('Ident')then local QZ=E:Get(MJX)local Q=OB:GetLocal(QZ.Data)\
+if not Q then\
+Q=OB:GetGlobal(QZ.Data)if not Q then Q=OB:CreateGlobal(QZ.Data)else\
+Q.References=Q.References+1 end else Q.References=Q.References+1 end;local NE={}NE.AstType='VarExpr'NE.Name=QZ.Data;NE.Variable=Q;NE.Tokens=MJX\
+return true,NE else return false,UX(\"primary expression expected\")end end\
+function D(DH,KQ)local WX,U=NU(DH)if not WX then return false,U end\
+while true do local UY={}\
+if E:IsSymbol('.')or\
+E:IsSymbol(':')then local FG=E:Get(UY).Data;if not E:Is('Ident')then return false,\
+UX(\"<Ident> expected.\")end;local MUS=E:Get(UY)\
+local ER={}ER.AstType='MemberExpr'ER.Base=U;ER.Indexer=FG;ER.Ident=MUS;ER.Tokens=UY;U=ER elseif not\
+KQ and E:ConsumeSymbol('[',UY)then local WX,MK=I(DH)\
+if not WX then return false,MK end\
+if not E:ConsumeSymbol(']',UY)then return false,UX(\"`]` expected.\")end;local IA={}IA.AstType='IndexExpr'IA.Base=U;IA.Index=MK;IA.Tokens=UY;U=IA elseif not KQ and\
+E:ConsumeSymbol('(',UY)then local ES={}\
+while not E:ConsumeSymbol(')',UY)do local WX,MO=I(DH)if\
+not WX then return false,MO end;ES[#ES+1]=MO;if\
+not E:ConsumeSymbol(',',UY)then\
+if E:ConsumeSymbol(')',UY)then break else return false,UX(\"`)` Expected.\")end end end;local GV={}GV.AstType='CallExpr'GV.Base=U;GV.Arguments=ES;GV.Tokens=UY;U=GV elseif not KQ and\
+E:Is('String')then local DBN={}DBN.AstType='StringCallExpr'DBN.Base=U\
+DBN.Arguments={E:Get(UY)}DBN.Tokens=UY;U=DBN elseif not KQ and E:IsSymbol('{')then local WX,JA=TB(DH)if not WX then\
+return false,JA end;local ZP={}ZP.AstType='TableCallExpr'ZP.Base=U\
+ZP.Arguments={JA}ZP.Tokens=UY;U=ZP else break end end;return true,U end\
+function TB(R)local TU={}\
+if E:Is('Number')then local EY={}EY.AstType='NumberExpr'EY.Value=E:Get(TU)\
+EY.Tokens=TU;return true,EY elseif E:Is('String')then local CB={}CB.AstType='StringExpr'\
+CB.Value=E:Get(TU)CB.Tokens=TU;return true,CB elseif E:ConsumeKeyword('nil',TU)then local B={}B.AstType='NilExpr'\
+B.Tokens=TU;return true,B elseif E:IsKeyword('false')or E:IsKeyword('true')then local U={}\
+U.AstType='BooleanExpr'U.Value=(E:Get(TU).Data=='true')U.Tokens=TU\
+return true,U elseif E:ConsumeSymbol('...',TU)then local VF={}VF.AstType='DotsExpr'VF.Tokens=TU;return true,VF elseif\
+E:ConsumeSymbol('{',TU)then local F={}F.AstType='ConstructorExpr'F.EntryList={}\
+while true do\
+if E:IsSymbol('[',TU)then\
+E:Get(TU)local WX,YC=I(R)\
+if not WX then return false,UX(\"Key Expression Expected\")end\
+if not E:ConsumeSymbol(']',TU)then return false,UX(\"`]` Expected\")end\
+if not E:ConsumeSymbol('=',TU)then return false,UX(\"`=` Expected\")end;local WX,FH=I(R)\
+if not WX then return false,UX(\"Value Expression Expected\")end\
+F.EntryList[#F.EntryList+1]={Type='Key',Key=YC,Value=FH}elseif E:Is('Ident')then local LJ=E:Peek(1)\
+if\
+LJ.Type=='Symbol'and LJ.Data=='='then local PB=E:Get(TU)if not E:ConsumeSymbol('=',TU)then\
+return false,UX(\"`=` Expected\")end;local WX,PQ=I(R)if not WX then return false,\
+UX(\"Value Expression Expected\")end\
+F.EntryList[#F.EntryList+1]={Type='KeyString',Key=PB.Data,Value=PQ}else local WX,T=I(R)\
+if not WX then return false,UX(\"Value Exected\")end\
+F.EntryList[#F.EntryList+1]={Type='Value',Value=T}end elseif E:ConsumeSymbol('}',TU)then break else local WX,V=I(R)\
+F.EntryList[#F.EntryList+1]={Type='Value',Value=V}if not WX then return false,UX(\"Value Expected\")end end\
+if E:ConsumeSymbol(';',TU)or E:ConsumeSymbol(',',TU)then elseif\
+E:ConsumeSymbol('}',TU)then break else return false,UX(\"`}` or table entry Expected\")end end;F.Tokens=TU;return true,F elseif E:ConsumeKeyword('function',TU)then local WX,ZO=Y(R,TU)if not WX then\
+return false,ZO end;ZO.IsLocal=true;return true,ZO else return D(R)end end;local LR=PC{'-','not','#'}local WS=8\
+local FC={['+']={6,6},['-']={6,6},['%']={7,7},['/']={7,7},['*']={7,7},['^']={10,9},['..']={5,4},['==']={3,3},['<']={3,3},['<=']={3,3},['~=']={3,3},['>']={3,3},['>=']={3,3},['and']={2,2},['or']={1,1}}\
+function HC(AR,EU)local WX,DF\
+if LR[E:Peek().Data]then local ZAX={}local PTR=E:Get(ZAX).Data\
+WX,DF=HC(AR,WS)if not WX then return false,DF end;local U={}U.AstType='UnopExpr'U.Rhs=DF;U.Op=PTR\
+U.OperatorPrecedence=WS;U.Tokens=ZAX;DF=U else WX,DF=TB(AR)if not WX then return false,DF end end\
+while true do local JM=FC[E:Peek().Data]\
+if JM and JM[1]>EU then local KB={}\
+local YE=E:Get(KB).Data;local WX,XN=HC(AR,JM[2])if not WX then return false,XN end;local ZZ={}\
+ZZ.AstType='BinopExpr'ZZ.Lhs=DF;ZZ.Op=YE;ZZ.OperatorPrecedence=JM[1]ZZ.Rhs=XN;ZZ.Tokens=KB;DF=ZZ else\
+break end end;return true,DF end;I=function(B)return HC(B,0)end\
+local function O(U)local K=nil;local AH={}\
+if\
+E:ConsumeKeyword('if',AH)then local B={}B.AstType='IfStatement'B.Clauses={}\
+repeat local WX,EJV=I(U)\
+if not WX then return false,EJV end;if not E:ConsumeKeyword('then',AH)then\
+return false,UX(\"`then` expected.\")end;local WX,ST=ZN(U)\
+if not WX then return false,ST end;B.Clauses[#B.Clauses+1]={Condition=EJV,Body=ST}until not\
+E:ConsumeKeyword('elseif',AH)\
+if E:ConsumeKeyword('else',AH)then local WX,UE=ZN(U)if not WX then return false,UE end;B.Clauses[\
+#B.Clauses+1]={Body=UE}end;if not E:ConsumeKeyword('end',AH)then\
+return false,UX(\"`end` expected.\")end;B.Tokens=AH;K=B elseif\
+E:ConsumeKeyword('while',AH)then local A={}A.AstType='WhileStatement'local WX,WXC=I(U)\
+if not WX then return false,WXC end;if not E:ConsumeKeyword('do',AH)then\
+return false,UX(\"`do` expected.\")end;local WX,W=ZN(U)\
+if not WX then return false,W end;if not E:ConsumeKeyword('end',AH)then\
+return false,UX(\"`end` expected.\")end;A.Condition=WXC;A.Body=W;A.Tokens=AH;K=A elseif\
+E:ConsumeKeyword('do',AH)then local WX,T=ZN(U)if not WX then return false,T end\
+if\
+not E:ConsumeKeyword('end',AH)then return false,UX(\"`end` expected.\")end;local IE={}IE.AstType='DoStatement'IE.Body=T;IE.Tokens=AH;K=IE elseif\
+E:ConsumeKeyword('for',AH)then\
+if not E:Is('Ident')then return false,UX(\"<ident> expected.\")end;local YO=E:Get(AH)\
+if E:ConsumeSymbol('=',AH)then local W=OJ(U)\
+local OR=W:CreateLocal(YO.Data)local WX,X=I(U)if not WX then return false,X end;if\
+not E:ConsumeSymbol(',',AH)then return false,UX(\"`,` Expected\")end\
+local WX,GL=I(U)if not WX then return false,GL end;local WX,CD;if E:ConsumeSymbol(',',AH)then WX,CD=I(U)if not WX then return\
+false,CD end end\
+if not\
+E:ConsumeKeyword('do',AH)then return false,UX(\"`do` expected\")end;local WX,N=ZN(W)if not WX then return false,N end;if\
+not E:ConsumeKeyword('end',AH)then return false,UX(\"`end` expected\")end\
+local B={}B.AstType='NumericForStatement'B.scope=W;B.Variable=OR;B.Start=X;B.End=GL\
+B.Step=CD;B.Body=N;B.Tokens=AH;K=B else local DN=OJ(U)\
+local DUY={DN:CreateLocal(YO.Data)}while E:ConsumeSymbol(',',AH)do if not E:Is('Ident')then\
+return false,UX(\"for variable expected.\")end\
+DUY[#DUY+1]=DN:CreateLocal(E:Get(AH).Data)end\
+if not\
+E:ConsumeKeyword('in',AH)then return false,UX(\"`in` expected.\")end;local ZW={}local WX,DNE=I(U)if not WX then return false,DNE end;ZW[#ZW+1]=DNE\
+while\
+E:ConsumeSymbol(',',AH)do local WX,GA=I(U)if not WX then return false,GA end;ZW[#ZW+1]=GA end;if not E:ConsumeKeyword('do',AH)then\
+return false,UX(\"`do` expected.\")end;local WX,KJ=ZN(DN)\
+if not WX then return false,KJ end;if not E:ConsumeKeyword('end',AH)then\
+return false,UX(\"`end` expected.\")end;local UVE={}\
+UVE.AstType='GenericForStatement'UVE.scope=DN;UVE.VariableList=DUY;UVE.Generators=ZW;UVE.Body=KJ\
+UVE.Tokens=AH;K=UVE end elseif E:ConsumeKeyword('repeat',AH)then local WX,F=ZN(U)if not WX then return false,F end\
+if not\
+E:ConsumeKeyword('until',AH)then return false,UX(\"`until` expected.\")end;local WX,LX=I(F.scope)if not WX then return false,LX end;local FX={}\
+FX.AstType='RepeatStatement'FX.Condition=LX;FX.Body=F;FX.Tokens=AH;K=FX elseif E:ConsumeKeyword('function',AH)then\
+if not\
+E:Is('Ident')then return false,UX(\"Function name expected\")end;local WX,RF=D(U,true)if not WX then return false,RF end;local WX,A=Y(U,AH)if not WX then\
+return false,A end;A.IsLocal=false;A.Name=RF;K=A elseif E:ConsumeKeyword('local',AH)then\
+if\
+E:Is('Ident')then local LY={E:Get(AH).Data}\
+while E:ConsumeSymbol(',',AH)do\
+if\
+not E:Is('Ident')then return false,UX(\"local var name expected\")end;LY[#LY+1]=E:Get(AH).Data end;local DH={}if E:ConsumeSymbol('=',AH)then\
+repeat local WX,NW=I(U)if not WX then return false,NW end;DH[#DH+\
+1]=NW until not E:ConsumeSymbol(',',AH)end;for KQ,T in\
+pairs(LY)do LY[KQ]=U:CreateLocal(T)end;local UK={}\
+UK.AstType='LocalStatement'UK.LocalList=LY;UK.InitList=DH;UK.Tokens=AH;K=UK elseif\
+E:ConsumeKeyword('function',AH)then\
+if not E:Is('Ident')then return false,UX(\"Function name expected\")end;local EI=E:Get(AH).Data;local XC=U:CreateLocal(EI)local WX,TL=Y(U,AH)if\
+not WX then return false,TL end;TL.Name=XC;TL.IsLocal=true;K=TL else return false,\
+UX(\"local var or function def expected\")end elseif E:ConsumeSymbol('::',AH)then if not E:Is('Ident')then\
+return false,UX('Label name expected')end;local HX=E:Get(AH).Data\
+if not\
+E:ConsumeSymbol('::',AH)then return false,UX(\"`::` expected\")end;local T={}T.AstType='LabelStatement'T.Label=HX;T.Tokens=AH;K=T elseif\
+E:ConsumeKeyword('return',AH)then local VN={}\
+if not E:IsKeyword('end')then local WX,JMC=I(U)if WX then VN[1]=JMC\
+while\
+E:ConsumeSymbol(',',AH)do local WX,KG=I(U)if not WX then return false,KG end;VN[#VN+1]=KG end end end;local F={}F.AstType='ReturnStatement'F.Arguments=VN;F.Tokens=AH;K=F elseif\
+E:ConsumeKeyword('break',AH)then local MZ={}MZ.AstType='BreakStatement'MZ.Tokens=AH;K=MZ elseif\
+E:ConsumeKeyword('goto',AH)then\
+if not E:Is('Ident')then return false,UX(\"Label expected\")end;local WZ=E:Get(AH).Data;local F={}F.AstType='GotoStatement'F.Label=WZ\
+F.Tokens=AH;K=F else local WX,B=D(U)if not WX then return false,B end\
+if\
+E:IsSymbol(',')or E:IsSymbol('=')then\
+if(B.ParenCount or 0)>0 then return false,\
+UX(\"Can not assign to parenthesized expression, is not an lvalue\")end;local F={B}while E:ConsumeSymbol(',',AH)do local WX,X=D(U)if not WX then return false,X end\
+F[#F+1]=X end;if\
+not E:ConsumeSymbol('=',AH)then return false,UX(\"`=` Expected.\")end\
+local DG={}local WX,IQA=I(U)if not WX then return false,IQA end;DG[1]=IQA\
+while\
+E:ConsumeSymbol(',',AH)do local WX,GU=I(U)if not WX then return false,GU end;DG[#DG+1]=GU end;local KKR={}KKR.AstType='AssignmentStatement'KKR.Lhs=F;KKR.Rhs=DG\
+KKR.Tokens=AH;K=KKR elseif\
+B.AstType=='CallExpr'or B.AstType=='TableCallExpr'or B.AstType=='StringCallExpr'then local EV={}\
+EV.AstType='CallStatement'EV.Expression=B;EV.Tokens=AH;K=EV else\
+return false,UX(\"Assignment Statement Expected\")end end\
+if E:IsSymbol(';')then K.Semicolon=E:Get(K.Tokens)end;return true,K end;local P=PC{'end','else','elseif','until'}\
+ZN=function(WXJZ)local R={}\
+R.scope=OJ(WXJZ)R.AstType='Statlist'R.Body={}R.Tokens={}\
+while not P[E:Peek().Data]and not\
+E:IsEof()do local WX,IUB=O(R.scope)\
+if not WX then return false,IUB end;R.Body[#R.Body+1]=IUB end;if E:IsEof()then local ZR={}ZR.AstType='Eof'ZR.Tokens={E:Get()}\
+R.Body[#R.Body+1]=ZR end;return true,R end;local function IRA()local DO=OJ()return ZN(DO)end;local WX,JO=IRA()return WX,JO end;lua_parser={LexLua=L,ParseLua=H}",
+  [ "/lib/util.lua" ] = "\
+local function I(OW)for A,R in pairs(OW)do OW[R]=true end;return OW end;local function QX(E)local R=0;for DL in pairs(E)do R=R+1 end;return R end\
+local function IZ(GR,LG)if\
+GR.Print then return GR.Print()end;LG=LG or 0;local HR=(QX(GR)>1)local ED=string.rep('    ',\
+LG+1)\
+local OY=\"{\".. (HR and'\\n'or'')\
+for LE,NQ in pairs(GR)do\
+if type(NQ)~='function'then\
+OY=OY.. (HR and ED or'')\
+if type(LE)=='number'then elseif type(LE)=='string'and\
+LE:match(\"^[A-Za-z_][A-Za-z0-9_]*$\")then OY=OY..LE..\" = \"elseif type(LE)=='string'then OY=\
+OY..\"[\\\"\"..LE..\"\\\"] = \"else OY=OY..\"[\"..\
+tostring(LE)..\"] = \"end\
+if type(NQ)=='string'then OY=OY..\"\\\"\"..NQ..\"\\\"\"elseif\
+type(NQ)=='number'then OY=OY..NQ elseif type(NQ)=='table'then OY=OY..\
+IZ(NQ,LG+ (HR and 1 or 0))else OY=OY..tostring(NQ)end;if next(GR,LE)then OY=OY..\",\"end;if HR then OY=OY..'\\n'end end end;OY=OY..\
+(HR and string.rep('    ',LG)or'')..\"}\"return OY end\
+local function L(IES)\
+if IES:match(\"\\n\")then local EB={}\
+for W in IES:gmatch(\"[^\\n]*\")do table.insert(EB,W)end;assert(#EB>0)return EB else return{IES}end end\
+local function ZR(BX,...)return print(string.format(BX,...))end\
+util=applyreadonly({PrintTable=IZ,CountTable=QX,lookupify=I,splitLines=L,printf=ZR})",
+  [ "/lib/scope.lua" ] = "\
+local G={new=function(O,HN)\
+local Q={Parent=HN,Locals={},Globals={},oldLocalNamesMap={},oldGlobalNamesMap={},Children={}}if HN then table.insert(HN.Children,Q)end;return\
+setmetatable(Q,{__index=O})end,AddLocal=function(S,MK)\
+table.insert(S.Locals,MK)end,AddGlobal=function(O,WF)table.insert(O.Globals,WF)end,CreateLocal=function(T,GYB)\
+local ZV;ZV=T:GetLocal(GYB)if ZV then return ZV end;ZV={}ZV.Scope=T;ZV.Name=GYB\
+ZV.IsGlobal=false;ZV.CanRename=true;ZV.References=1;T:AddLocal(ZV)return ZV end,GetLocal=function(WA,CA)for A,BV in\
+pairs(WA.Locals)do if BV.Name==CA then return BV end end;if WA.Parent then return\
+WA.Parent:GetLocal(CA)end end,GetOldLocal=function(M,QL)if\
+M.oldLocalNamesMap[QL]then return M.oldLocalNamesMap[QL]end;return\
+M:GetLocal(QL)end,mapLocal=function(T,DT,AC)\
+T.oldLocalNamesMap[DT]=AC end,GetOldGlobal=function(AG,DI)if AG.oldGlobalNamesMap[DI]then\
+return AG.oldGlobalNamesMap[DI]end;return AG:GetGlobal(DI)end,mapGlobal=function(X,CQ,E)\
+X.oldGlobalNamesMap[CQ]=E end,GetOldVariable=function(XC,E)return\
+XC:GetOldLocal(E)or XC:GetOldGlobal(E)end,RenameLocal=function(IX,JW,H)JW=type(JW)=='string'and\
+JW or JW.Name;local XW=false\
+local J=IX:GetLocal(JW)if J then J.Name=H;IX:mapLocal(JW,J)XW=true end;if\
+not XW and IX.Parent then IX.Parent:RenameLocal(JW,H)end end,RenameGlobal=function(E,J,WM)J=\
+type(J)=='string'and J or J.Name;local FK=false\
+local A=E:GetGlobal(J)if A then A.Name=WM;E:mapGlobal(J,A)FK=true end;if\
+not FK and E.Parent then E.Parent:RenameGlobal(J,WM)end end,RenameVariable=function(O,H,VZ)H=\
+type(H)=='string'and H or H.Name;if O:GetLocal(H)then\
+O:RenameLocal(H,VZ)else O:RenameGlobal(H,VZ)end end,GetAllVariables=function(FQ)\
+local Q=FQ:getVars(true)\
+for OF,WS in pairs(FQ:getVars(false))do table.insert(Q,WS)end;return Q end,getVars=function(IW,E)local UF={}\
+if E then for U,Y in\
+pairs(IW.Children)do\
+for FJ,R in pairs(Y:getVars(true))do table.insert(UF,R)end end else for P,AU in pairs(IW.Locals)do\
+table.insert(UF,AU)end\
+for IU,WY in pairs(IW.Globals)do table.insert(UF,WY)end\
+if IW.Parent then for HX,D in pairs(IW.Parent:getVars(false))do\
+table.insert(UF,D)end end end;return UF end,CreateGlobal=function(OT,YM)\
+local SM;SM=OT:GetGlobal(YM)if SM then return SM end;SM={}SM.Scope=OT;SM.Name=YM\
+SM.IsGlobal=true;SM.CanRename=true;SM.References=1;OT:AddGlobal(SM)return SM end,GetGlobal=function(Y,E)for Q,X in\
+pairs(Y.Globals)do if X.Name==E then return X end end;if Y.Parent then return\
+Y.Parent:GetGlobal(E)end end,GetVariable=function(J,BL)return\
+J:GetLocal(BL)or J:GetGlobal(BL)end,ObfuscateLocals=function(AP,E,XK)\
+E=1;local QA=XK or\"QWERTYUIOPASDFGHJKLZXCVBNM\"\
+local M=XK or\"QWERTYUIOPASDFGHJKLZXCVBNM\"\
+for PE,X in pairs(AP.Locals)do local WW=\"\"local SW=0\
+repeat local Y=math.random(1,#QA)\
+WW=WW..QA:sub(Y,Y)for i=1,math.random(0,SW>5 and 30 or E)do local Y=math.random(1,#M)WW=WW..\
+M:sub(Y,Y)end;SW=SW+1 until not\
+AP:GetVariable(WW)AP:RenameLocal(X.Name,WW)end end}scope=G",
+}

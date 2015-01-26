@@ -1,0 +1,146 @@
+{
+  [ "/lib/libjson.lua" ] = "local BF=20140923;local D={VERSION=BF}\
+local N={__tostring=function()return\"JSON array\"end}N.__index=N\
+local OJ={__tostring=function()return\"JSON object\"end}OJ.__index=OJ\
+function D:newArray(FW)return setmetatable(FW or{},N)end;function D:newObject(JW)return setmetatable(JW or{},OJ)end\
+local function LH(DW)\
+if\
+DW<=127 then return string.char(DW)elseif DW<=2047 then\
+local YT=math.floor(DW/0x40)local W=DW- (0x40*YT)\
+return string.char(0xC0+YT,0x80+W)elseif DW<=65535 then local A=math.floor(DW/0x1000)local TV=DW-0x1000*A;local AS=math.floor(\
+TV/0x40)local IN=TV-0x40*AS;A=0xE0+A;AS=0x80+AS;IN=\
+0x80+IN\
+if\
+\
+(A==0xE0 and AS<0xA0)or\
+(A==0xED and AS>0x9F)or(A==0xF0 and AS<0x90)or(A==0xF4 and AS>0x8F)then return\"?\"else return string.char(A,AS,IN)end else local DR=math.floor(DW/0x40000)local VF=DW-0x40000*DR;local US=math.floor(\
+VF/0x1000)VF=VF-0x1000*US\
+local Y=math.floor(VF/0x40)local TK=VF-0x40*Y\
+return string.char(0xF0+DR,0x80+US,0x80+Y,0x80+TK)end end\
+function D:onDecodeError(M,Y,TMG,VP)if VP~=nil then\
+M=M..\" (\"..D:encode(VP)..\")\"end;if self.assert then self.assert(false,M)else\
+assert(false,M)end end;D.onDecodeOfNilError=D.onDecodeError;D.onDecodeOfHTMLError=D.onDecodeError\
+function D:onEncodeError(VZS,EF)\
+if\
+EF~=nil then VZS=VZS..\" (\"..D:encode(EF)..\")\"end\
+if self.assert then self.assert(false,VZS)else assert(false,VZS)end end\
+local function GY(FQ,WR,YN,JH)\
+local FZ=WR:match('^-?[1-9]%d*',YN)or WR:match(\"^-?0\",YN)\
+if not FZ then FQ:onDecodeError(\"expected number\",WR,YN,JH)end;local AP=YN+FZ:len()\
+local FD=WR:match('^%.%d+',AP)or\"\"AP=AP+FD:len()\
+local AQ=WR:match('^[eE][-+]?%d+',AP)or\"\"AP=AP+AQ:len()local SI=FZ..FD..AQ;local R=tonumber(SI)if not R then\
+FQ:onDecodeError(\"bad number\",WR,YN,JH)end;return R,AP end\
+local function Q(DV,KF,JY,NCT)if KF:sub(JY,JY)~='\"'then\
+DV:onDecodeError(\"expected string's opening quote\",KF,JY,NCT)end;local BB=JY+1;local VBF=KF:len()\
+local NN=\"\"\
+while BB<=VBF do local BP=KF:sub(BB,BB)if BP=='\"'then return NN,BB+1 end\
+if BP~='\\\\'then\
+NN=NN..BP;BB=BB+1 elseif KF:match('^\\\\b',BB)then NN=NN..\"\\b\"BB=BB+2 elseif KF:match('^\\\\f',BB)then\
+NN=NN..\"\\f\"BB=BB+2 elseif KF:match('^\\\\n',BB)then NN=NN..\"\\n\"BB=BB+2 elseif KF:match('^\\\\r',BB)then\
+NN=NN..\"\\r\"BB=BB+2 elseif KF:match('^\\\\t',BB)then NN=NN..\"\\t\"BB=BB+2 else\
+local QV=KF:match('^\\\\u([0123456789aAbBcCdDeEfF][0123456789aAbBcCdDeEfF][0123456789aAbBcCdDeEfF][0123456789aAbBcCdDeEfF])',BB)\
+if QV then BB=BB+6;local TAK=tonumber(QV,16)\
+if TAK>=0xD800 and TAK<=0xDBFF then\
+local LW=KF:match('^\\\\u([dD][cdefCDEF][0123456789aAbBcCdDeEfF][0123456789aAbBcCdDeEfF])',BB)if LW then BB=BB+6\
+TAK=0x2400+ (TAK-0xD800)*0x400+tonumber(LW,16)else end end;NN=NN..LH(TAK)else NN=NN..KF:match('^\\\\(.)',BB)\
+BB=BB+2 end end end;DV:onDecodeError(\"unclosed string\",KF,JY,NCT)end\
+local function WU(OX,H)local A,O=OX:find(\"^[ \\n\\r\\t]+\",H)if O then return O+1 else return H end end;local YX\
+local function X(XA,QA,TK,F)if QA:sub(TK,TK)~='{'then\
+XA:onDecodeError(\"expected '{'\",QA,TK,F)end;local FYJ=WU(QA,TK+1)local IAR=XA.strictTypes and\
+XA:newObject{}or{}if QA:sub(FYJ,FYJ)==\
+'}'then return IAR,FYJ+1 end;local CC=QA:len()\
+while FYJ<=CC do\
+local BP,L=Q(XA,QA,FYJ,F)FYJ=WU(QA,L)if QA:sub(FYJ,FYJ)~=':'then\
+XA:onDecodeError(\"expected colon\",QA,FYJ,F)end;FYJ=WU(QA,FYJ+1)\
+local UG,L=YX(XA,QA,FYJ)IAR[BP]=UG;FYJ=WU(QA,L)local NT=QA:sub(FYJ,FYJ)\
+if NT=='}'then return IAR,FYJ+1 end;if QA:sub(FYJ,FYJ)~=','then\
+XA:onDecodeError(\"expected comma or '}'\",QA,FYJ,F)end;FYJ=WU(QA,FYJ+1)end;XA:onDecodeError(\"unclosed '{'\",QA,TK,F)end\
+local function T(GT,YU,MR,AE)if YU:sub(MR,MR)~='['then\
+GT:onDecodeError(\"expected '['\",YU,MR,AE)end;local ZZ=WU(YU,MR+1)local QCP=GT.strictTypes and\
+GT:newArray{}or{}if\
+YU:sub(ZZ,ZZ)==']'then return QCP,ZZ+1 end;local XLK=1;local RA=YU:len()\
+while ZZ<=RA do\
+local VQ,L=YX(GT,YU,ZZ)QCP[XLK]=VQ;XLK=XLK+1;ZZ=WU(YU,L)local GJ=YU:sub(ZZ,ZZ)if GJ==']'then\
+return QCP,ZZ+1 end;if YU:sub(ZZ,ZZ)~=','then\
+GT:onDecodeError(\"expected comma or '['\",YU,ZZ,AE)end;ZZ=WU(YU,ZZ+1)end;GT:onDecodeError(\"unclosed '['\",YU,MR,AE)end\
+YX=function(S,P,OF,QTB)OF=WU(P,OF)if OF>P:len()then\
+S:onDecodeError(\"unexpected end of string\",P,nil,QTB)end\
+if P:find('^\"',OF)then return Q(S,P,OF,QTB)elseif\
+P:find('^[-0123456789 ]',OF)then return GY(S,P,OF,QTB)elseif P:find('^%{',OF)then return X(S,P,OF,QTB)elseif P:find('^%[',OF)then return\
+T(S,P,OF,QTB)elseif P:find('^true',OF)then return true,OF+4 elseif P:find('^false',OF)then return false,OF+5 elseif\
+P:find('^null',OF)then return nil,OF+4 else\
+S:onDecodeError(\"can't parse JSON\",P,OF,QTB)end end\
+function D:decode(W,R)if type(self)~='table'or self.__index~=D then\
+D:onDecodeError(\"JSON:decode must be called in method format\",\
+nil,nil,R)end\
+if W==nil then\
+self:onDecodeOfNilError(string.format(\"nil passed to JSON:decode()\"),\
+nil,nil,R)elseif type(W)~='string'then\
+self:onDecodeError(string.format(\"expected string argument to JSON:decode(), got %s\",type(W)),\
+nil,nil,R)end;if W:match('^%s*$')then return nil end;if W:match('^%s*<')then\
+self:onDecodeOfHTMLError(string.format(\"html passed to JSON:decode()\"),W,\
+nil,R)end;if\
+W:sub(1,1):byte()==0 or\
+(W:len()>=2 and W:sub(2,2):byte()==0)then\
+self:onDecodeError(\"JSON package groks only UTF-8, sorry\",W,nil,R)end\
+local C,FD=pcall(YX,self,W,1,R)if C then return FD else\
+if self.assert then self.assert(false,FD)else assert(false,FD)end;return nil,FD end end\
+local function G(PG)\
+if PG==\"\\n\"then return\"\\\\n\"elseif PG==\"\\r\"then return\"\\\\r\"elseif PG==\"\\t\"then return\"\\\\t\"elseif PG==\"\\b\"then return\"\\\\b\"elseif PG==\"\\f\"then return\"\\\\f\"elseif\
+PG=='\"'then return'\\\\\"'elseif PG=='\\\\'then return'\\\\\\\\'else\
+return string.format(\"\\\\u%04x\",PG:byte())end end;local DVJ='['..'\"'..\
+'%\\\\'..'%z'..'\\001'..'-'..'\\031'..']'local function I(QP)\
+local J=QP:gsub(DVJ,G)return'\"'..J..'\"'end\
+local function V(ICL,RC,FO)local XG={}local HY={}local GR=false\
+local GK\
+for M in pairs(RC)do\
+if type(M)=='string'then table.insert(XG,M)elseif type(M)=='number'then\
+table.insert(HY,M)\
+if M<=0 or M>=math.huge then GR=true elseif not GK or M>GK then GK=M end else\
+ICL:onEncodeError(\"can't encode table with a key of type \"..type(M),FO)end end\
+if#XG==0 and not GR then\
+if#HY>0 then return nil,GK elseif tostring(RC)==\"JSON array\"then return nil elseif\
+tostring(RC)==\"JSON object\"then return{}else return nil end end;table.sort(XG)local C\
+if#HY>0 then if ICL.noKeyConversion then\
+ICL:onEncodeError(\"a table with both numeric and string keys could be an object or array; aborting\",FO)end;C={}for WQ,R in\
+pairs(RC)do C[WQ]=R end;table.sort(HY)\
+for L,F in ipairs(HY)do\
+local M=tostring(F)\
+if C[M]==nil then table.insert(XG,M)C[M]=RC[F]else\
+ICL:onEncodeError(\
+\"conflict converting table with mixed-type keys into a JSON object: key \"..F..\" exists both as a string and a number.\",FO)end end end;return XG,nil,C end;local K\
+function K(B,WW,AL,S,E)\
+if WW==nil then return'null'elseif type(WW)=='string'then return I(WW)elseif type(WW)=='number'then\
+if WW~=WW then return\
+\"null\"elseif WW>=math.huge then return\"1e+9999\"elseif WW<=-math.huge then return\"-1e+9999\"else return\
+tostring(WW)end elseif type(WW)=='boolean'then return tostring(WW)elseif type(WW)~='table'then\
+B:onEncodeError(\
+\"can't convert \"..type(WW)..\" to JSON\",S)else local FT=WW;if AL[FT]then\
+B:onEncodeError(\"table \"..tostring(FT)..\" is a child of itself\",S)else AL[FT]=true end;local VA\
+local EC,P,J=V(B,FT,S)\
+if P then local AF={}\
+for i=1,P do table.insert(AF,K(B,FT[i],AL,S,E))end\
+if E then\
+VA=\"[ \"..table.concat(AF,\", \")..\" ]\"else VA=\"[\"..table.concat(AF,\",\")..\"]\"end elseif EC then local R=J or FT\
+if E then local L={}local JL=0\
+for LXC,H in ipairs(EC)do\
+local FZ=K(B,tostring(H),AL,S,\"\")JL=math.max(JL,#FZ)table.insert(L,FZ)end;local MG=E..\"    \"local NN=E..string.rep(\" \",JL+2+4)\
+local VD=\
+\"%s%\"..string.format(\"%d\",JL)..\"s: %s\"local XG={}for EY,PQZ in ipairs(EC)do local Z=K(B,R[PQZ],AL,S,NN)\
+table.insert(XG,string.format(VD,MG,L[EY],Z))end\
+VA=\"{\\n\"..\
+table.concat(XG,\",\\n\")..\"\\n\"..E..\"}\"else local XK={}for PQI,IK in ipairs(EC)do local AK=K(B,R[IK],AL,S,E)\
+local C=K(B,tostring(IK),AL,S,E)\
+table.insert(XK,string.format(\"%s:%s\",C,AK))end;VA=\"{\"..\
+table.concat(XK,\",\")..\"}\"end else VA=\"[]\"end;AL[FT]=false;return VA end end\
+function D:encode(M,H)if type(self)~='table'or self.__index~=D then\
+D:onEncodeError(\"JSON:encode must be called in method format\",H)end\
+return K(self,M,{},H,nil)end\
+function D:encode_pretty(E,JA)if type(self)~='table'or self.__index~=D then\
+D:onEncodeError(\"JSON:encode_pretty must be called in method format\",JA)end;return\
+K(self,E,{},JA,\"\")end;function D.__tostring()return\"JSON encode/decode package\"end\
+D.__index=D;function D:new(GG)local VP={}if GG then for L,J in pairs(GG)do VP[L]=J end end;return\
+setmetatable(VP,D)end\
+JSON=D:new()",
+  [ "/lib" ] = true,
+}

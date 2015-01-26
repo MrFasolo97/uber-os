@@ -1,0 +1,18 @@
+{
+  [ "/uboot" ] = "local SK=os.pullEvent;os.pullEvent=os.pullEventRaw\
+local function JL(LG)local HC=\"\"for i=1,#LG do\
+if\
+string.sub(LG,i,i)~=\" \"then HC=HC..string.sub(LG,i,i)else break end end\
+if not fs.exists(HC)or\
+fs.isDir(HC)then print(\"Path invalid!\")return false end;term.clear()term.setCursorPos(1,1)os.pullEvent=SK\
+shell.run(LG)return true end;term.clear()term.setCursorPos(1,1)\
+print(\"Uber Bootloader v0.1\")\
+ROOT_DIR=fs.getDir(shell.getRunningProgram())print(\"Root directory: /\"..ROOT_DIR)local L=ROOT_DIR..\
+\"/boot/uberkernel start mlua musers mfsd fLog\"if\
+L:sub(1,1)~=\"/\"then L=\"/\"..L end;print(\"Default = \"..L)\
+print(\"\")local DJ=\"\"while true do write(\"boot: \")DJ=read()\
+if DJ==\"\"then\
+print(\"Booting default ...\")if JL(L)then return end else if JL(DJ)then return end end end",
+  [ "/startup" ] = "\
+shell.run(fs.getDir(shell.getRunningProgram())..\"/uboot\")",
+}

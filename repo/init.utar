@@ -1,0 +1,20 @@
+{
+  [ "/sbin/init" ] = "lua.include(\"split\")function usage()\
+print(\"Usage: init [runlevel]\")end\
+function run(A)\
+kernel.log(\"New runlevel: \"..A)local NQ=fs.open(\"/etc/rc.d/rc\"..A,\"r\")\
+local AY=string.split(NQ.readAll(),\"\\n\")NQ.close()\
+table.sort(AY,function(BD,JT)return tonumber(string.sub(BD,2,3))<\
+tonumber(string.sub(JT,2,3))end)\
+for YP,W in pairs(AY)do if string.sub(W,1,1)==\"R\"then\
+shell.run(\"/etc/init.d/\"..string.sub(W,4,#W)..\
+\" start\")end;if string.sub(W,1,1)==\"S\"then\
+shell.run(\
+\"/etc/init.d/\"..string.sub(W,4,#W)..\" stop\")end;if string.sub(W,1,1)==\"K\"then\
+shell.run(\
+\"/etc/init.d/\"..string.sub(W,4,#W)..\"restart\")end end;while true do kernel.pullEvent()end end;local M={...}\
+if#M==0 then run(1)\
+kernel.panic(\"Init done. Running init 0\")run(0)return elseif M[1]==\"--help\"then usage()\
+kernel.log(\"Stopping init\")return else run(M[1])end",
+  [ "/sbin" ] = true,
+}

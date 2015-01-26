@@ -1,0 +1,11 @@
+{
+  [ "/bin" ] = true,
+  [ "/bin/makepkg" ] = "local J={...}\
+if#J<1 then error(\"Usage: makepkg <PACKAGE>\")end;local IK=shell.dir()\
+shell.setDir(\"/usr/src/\"..J[1])print(\"Building...\")shell.run(\"Build.lua\")fs.makeDir(\"/tmp/\"..\
+J[1])print(\"Packaging...\")shell.run(\
+\"Build.lua install /tmp/\"..J[1])\
+shell.setDir(IK)lua.include(\"libarchive\")archive.pack(\"/tmp/\"..J[1],\
+shell.resolve(J[1])..\".utar\")fs.delete(\
+\"/tmp/\"..J[1])print(\"Done!\")",
+}

@@ -2,32 +2,56 @@
 
 local argv = { ... }
 
+lua.include("luamin")
+
 if #argv < 1 then
   error("Usage: upt install|remove|get|get-install")
 end
 
-local function install()
-  if #argv < 2 then
-    error("Usage: upt install <package1> [package2] ...")
-  end
-  local oldDir = shell.dir()
-  for i = 2, #argv do
-    if not fs.exists("/usr/src/" .. argv[i]) then
-      error("Package " .. argv[i] .. " not found!")
+function listDeps(package, notinstalled)
+  notinstalled = true
+  shell.run("/usr/src/" .. package .. "/PKGINFO.lua")
+  local d = {}
+  for k, v in pairs(DEPENDS) do
+    if notisntalled then
+      if not fs.exists("/var/lib/upt/" .. v) then
+        table.insert(d, v)
+      end
+    else
+      table.insert(d, v)
     end
-    print("Building package " .. argv[i])
-    shell.setDir("/usr/src/" .. argv[i])
-    shell.run("/usr/src/" .. argv[i] .."/Build.lua")
-    fs.makeDir("/var/cache/" .. argv[i])
-    print("Installing package " .. argv[i])
-    shell.run("/usr/src/" .. argv[i] .."/Build.lua install /var/cache/" .. argv[i])
-    shell.run("/usr/src/" .. argv[i] .."/Build.lua install")
-    print("Registring package " .. argv[i])
-    local flist = fs.recursList("/var/cache/" .. argv[i])
+  end
+  return d
+end
+
+local function install(packages)
+  local oldDir = shell.dir()
+  for i = 1, #packages do
+    if not fs.exists("/usr/src/" .. packages[i]) then
+      error("Package " .. packages[i] .. " not found!")
+    end
+    print("Building package " .. packages[i])
+    shell.setDir("/usr/src/" .. packages[i])
+    shell.run("/usr/src/" .. packages[i] .. "/PKGINFO.lua")
+    print("Checking dependencies...")
+    for k, v in pairs(DEPENDS) do
+      if not fs.exists("/var/lib/upt/" .. v) then
+        error("Dependency " .. v .. " not satisfied!")
+      end
+      print("Dependency " .. v .. " ok")
+    end
+    print("All dependencies satisfied")
+    shell.run("/usr/src/" .. packages[i] .."/Build.lua")
+    fs.makeDir("/tmp/" .. packages[i])
+    print("Installing package " .. packages[i])
+    shell.run("/usr/src/" .. packages[i] .."/Build.lua install /tmp/" .. packages[i])
+    shell.run("/usr/src/" .. packages[i] .."/Build.lua install")
+    print("Registring package " .. packages[i])
+    local flist = fs.recursList("/tmp/" .. packages[i])
     --print(textutils.serialize(flist)) 
-    local f = fs.open("/var/lib/upt/" .. argv[i], "w")
+    local f = fs.open("/var/lib/upt/" .. packages[i], "w")
     for j = #flist, 1, -1 do
-      local x = fsd.stripPath("/var/cache/" .. argv[i], flist[j])
+      local x = fsd.stripPath("/tmp/" .. packages[i], flist[j])
       if not fs.isDir(x) then
         f.write(x .. "\n")
       end
@@ -35,29 +59,26 @@ local function install()
     end
     f.write("//DIRLIST\n")
     for j = #flist, 1, -1 do
-      local x = fsd.stripPath("/var/cache/" .. argv[i], flist[j])
+      local x = fsd.stripPath("/tmp/" .. packages[i], flist[j])
       if fs.isDir(x) then
         f.write(x .. "\n")
       end
       --print("A dir: " .. x)
     end
     f.close()
-    fs.delete("/var/cache/" .. argv[i])
-    print("Installing package " .. argv[i] .. " done!")
+    fs.delete("/tmp/" .. packages[i])
+    print("Installing package " .. packages[i] .. " done!")
   end
   shell.setDir(oldDir)
 end
 
-local function remove()
-  if #argv < 2 then
-    error("Usage: upt remove <package1> [package2] ...")
-  end
-  for i = 2, #argv do
-    if not fs.exists("/var/lib/upt/" .. argv[i]) then
-      error("Package " .. argv[i] .. " not found!")
+local function remove(packages)
+  for i = 1, #packages do
+    if not fs.exists("/var/lib/upt/" .. packages[i]) then
+      error("Package " .. packages[i] .. " not found!")
     end
-    print("Removing package " .. argv[i])
-    local f = fs.open("/var/lib/upt/" .. argv[i], "r")
+    print("Removing package " .. packages[i])
+    local f = fs.open("/var/lib/upt/" .. packages[i], "r")
     local x = f.readLine()
     local d = false
     while x do
@@ -76,66 +97,73 @@ local function remove()
       x = f.readLine()
     end
     f.close()
-    fs.delete("/var/lib/upt/" .. argv[i])
-    print("Removing package " .. argv[i] .. " done!")
+    fs.delete("/var/lib/upt/" .. packages[i])
+    print("Removing package " .. packages[i] .. " done!")
   end
 end
 
-local function gitGetDir(gitPath, stripPath, path)
-  path = fsd.normalizePath(path)
-  gitPath = fsd.normalizePath(gitPath)
-  local request = http.get("https://api.github.com/repos/TsarN/uber-os/contents" .. gitPath)
-  local decoded = JSON:decode(request.readAll())
-  for k, v in pairs(decoded) do
-    if v.type == "dir" then
-      fs.makeDir(path .. fsd.stripPath(stripPath, gitPath .. "/" .. v.name))
-      gitGetDir(gitPath .. "/" .. v.name, stripPath, path)
-    else
-      local f = fs.open(path .. fsd.stripPath(stripPath, gitPath .. "/" .. v.name), "w")
-      print("Downloading " .. gitPath .. "/" .. v.name)
-      local r = http.get("https://raw.githubusercontent.com/TsarN/uber-os/master" .. gitPath .. "/" .. v.name)
-      if not r then error("Cannot get file!") end
-      f.write(r.readAll())
-      r.close()
-      f.close()
-    end
+local function get(packages)
+  lua.include("libjson")
+  if not http then error("Http API not enabled") end
+  for i = 1, #packages do
+    if flag then error("Package not found!") end
+    print("Downloading package " .. packages[i])
+    local r = http.get("https://raw.githubusercontent.com/TsarN/uber-os/master/repo/" .. packages[i] .. ".utar")
+    if not r then error("Failed to download " .. packages[i] .. "! Make sure, that you have raw.githubusercontent.com whitelisted or try again later.") end
+    print("Saving package " .. packages[i])
+    local f = fs.open("/tmp/" .. packages[i], "w") 
+    f.write(r.readAll())
+    f.close()
+    r.close()
+    print("Unpacking package " .. packages[i])
+    lua.include("libarchive")
+    if fs.exists("/usr/src/" .. packages[i]) then fs.delete("/usr/src/" .. packages[i]) end
+    fs.makeDir("/usr/src/" .. packages[i])
+    archive.unpack("/tmp/" .. packages[i], "/usr/src/" .. packages[i])
+    fs.delete("/tmp/" .. packages[i])
+    print("Downloading package " .. packages[i] .. " done!")
   end
 end
 
-local function get()
+local function getInstall(package)
+  if fs.exists("/var/lib/upt/" .. package) then return end --Quick fix
+  get({package})
+  fs.open("/var/lib/upt/" .. package, "w").close()
+  local d = listDeps(package, true)
+  for k, v in pairs(d) do
+    getInstall(v)
+  end
+  install({package})
+end
+
+local p = {}
+
+for i = 2, #argv do table.insert(p, argv[i]) end
+
+if argv[1] == "install" then 
+  if #argv < 2 then
+    error("Usage: upt install <package1> [package2] ...")
+  end
+  install(p)
+end
+
+if argv[1] == "remove" then 
+  if #argv < 2 then
+    error("Usage: upt remove <package1> [package2] ...")
+  end
+  remove(p)
+end
+
+if argv[1] == "get" then 
   if #argv < 2 then
     error("Usage: upt get <package1> [package2] ...")
   end
-  lua.include("libjson")
-  print("Getting package list")
-  if not http then error("Http API not enabled") end
-  local request = http.get("https://api.github.com/repos/TsarN/uber-os/contents/packages")
-  if not request then error("Cannot get package list. Make sure, that you have api.github.com whitelisted!") end
-  local decoded = JSON:decode(request.readAll())
-  request.close()
-  local plist = {}
-  for k, v in pairs(decoded) do
-    if (v.name ~= "CONFIG") and (v.name ~= "Build.lua") then
-      table.insert(plist, v.name)
-    end
-  end
-  for i = 2, #argv do
-    print("Downloading package " .. argv[i])
-    gitGetDir("/packages/" .. argv[i], "/packages", "/usr/src")
-    print("Downloading package " .. argv[i] .. " done!")
-  end
+  get(p)
 end
 
-if argv[1] == "install" then install() end
-
-if argv[1] == "remove" then remove() end
-
-if argv[1] == "get" then get() end
-
 if argv[1] == "get-install" then
-  get() install()
-  for i = 2, #argv do
-    print("Cleaning up " .. argv[i])
-    fs.delete("/usr/src/" .. argv[i])
+  if #argv < 2 then
+    error("Usage: upt get-install <package1> [package2] ...")
   end
+  for k, v in pairs(p) do fs.delete("/var/lib/upt/" .. v) getInstall(v) end
 end
