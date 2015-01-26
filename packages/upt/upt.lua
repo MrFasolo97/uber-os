@@ -5,7 +5,7 @@ local argv = { ... }
 lua.include("luamin")
 
 if #argv < 1 then
-  error("Usage: upt install|remove|get|get-install")
+  error("Usage: upt install|remove|get|get-install|update")
 end
 
 function listDeps(package, notinstalled)
@@ -153,7 +153,7 @@ local function update()
   print("Updating package list...")
   local r = http.get("https://raw.githubusercontent.com/TsarN/uber-os/master/repo/repo.db")
   if not r then error("Failed to get package list!") end
-  local f = fs.open("/var/lib/upt/database", "r")
+  local f = fs.open("/var/lib/upt/database", "w")
   f.write(r.readAll())
   r.close()
   f.close()
