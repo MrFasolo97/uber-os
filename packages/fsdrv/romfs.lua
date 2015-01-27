@@ -1,55 +1,75 @@
---ROM Filesystem (access to /rom)
+--ROM File System Driver. Works with fsd.
 
-lua.include("copy")
-
-local oldfs = deepcopy(fs)
 romfs = {}
 
-romfs.open = function(mountPath, device, path, mode)
-  mountPath = fsd.normalizePath(mountPath)
-  path = fsd.normalizePath(path)
-  local lPath = fsd.normalizePath(string.sub(path, #mountPath + 2, #path))
-  return oldfs.open("/rom" .. lPath, mode)
-end
-
+local oldfs = deepcopy(fs)
 romfs.list = function(mountPath, device, path)
-  mountPath = fsd.normalizePath(mountPath)
   path = fsd.normalizePath(path)
-  local lPath = fsd.normalizePath(string.sub(path, #mountPath + 2, #path))
-  return oldfs.list("/rom" .. lPath)
-end
-
-romfs.isReadOnly = function(mountPath, device, path)
-  mountPath = fsd.normalizePath(mountPath)
-  path = fsd.normalizePath(path)
-  local lPath = fsd.normalizePath(string.sub(path, #mountPath + 2, #path))
-  return oldfs.isReadOnly("/rom" .. lPath)
-end
-
-romfs.move = function(mountPath, device, path)
-  error("Filesystem is Read Only!")
-end
-
-romfs.copy = function(mountPath, device, path, to)
-  error("Copying is not yet implemented!")
-end
-
-romfs.delete = function(mountPath, device, path, to)
-  error("Filesystem is Read Only")
-end
-
-romfs.isDir = function(mountPath, device, path)
-  mountPath = fsd.normalizePath(mountPath)
-  path = fsd.normalizePath(path)
-  local lPath = fsd.normalizePath(string.sub(path, #mountPath + 2, #path))
-  return oldfs.isDir("/rom" .. lPath)
+  path = fsd.resolveLinks(path)
+  path = fsd.stripPath(mountPath, path)
+  local p = oldfs.list(device .. path)
+  if path == "/" then path = "" end
+  for i = 1, #p do
+    if p[i] then
+      local x = path .. "/" .. p[i]
+    end
+  end
+  return p
 end
 
 romfs.exists = function(mountPath, device, path)
-  mountPath = fsd.normalizePath(mountPath)
   path = fsd.normalizePath(path)
-  local lPath = fsd.normalizePath(string.sub(path, #mountPath + 2, #path))
-  return oldfs.exists("/rom" .. lPath)
+  path = fsd.resolveLinks(path)
+  path = fsd.stripPath(mountPath, path)
+  if mountPath == path then return true end
+  return oldfs.exists(device .. path)
+end
+
+romfs.isDir = function(mountPath, device, path)
+  path = fsd.normalizePath(path)
+  path = fsd.resolveLinks(path)
+  path = fsd.stripPath(mountPath, path)
+  if mountPath == path then return true end
+  return oldfs.isDir(device .. path)
+end
+
+romfs.open = function(mountPath, device, path, mode)
+  path = fsd.resolveLinks(path)
+  path = fsd.stripPath(mountPath, path)
+  return oldfs.open(device .. path, mode)
+end
+
+romfs.makeDir = function(mountPath, device, path)
+  path = fsd.resolveLinks(path)
+  path = fsd.stripPath(mountPath, path)
+  oldfs.makeDir(device .. path)
+  fs.setNode(mountPath .. "/" .. path)
+end
+
+romfs.move = function(mountPath, device, from, to)
+  from = fsd.resolveLinks(from)
+  to = fsd.resolveLinks(to)
+  from = fsd.stripPath(mountPath, from)
+  to = fsd.stripPath(mountPath, to)
+  oldfs.move(device .. from, device .. to)
+  fs.setNode(mountPath .. "/" .. to)
+end
+
+romfs.copy = function(mountPath, device, from, to)
+  from = fsd.resolveLinks(from)
+  to = fsd.resolveLinks(to)
+  from = fsd.stripPath(mountPath, from)
+  to = fsd.stripPath(mountPath, to)
+  oldfs.copy(device .. from, device .. to)
+  fs.setNode(mountPath .. "/" .. to)
+end
+
+
+romfs.delete = function(mountPath, device, path)
+  path = fsd.stripPath(mountPath, path)
+  fsd.setNode(path, nil, nil, false)
+  oldfs.delete(device .. path)
+  fs.deleteNode(mountPath .. "/" .. path)
 end
 
 romfs = applyreadonly(romfs) _G["romfs"] = romfs

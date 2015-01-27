@@ -1,2 +1,2 @@
-DEPENDS = {"uberkernel", "corelib", "luamin", "libjson"}
+DEPENDS = {"uberkernel", "corelib"}
 VERSION = {0, 2, 1}

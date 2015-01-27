@@ -1,15 +1,15 @@
-upt 0;2;1 uberkernel;corelib
-libjson 0;2;1 uberkernel
-ush 0;2;1 uberkernel;corelib
-init 0;2;1 uberkernel;corelib
-udev 0;2;1 uberkernel;corelib
-corelib 0;2;1 uberkernel
-login 0;2;1 uberkernel;corelib
-libarchive 0;2;1 uberkernel
-luamin 0;2;1 uberkernel
-uberkernel 0;2;1 corelib
-fsdrv 0;2;1 uberkernel;corelib
-coreutils 0;2;1 uberkernel;corelib
-utar 0;2;1 uberkernel;corelib;libarchive
-uboot 0;2;1 
-devutils 0;2;1 uberkernel;corelib;libarchive;luamin
+upt 0.2.1 uberkernel.corelib
+libjson 0.2.1 uberkernel
+ush 0.2.1 uberkernel.corelib
+init 0.2.1 uberkernel.corelib
+udev 0.2.1 uberkernel.corelib
+corelib 0.2.1 uberkernel
+login 0.2.1 uberkernel.corelib
+libarchive 0.2.1 uberkernel
+luamin 0.2.1 uberkernel
+uberkernel 0.2.1 corelib
+fsdrv 0.2.1 uberkernel.corelib
+coreutils 0.2.1 uberkernel.corelib
+utar 0.2.1 uberkernel.corelib.libarchive
+uboot 0.2.1 
+devutils 0.2.1 uberkernel.corelib.libarchive.luamin

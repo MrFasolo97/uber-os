@@ -8,13 +8,28 @@ if #argv < 1 then
   error("Usage: upt install|remove|get|get-install|update")
 end
 
-function listDeps(package, notinstalled)
-  if fs.exists("/usr/src/" .. package .. "/PKGINFO.lua") then shell.run("/usr/src/" .. package .. "/PKGINFO.lua") elseif
-  fs.exists("/usr/pkg/" .. package .. "/PKGINFO.lua") then shell.run("/usr/pkg/" .. package .. "/PKGINFO.lua") else
+local function getPkgInfo(package)
+  local DEPENDS, VERSION
+  if fs.exists("/var/lib/upt/" .. package) then
     local f = fs.open("/var/lib/upt/" .. package, "r")
     DEPENDS = string.split(f.readLine(), " ")
+    VERSION = string.split(f.readLine(), ";")
     f.close()
+    return DEPENDS, VERSION 
   end
+  local f = fs.open("/var/lib/upt/database", "r")
+  for k, v in pairs(string.split(f.readAll(), "\n")) do
+    local x = string.split(v, " ")
+    VERSION = string.split(x[2], ";")
+    DEPENDS = string.split(x[3], ";") 
+    if x[1] == package then break end
+  end
+  f.close()
+  return DEPENDS, VERSION 
+end
+
+function listDeps(package, notinstalled)
+  getPkgInfo(package)
   local d = {}
   for k, v in pairs(DEPENDS) do
     if notisntalled then
@@ -31,31 +46,57 @@ end
 local function recursCopy(from, to)
   local l = fs.list(from)
   for k, v in pairs(l) do
-    if to == "" and v == "PKGINFO.lua" then else
-      if fs.isDir(from .. "/" .. v) then
-        if fs.exists(to .. "/" .. v) then
-        else
-          fs.makeDir(to .. "/" .. v)
-        end
-        recursCopy(from .. "/" .. v, to .. "/" .. v)
+    if fs.isDir(from .. "/" .. v) then
+      if fs.exists(to .. "/" .. v) then
       else
-        if fs.exists(to .. "/" .. v) then fs.delete(to .. "/" .. v) end
-        fs.copy(from .. "/" .. v, to .. "/" .. v)
+        fs.makeDir(to .. "/" .. v)
       end
+      recursCopy(from .. "/" .. v, to .. "/" .. v)
+    else
+      if fs.exists(to .. "/" .. v) then fs.delete(to .. "/" .. v) end
+      fs.copy(from .. "/" .. v, to .. "/" .. v)
     end
   end
 end
 
-local function install(packages)
+local function getInstalledPackages()
+  local x = fs.list("/var/lib/upt")
+  local r = {}
+  for k, v in pairs(x) do
+    if v == "database" then else
+      r[v] = true
+    end
+  end
+  return r
+end
+
+local function buildDependencyTree(packages, tree)
+  if not tree then 
+    tree = {}
+    for k, v in pairs(packages) do tree[v] = true end
+  end
+  for i = 1, #packages do
+    DEPENDS, VERSION = getPkgInfo(packages[i])
+    for k, v in pairs(DEPENDS) do
+      if getInstalledPackages()[v] or tree[v] or v == "" then else
+        tree[v] = true
+        buildDependencyTree({v}, tree)
+      end
+    end
+  end
+  return tree
+end
+
+local function install(packages, dontcheck)
   local oldDir = shell.dir()
   for i = 1, #packages do
     if fs.exists("/usr/pkg/" .. packages[i]) then
       recursCopy("/usr/pkg/" .. packages[i], "")
-      shell.run("/usr/pkg/" .. packages[i] .. "/PKGINFO.lua")
+      DEPENDS, VERSION = getPkgInfo(packages[i])
       local flist = fs.recursList("/usr/pkg/" .. packages[i])
       local f = fs.open("/var/lib/upt/" .. packages[i], "w")
       f.writeLine(table.concat(DEPENDS, " "))
-      f.writeLine(table.concat(VERSION, "."))
+      f.writeLine(table.concat(VERSION, ";"))
       for j = #flist, 1, -1 do
         local x = fsd.stripPath("/tmp/" .. packages[i], flist[j])
         if not fs.isDir(x) then
@@ -79,14 +120,16 @@ local function install(packages)
     print("Building package " .. packages[i])
     shell.setDir("/usr/src/" .. packages[i])
     shell.run("/usr/src/" .. packages[i] .. "/PKGINFO.lua")
-    print("Checking dependencies...")
-    for k, v in pairs(DEPENDS) do
-      if not fs.exists("/var/lib/upt/" .. v) then
-        error("Dependency " .. v .. " not satisfied!")
+    if not dontcheck then
+      print("Checking dependencies...")
+      for k, v in pairs(DEPENDS) do
+        if not fs.exists("/var/lib/upt/" .. v) then
+          error("Dependency " .. v .. " not satisfied!")
+        end
+        print("Dependency " .. v .. " ok")
       end
-      print("Dependency " .. v .. " ok")
+      print("All dependencies satisfied")
     end
-    print("All dependencies satisfied")
     shell.run("/usr/src/" .. packages[i] .."/Build.lua")
     fs.makeDir("/tmp/" .. packages[i])
     print("Installing package " .. packages[i])
@@ -96,7 +139,7 @@ local function install(packages)
     local flist = fs.recursList("/tmp/" .. packages[i])
     local f = fs.open("/var/lib/upt/" .. packages[i], "w")
     f.writeLine(table.concat(DEPENDS, " "))
-    f.writeLine(table.concat(VERSION, "."))
+    f.writeLine(table.concat(VERSION, ";"))
     for j = #flist, 1, -1 do
       local x = fsd.stripPath("/tmp/" .. packages[i], flist[j])
       if not fs.isDir(x) then
@@ -167,6 +210,7 @@ local function get(packages)
   if not fs.exists("/var/lib/upt/database") then update() end
   local flist = fs.open("/var/lib/upt/database", "r")
   pkglist = string.split(flist.readAll(), "\n")
+  for k, v in pairs(pkglist) do pkglist[k] = string.split(v, " ")[1] end
   flist.close()
   for i = 1, #packages do
     local flag = true
@@ -195,15 +239,18 @@ local function get(packages)
 end
 
 local function getInstall(package)
-  if fs.exists("/var/lib/upt/" .. package) then return end --Quick fix
-  get({package})
-  fs.open("/var/lib/upt/" .. package, "w").close()
-  local d = listDeps(package, true)
-  print("Dependencies required for package " .. package .. ": " .. table.concat(d, ", "))
-  for k, v in pairs(d) do
-    getInstall(v)
+  print("Building dependency tree...")
+  local tree = buildDependencyTree({package})
+  print("Following packages will be installed:")
+  for k, v in pairs(tree) do
+    write(k .. " ")
   end
-  install({package})
+  print()
+  write("Confirm? [Y/n]: ")
+  local x = read()
+  if x == "n" or x == "N" then return end
+  for k, v in pairs(tree) do get({k}) end
+  for k, v in pairs(tree) do install({k}, true) end
 end
 
 local p = {}
@@ -215,6 +262,10 @@ if argv[1] == "install" then
     error("Usage: upt install <package1> [package2] ...")
   end
   install(p)
+end
+
+if argv[1] == "update" then 
+  update()
 end
 
 if argv[1] == "remove" then 

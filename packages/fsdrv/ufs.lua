@@ -87,7 +87,7 @@ ufs.exists = function(mountPath, device, path)
     return false
   end
   if mountPath == path then return true end
-  return oldfs.exists(path)
+  return oldfs.exists(device .. path)
 end
 
 ufs.isDir = function(mountPath, device, path)

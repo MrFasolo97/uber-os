@@ -9,15 +9,19 @@ local uid = thread.getUID(coroutine.running())
 while s ~= "exit" do
   if s ~= "" then
     s = s:gsub("^%s*(.-)%s*$", "%1")
-    background = false
-    if string.match(s, "&$") then
-      background = true
-      s = string.sub(1, #s - 1)
-      s = s:gsub("^%s*(.-)%s*$", "%1")
-    end
-    local S = string.split(s, "&&")
-    for k, v in pairs(S) do
-      thread.runFile(v:gsub("^%s*(.-)%s*$", "%1"), false, not background)
+    if string.match(s, "^:") then --Lua command
+      loadstring(string.sub(s, 2, #s))()
+    else
+      background = false
+      if string.match(s, "&$") then
+        background = true
+        s = string.sub(1, #s - 1)
+        s = s:gsub("^%s*(.-)%s*$", "%1")
+      end
+      local S = string.split(s, "&&")
+      for k, v in pairs(S) do
+        thread.runFile(v:gsub("^%s*(.-)%s*$", "%1"), false, not background)
+      end
     end
   end
   if uid == 0 then

@@ -1,5 +1,5 @@
-BASE_PACKAGES = corelib coreutils fsdrv init login uberkernel uboot udev ush
-PACKAGES = $(BASE_PACKAGES) libjson luamin upt libarchive utar devutils
+BASE_PACKAGES = corelib coreutils fsdrv init login uberkernel uboot udev ush libarchive upt
+PACKAGES = $(BASE_PACKAGES) libjson luamin utar devutils
 
 all: clean prepare base configure
 

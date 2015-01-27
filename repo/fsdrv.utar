@@ -1,84 +1,109 @@
 {
-  [ "/lib/drivers/fs/devfs" ] = "local X=deepcopy(fs)devfs={}\
-function devfs.list(C,G,Y)return udev.getMnemonics()end\
-function devfs.exists(ZS,Y,ZX)local WI=udev.getMnemonics()ZX=X.getName(ZX)for i=1,#WI do if\
-WI[i]==ZX then return true end end;return false end\
-function devfs.open(XH,C,GI,LX)GI=fs.normalizePath(GI)\
-local QY=udev.readDevice(X.getName(GI))\
-local VF={currentLine=1,text=QY,lines=string.split(QY,\"\\n\"),close=function()end}\
-local S=function()local VF=VF;if VF.currentLine>#VF.lines then return nil end;VF.currentLine=\
-VF.currentLine+1\
-return VF.lines[VF.currentLine-1]end\
-local G=function()local VF=VF\
-return table.concat(VF.lines,\"\\n\",VF.currentLine)end;VF.readLine=S;VF.readAll=G;return VF end;devfs=applyreadonly(devfs)",
+  [ "/lib/drivers/fs/devfs" ] = "local GQ=deepcopy(fs)devfs={}\
+function devfs.list(M,P,Q)return udev.getMnemonics()end\
+function devfs.exists(RI,AG,C)local F=udev.getMnemonics()C=GQ.getName(C)for i=1,#F do if F[i]==C then\
+return true end end;return false end\
+function devfs.open(J,NZ,D,H)D=fs.normalizePath(D)\
+local A=udev.readDevice(GQ.getName(D))\
+local K={currentLine=1,text=A,lines=string.split(A,\"\\n\"),close=function()end}\
+local DMQ=function()local K=K;if K.currentLine>#K.lines then return nil end\
+K.currentLine=K.currentLine+1;return K.lines[K.currentLine-1]end\
+local IE=function()local K=K;return table.concat(K.lines,\"\\n\",K.currentLine)end;K.readLine=DMQ;K.readAll=IE;return K end;devfs=applyreadonly(devfs)_G[\"devfs\"]=devfs",
   [ "/lib/drivers" ] = true,
   [ "/lib" ] = true,
-  [ "/lib/drivers/fs/ccfs" ] = "ccfs=applyreadonly({})",
+  [ "/lib/drivers/fs/ccfs" ] = "ccfs={}local F=deepcopy(fs)\
+ccfs.list=function(HF,QF,Z)Z=fsd.normalizePath(Z)\
+Z=fsd.resolveLinks(Z)Z=fsd.stripPath(HF,Z)if not fs.isDir(QF..Z)then\
+error(\"Not a directory\")end;local AP=F.list(QF..Z)if Z==\"/\"then Z=\"\"end\
+for i=1,#AP do if\
+AP[i]then local CQ=Z..\"/\"..AP[i]end end;return AP end\
+ccfs.exists=function(R,Z,QW)QW=fsd.normalizePath(QW)QW=fsd.resolveLinks(QW)\
+QW=fsd.stripPath(R,QW)if R==QW then return true end;return F.exists(Z..QW)end\
+ccfs.isDir=function(RV,K,WX)WX=fsd.normalizePath(WX)WX=fsd.resolveLinks(WX)\
+WX=fsd.stripPath(RV,WX)if RV==WX then return true end;return F.isDir(K..WX)end\
+ccfs.open=function(YI,XX,ZO,HL)ZO=fsd.resolveLinks(ZO)ZO=fsd.stripPath(YI,ZO)return F.open(\
+XX..ZO,HL)end\
+ccfs.makeDir=function(P,L,NV)NV=fsd.resolveLinks(NV)NV=fsd.stripPath(P,NV)F.makeDir(\
+L..NV)fs.setNode(P..\"/\"..NV)end\
+ccfs.move=function(QB,LF,UE,WS)UE=fsd.resolveLinks(UE)WS=fsd.resolveLinks(WS)\
+UE=fsd.stripPath(QB,UE)WS=fsd.stripPath(QB,WS)F.move(LF..UE,LF..WS)fs.setNode(QB..\
+\"/\"..WS)end\
+ccfs.copy=function(QU,K,T,RS)T=fsd.resolveLinks(T)RS=fsd.resolveLinks(RS)\
+T=fsd.stripPath(QU,T)RS=fsd.stripPath(QU,RS)F.copy(K..T,K..RS)\
+fs.setNode(QU..\"/\"..RS)end\
+ccfs.delete=function(W,WK,KT)KT=fsd.stripPath(W,KT)\
+fsd.setNode(KT,nil,nil,false)F.delete(WK..KT)fs.deleteNode(W..\"/\"..KT)end;ccfs=applyreadonly(ccfs)_G[\"ccfs\"]=ccfs",
   [ "/lib/drivers/fs" ] = true,
   [ "/PKGINFO.lua" ] = "DEPENDS = {\"uberkernel\", \"corelib\"}\
 VERSION = {0, 2, 1}",
-  [ "/lib/drivers/fs/romfs" ] = "lua.include(\"copy\")local T=deepcopy(fs)romfs={}\
-romfs.open=function(J,GR,CC,B)\
-J=fsd.normalizePath(J)CC=fsd.normalizePath(CC)\
-local W=fsd.normalizePath(string.sub(CC,#J+2,#CC))return T.open(\"/rom\"..W,B)end\
-romfs.list=function(Y,AS,DB)Y=fsd.normalizePath(Y)DB=fsd.normalizePath(DB)local ZR=fsd.normalizePath(string.sub(DB,\
-#Y+2,#DB))return\
-T.list(\"/rom\"..ZR)end\
-romfs.isReadOnly=function(WK,OI,LC)WK=fsd.normalizePath(WK)\
-LC=fsd.normalizePath(LC)\
-local R=fsd.normalizePath(string.sub(LC,#WK+2,#LC))return T.isReadOnly(\"/rom\"..R)end\
-romfs.move=function(CG,BV,W)error(\"Filesystem is Read Only!\")end\
-romfs.copy=function(IK,L,S,HA)error(\"Copying is not yet implemented!\")end\
-romfs.delete=function(HP,NO,A,KC)error(\"Filesystem is Read Only\")end\
-romfs.isDir=function(H,EO,F)H=fsd.normalizePath(H)F=fsd.normalizePath(F)local TYY=fsd.normalizePath(string.sub(F,\
-#H+2,#F))return\
-T.isDir(\"/rom\"..TYY)end\
-romfs.exists=function(GV,YX,DD)GV=fsd.normalizePath(GV)\
-DD=fsd.normalizePath(DD)\
-local QG=fsd.normalizePath(string.sub(DD,#GV+2,#DD))return T.exists(\"/rom\"..QG)end;romfs=applyreadonly(romfs)",
-  [ "/lib/drivers/fs/ufs" ] = "ufs={}local V=deepcopy(fs)\
-local function CT(M,LC,WY)if not WY then WY={}end\
-M=fsd.normalizePath(M)local UY=fsd.stripPath(LC,M)WY[M]=fsd.getInfo(M)\
-local E,ND=pcall(fs.list,M)if not E then return WY end;if M==\"/\"then M=\"\"end\
-for BH,TE in pairs(ND)do WY[fsd.normalizePath(UY..\"/\"..TE)]=fsd.getInfo(\
-M..\"/\"..TE)if\
-fs.isDir(M..\"/\"..TE)then CT(M..\"/\"..TE,LC,WY)end end;return WY end\
-ufs.saveFs=function(CO,O)local PC=fsd.normalizePath(O)if PC==\"/\"then PC=\"\"end\
-local EH=V.open(PC..\"/UFSDATA\",\"w\")local UJ=\"\"\
-for W,MF in pairs(CT(CO,CO,{}))do UJ=UJ..W..\
-\":\"..MF.owner..\":\"..MF.perms..\":\"if MF.linkto then\
-UJ=UJ..MF.linkto end;UJ=UJ..\"\\n\"end;EH.write(UJ)EH.close()end\
-ufs.loadFs=function(E,H)local R=fsd.normalizePath(H)if R==\"/\"then R=\"\"end;if not\
-V.exists(R..\"/UFSDATA\")then ufs.saveFs(E,H)end\
-local GE=V.open(R..\"/UFSDATA\",\"r\")local OW=GE.readAll()GE.close()local EP=string.split(OW,\"\\n\")\
-local Y={}\
-for HR,P in pairs(EP)do local G=string.split(P,\":\")\
-Y[G[1]]={owner=tonumber(G[2]),perms=G[3],linkto=G[4]}if G[4]==\"\"then Y[G[1]].linkto=nil end end;return Y end\
-ufs.list=function(ZO,T,PH)PH=fsd.normalizePath(PH)PH=fsd.resolveLinks(PH)\
-PH=fsd.stripPath(ZO,PH)\
-if not fs.isDir(T..PH)then error(\"Not a directory\")end;local VR=V.list(T..PH)if PH==\"/\"then PH=\"\"end\
-for i=1,#VR do if VR[i]then\
-local L=PH..\"/\"..VR[i]\
-if(L==\"/rom\")or(L==\"/UFSDATA\")then table.remove(VR,i)end end end;return VR end\
-ufs.exists=function(GA,AL,P)P=fsd.normalizePath(P)if\
-string.sub(AL..P,1,4)==\"/rom\"then return false end;P=fsd.resolveLinks(P)\
-P=fsd.stripPath(GA,P)if P==\"/UFSDATA\"then return false end;if GA==P then return true end;return\
-V.exists(P)end\
-ufs.isDir=function(JT,EB,U)U=fsd.normalizePath(U)if\
-string.sub(EB..U..\"/\",1,5)==\"/rom/\"then return false end;U=fsd.resolveLinks(U)\
-U=fsd.stripPath(JT,U)if U==\"/UFSDATA\"then return false end;if JT==U then return true end;return\
-V.isDir(EB..U)end\
-ufs.open=function(Z,I,U,T)U=fsd.resolveLinks(U)U=fsd.stripPath(Z,U)\
+  [ "/lib/drivers/fs/romfs" ] = "romfs={}local L=deepcopy(fs)\
+romfs.list=function(I,PF,V)V=fsd.normalizePath(V)\
+V=fsd.resolveLinks(V)V=fsd.stripPath(I,V)local H=L.list(PF..V)if V==\"/\"then V=\"\"end;for i=1,#H do if\
+H[i]then local RX=V..\"/\"..H[i]end end\
+return H end\
+romfs.exists=function(LU,G,UC)UC=fsd.normalizePath(UC)\
+UC=fsd.resolveLinks(UC)UC=fsd.stripPath(LU,UC)if LU==UC then return true end;return\
+L.exists(G..UC)end\
+romfs.isDir=function(T,A,XS)XS=fsd.normalizePath(XS)\
+XS=fsd.resolveLinks(XS)XS=fsd.stripPath(T,XS)if T==XS then return true end\
+return L.isDir(A..XS)end\
+romfs.open=function(WP,Z,S,CH)S=fsd.resolveLinks(S)S=fsd.stripPath(WP,S)return\
+L.open(Z..S,CH)end\
+romfs.makeDir=function(PJ,XX,KI)KI=fsd.resolveLinks(KI)KI=fsd.stripPath(PJ,KI)L.makeDir(\
+XX..KI)fs.setNode(PJ..\"/\"..KI)end\
+romfs.move=function(U,E,X,T)X=fsd.resolveLinks(X)T=fsd.resolveLinks(T)\
+X=fsd.stripPath(U,X)T=fsd.stripPath(U,T)L.move(E..X,E..T)\
+fs.setNode(U..\"/\"..T)end\
+romfs.copy=function(B,GI,BGQ,S)BGQ=fsd.resolveLinks(BGQ)S=fsd.resolveLinks(S)\
+BGQ=fsd.stripPath(B,BGQ)S=fsd.stripPath(B,S)L.copy(GI..BGQ,GI..S)\
+fs.setNode(B..\"/\"..S)end\
+romfs.delete=function(WL,UZ,LQD)LQD=fsd.stripPath(WL,LQD)\
+fsd.setNode(LQD,nil,nil,false)L.delete(UZ..LQD)\
+fs.deleteNode(WL..\"/\"..LQD)end;romfs=applyreadonly(romfs)_G[\"romfs\"]=romfs",
+  [ "/lib/drivers/fs/ufs" ] = "ufs={}local MW=deepcopy(fs)\
+local function FU(HH,SL,VJ)if not VJ then VJ={}end\
+HH=fsd.normalizePath(HH)local K=fsd.stripPath(SL,HH)VJ[HH]=fsd.getInfo(HH)\
+local QV,HT=pcall(fs.list,HH)if not QV then return VJ end;if HH==\"/\"then HH=\"\"end\
+for CM,DB in pairs(HT)do VJ[fsd.normalizePath(K..\"/\"..DB)]=fsd.getInfo(\
+HH..\"/\"..DB)if\
+fs.isDir(HH..\"/\"..DB)then FU(HH..\"/\"..DB,SL,VJ)end end;return VJ end\
+ufs.saveFs=function(B,OX)local ON=fsd.normalizePath(OX)if ON==\"/\"then ON=\"\"end;local GC=MW.open(ON..\
+\"/UFSDATA\",\"w\")local Z=\"\"\
+for QW,S in pairs(FU(B,B,{}))do\
+Z=Z..QW..\":\"..S.owner..\
+\":\"..S.perms..\":\"if S.linkto then Z=Z..S.linkto end;Z=Z..\"\\n\"end;GC.write(Z)GC.close()end\
+ufs.loadFs=function(IH,NN)local Y=fsd.normalizePath(NN)if Y==\"/\"then Y=\"\"end;if not\
+MW.exists(Y..\"/UFSDATA\")then ufs.saveFs(IH,NN)end;local DE=MW.open(Y..\
+\"/UFSDATA\",\"r\")local L=DE.readAll()\
+DE.close()local GG=string.split(L,\"\\n\")local LV={}\
+for LK,CU in pairs(GG)do\
+local PJ=string.split(CU,\":\")\
+LV[PJ[1]]={owner=tonumber(PJ[2]),perms=PJ[3],linkto=PJ[4]}if PJ[4]==\"\"then LV[PJ[1]].linkto=nil end end;return LV end\
+ufs.list=function(YE,O,W)W=fsd.normalizePath(W)W=fsd.resolveLinks(W)\
+W=fsd.stripPath(YE,W)\
+if not fs.isDir(O..W)then error(\"Not a directory\")end;local DJ=MW.list(O..W)if W==\"/\"then W=\"\"end;for i=1,#DJ do\
+if DJ[i]then\
+local UU=W..\"/\"..DJ[i]if(UU==\"/rom\")or(UU==\"/UFSDATA\")then\
+table.remove(DJ,i)end end end;return DJ end\
+ufs.exists=function(PQ,G,C)C=fsd.normalizePath(C)if\
+string.sub(G..C,1,4)==\"/rom\"then return false end;C=fsd.resolveLinks(C)\
+C=fsd.stripPath(PQ,C)if C==\"/UFSDATA\"then return false end;if PQ==C then return true end;return\
+MW.exists(G..C)end\
+ufs.isDir=function(D,B,FK)FK=fsd.normalizePath(FK)if string.sub(B..FK..\"/\",1,5)==\
+\"/rom/\"then return false end\
+FK=fsd.resolveLinks(FK)FK=fsd.stripPath(D,FK)if FK==\"/UFSDATA\"then return false end;if\
+D==FK then return true end;return MW.isDir(B..FK)end\
+ufs.open=function(CP,ZV,AR,X)AR=fsd.resolveLinks(AR)AR=fsd.stripPath(CP,AR)\
 if\
-fsd.normalizePath(U)==\"/UFSDATA\"then error(\"Internal error\")return end;return V.open(I..U,T)end\
-ufs.makeDir=function(N,I,YQ)YQ=fsd.resolveLinks(YQ)YQ=fsd.stripPath(N,YQ)V.makeDir(\
-I..YQ)fs.setNode(N..\"/\"..YQ)end\
-ufs.move=function(SO,Q,I,X)I=fsd.resolveLinks(I)X=fsd.resolveLinks(X)\
-I=fsd.stripPath(SO,I)X=fsd.stripPath(SO,X)V.move(Q..I,Q..X)\
-fs.setNode(SO..\"/\"..X)end\
-ufs.copy=function(LW,GL,IW,HS)IW=fsd.resolveLinks(IW)HS=fsd.resolveLinks(HS)\
-IW=fsd.stripPath(LW,IW)HS=fsd.stripPath(LW,HS)V.copy(GL..IW,GL..HS)fs.setNode(LW..\
-\"/\"..HS)end\
-ufs.delete=function(SI,Z,FW)FW=fsd.stripPath(SI,FW)\
-fsd.setNode(FW,nil,nil,false)V.delete(Z..FW)fs.deleteNode(SI..\"/\"..FW)end;ufs=applyreadonly(ufs)",
+fsd.normalizePath(AR)==\"/UFSDATA\"then error(\"Internal error\")return end;return MW.open(ZV..AR,X)end\
+ufs.makeDir=function(D,EQ,NK)NK=fsd.resolveLinks(NK)NK=fsd.stripPath(D,NK)MW.makeDir(\
+EQ..NK)fs.setNode(D..\"/\"..NK)end\
+ufs.move=function(J,II,YX,S)YX=fsd.resolveLinks(YX)S=fsd.resolveLinks(S)\
+YX=fsd.stripPath(J,YX)S=fsd.stripPath(J,S)MW.move(II..YX,II..S)\
+fs.setNode(J..\"/\"..S)end\
+ufs.copy=function(ZP,FI,YE,A)YE=fsd.resolveLinks(YE)A=fsd.resolveLinks(A)\
+YE=fsd.stripPath(ZP,YE)A=fsd.stripPath(ZP,A)MW.copy(FI..YE,FI..A)fs.setNode(ZP..\
+\"/\"..A)end\
+ufs.delete=function(H,N,Q)Q=fsd.stripPath(H,Q)\
+fsd.setNode(Q,nil,nil,false)MW.delete(N..Q)fs.deleteNode(H..\"/\"..Q)end;ufs=applyreadonly(ufs)_G[\"ufs\"]=ufs",
 }
