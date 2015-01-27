@@ -1,21 +1,21 @@
 {
-  [ "/bin/gendb" ] = "local P=fs.list(\"/usr/src\")\
-local BR=fs.open(shell.resolve(\"repo.db\"),\"w\")for R,T in pairs(P)do\
-shell.run(\"/usr/src/\"..T..\"/PKGINFO.lua\")\
-BR.writeLine(T..\" \"..table.concat(VERSION,\".\")..\
-\" \"..table.concat(DEPENDS,\".\"))end\
-BR.close()",
-  [ "/bin/makepkg" ] = "local N={...}\
-if#N<1 then error(\"Usage: makepkg <PACKAGE>\")end;local L=shell.dir()\
-shell.setDir(\"/usr/src/\"..N[1])print(\"Building...\")shell.run(\"Build.lua\")fs.makeDir(\"/tmp/\"..\
-N[1])print(\"Packaging...\")shell.run(\
-\"Build.lua install /tmp/\"..N[1])\
-fs.copy(\"/usr/src/\"..N[1]..\
-\"/PKGINFO.lua\",\"/tmp/\"..N[1]..\"/PKGINFO.lua\")shell.setDir(L)lua.include(\"libarchive\")\
+  [ "/bin/gendb" ] = "local QX=fs.list(\"/usr/src\")\
+local AC=fs.open(shell.resolve(\"repo.db\"),\"w\")\
+for K,UZ in pairs(QX)do\
+shell.run(\"/usr/src/\"..UZ..\"/PKGINFO.lua\")\
+AC.writeLine(UZ..\" \"..table.concat(VERSION,\";\")..\
+\" \"..table.concat(DEPENDS,\";\"))end;AC.close()",
+  [ "/bin/makepkg" ] = "local Q={...}\
+if#Q<1 then error(\"Usage: makepkg <PACKAGE>\")end;local O=shell.dir()\
+shell.setDir(\"/usr/src/\"..Q[1])print(\"Building...\")shell.run(\"Build.lua\")fs.makeDir(\"/tmp/\"..\
+Q[1])print(\"Packaging...\")shell.run(\
+\"Build.lua install /tmp/\"..Q[1])\
+fs.copy(\"/usr/src/\"..Q[1]..\
+\"/PKGINFO.lua\",\"/tmp/\"..Q[1]..\"/PKGINFO.lua\")shell.setDir(O)lua.include(\"libarchive\")\
 archive.pack(\"/tmp/\"..\
-N[1],shell.resolve(N[1])..\".utar\")fs.delete(\"/tmp/\"..N[1])print(\"Done!\")",
-  [ "/bin/makeallpkg" ] = "local XU=fs.list(\"/usr/src\")for PR,LN in pairs(XU)do\
-shell.run(\"makepkg \"..LN)end",
+Q[1],shell.resolve(Q[1])..\".utar\")fs.delete(\"/tmp/\"..Q[1])print(\"Done!\")",
+  [ "/bin/makeallpkg" ] = "local TD=fs.list(\"/usr/src\")for P,JD in pairs(TD)do\
+shell.run(\"makepkg \"..JD)end",
   [ "/bin" ] = true,
   [ "/PKGINFO.lua" ] = "DEPENDS = {\"uberkernel\", \"corelib\", \"libarchive\", \"luamin\"}\
 VERSION = {0, 2, 1}",

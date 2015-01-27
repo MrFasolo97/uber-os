@@ -5,12 +5,12 @@ local argv = { ... }
 lua.include("luamin")
 
 if #argv < 1 then
-  error("Usage: upt install|remove|get|get-install|update")
+  error("Usage: upt install|remove|get|get-install|update|upgrade")
 end
 
-local function getPkgInfo(package)
+local function getPkgInfo(package, forcerepo)
   local DEPENDS, VERSION
-  if fs.exists("/var/lib/upt/" .. package) then
+  if not forcerepo and fs.exists("/var/lib/upt/" .. package) then
     local f = fs.open("/var/lib/upt/" .. package, "r")
     DEPENDS = string.split(f.readLine(), " ")
     VERSION = string.split(f.readLine(), ";")
@@ -88,6 +88,7 @@ local function buildDependencyTree(packages, tree)
 end
 
 local function install(packages, dontcheck)
+  if not fs.exists("/var/lib/upt/database") then error("Database not found. Run 'upt update' to download it.") end
   local oldDir = shell.dir()
   for i = 1, #packages do
     if fs.exists("/usr/pkg/" .. packages[i]) then
@@ -161,6 +162,7 @@ local function install(packages, dontcheck)
 end
 
 local function remove(packages)
+  if not fs.exists("/var/lib/upt/database") then error("Database not found. Run 'upt update' to download it.") end
   for i = 1, #packages do
     if not fs.exists("/var/lib/upt/" .. packages[i]) then
       error("Package " .. packages[i] .. " not found!")
@@ -204,7 +206,7 @@ local function update()
 end
 
 local function get(packages)
-  lua.include("libjson")
+  if not fs.exists("/var/lib/upt/database") then error("Database not found. Run 'upt update' to download it.") end
   if not http then error("Http API not enabled") end
   local pkglist
   if not fs.exists("/var/lib/upt/database") then update() end
@@ -238,12 +240,28 @@ local function get(packages)
   end
 end
 
-local function getInstall(package)
+local function getInstall(packages)
+  if not fs.exists("/var/lib/upt/database") then error("Database not found. Run 'upt update' to download it.") end
+  local flist = fs.open("/var/lib/upt/database", "r")
+  pkglist = string.split(flist.readAll(), "\n")
+  for k, v in pairs(pkglist) do pkglist[k] = string.split(v, " ")[1] end
+  flist.close()
+  for i = 1, #packages do
+    local flag = true
+    for k, v in pairs(pkglist) do
+      if packages[i] == v then
+        flag = false
+      end
+    end
+    if flag then error("Package not found!") end
+  end
   print("Building dependency tree...")
-  local tree = buildDependencyTree({package})
-  print("Following packages will be installed:")
+  local tree = buildDependencyTree(packages)
+  print("Following packages will be installed/upgraded:")
   for k, v in pairs(tree) do
-    write(k .. " ")
+    write(k .. ":")
+    DEPENDS, VERSION = getPkgInfo(k, true)
+    write(table.concat(VERSION, ".") .. " ")
   end
   print()
   write("Confirm? [Y/n]: ")
@@ -251,6 +269,23 @@ local function getInstall(package)
   if x == "n" or x == "N" then return end
   for k, v in pairs(tree) do get({k}) end
   for k, v in pairs(tree) do install({k}, true) end
+end
+
+local function upgrade()
+  local p = getInstalledPackages()
+  local toupg = {}
+  for k, v in pairs(p) do
+    DEPENDS1, VERSION1 = getPkgInfo(k, true)
+    DEPENDS, VERSION = getPkgInfo(k)
+    local flag = false
+    for i = 1, 3 do
+      if VERSION1[i] > VERSION[i] then flag = true break end
+    end
+    if flag then
+      table.insert(toupg, k)
+    end
+  end
+  getInstall(toupg)
 end
 
 local p = {}
@@ -266,6 +301,10 @@ end
 
 if argv[1] == "update" then 
   update()
+end
+
+if argv[1] == "upgrade" then 
+  upgrade()
 end
 
 if argv[1] == "remove" then 
@@ -286,5 +325,5 @@ if argv[1] == "get-install" then
   if #argv < 2 then
     error("Usage: upt get-install <package1> [package2] ...")
   end
-  for k, v in pairs(p) do fs.delete("/var/lib/upt/" .. v) getInstall(v) end
+  getInstall(p)
 end

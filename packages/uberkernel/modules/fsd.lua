@@ -232,6 +232,7 @@ function fsd.mount(dev, fs, path)
     kernel.log("Unable to mount " .. dev .. " as " .. fs .. " on " .. path .. " : Driver not loaded")
     return false
   end
+  if dev == "__ROOT_DEV__" then dev = ROOT_DIR end
   path = fsd.normalizePath(path)
   if mounts[path] then error("Filesystem is already mounted") end
   kernel.log("Mounting " .. dev .. " as " .. fs .. " on " .. path)
