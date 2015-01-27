@@ -1,2 +1,2 @@
 --Standard CraftOS Filesystem
-ccfs = applyreadonly({})
+ccfs = applyreadonly({}) _G["ccfs"] = ccfs

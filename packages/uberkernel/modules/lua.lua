@@ -25,4 +25,4 @@ function lua.include(lib)
   end
 end
 
-lua = applyreadonly(lua)
+lua = applyreadonly(lua) _G["lua"] = lua

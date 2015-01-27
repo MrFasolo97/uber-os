@@ -45,7 +45,7 @@ local function updatePeripherals()
   end
 end
 
-udev = applyreadonly(udev)
+udev = applyreadonly(udev) _G["udev"] = udev
 
 updatePeripherals()
 while true do

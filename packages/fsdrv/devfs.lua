@@ -44,4 +44,4 @@ function devfs.open(mountPath, device, path, mode)
   return handle
 end
 
-devfs = applyreadonly(devfs)
+devfs = applyreadonly(devfs) _G["devfs"] = devfs

@@ -91,5 +91,5 @@ end
 
 updatePasswd()
 
-users = applyreadonly(users)
+users = applyreadonly(users) _G["users"] = users
 

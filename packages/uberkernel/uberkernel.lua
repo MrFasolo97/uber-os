@@ -66,7 +66,7 @@ end
 local oldrawset = rawset
 rawset = function(table, index, value)
   for i = 1, #absoluteReadOnly do
-    if (table == absoluteReadOnly[i]) or (index == absoluteReadOnly[i]) then
+    if (table == absoluteReadOnly[i]) or (table[index] == absoluteReadOnly[i]) then
       error("Attempt to modify read-only table")
       return 
     end
@@ -461,7 +461,7 @@ local threadMan = function()
     rawset(thread, "setGlobalEventFilter", nil)
   end)
 
-  thread = applyreadonly(thread)
+  thread = applyreadonly(thread) _G["  thread"] =   thread
 
   if type(threadMain) == "function" then
     thread.startThread(threadMain)
@@ -641,7 +641,7 @@ local function start()
   end
   if fsd then
     fs = fsd
-    loadfile = newloadfile
+    _G["fs"] = _G["fsd"]
   end
   threadMan()
 end
@@ -651,7 +651,7 @@ local function stop()
   os.pullEventRaw = oldPullEventRaw
 end
 
-kernel = applyreadonly(kernel)
+kernel = applyreadonly(kernel) _G["kernel"] = kernel
 
 if #argv == 0 then
   return

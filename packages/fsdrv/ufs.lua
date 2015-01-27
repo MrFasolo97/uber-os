@@ -144,4 +144,4 @@ ufs.delete = function(mountPath, device, path)
   fs.deleteNode(mountPath .. "/" .. path)
 end
 
-ufs = applyreadonly(ufs)
+ufs = applyreadonly(ufs) _G["ufs"] = ufs

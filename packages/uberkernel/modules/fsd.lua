@@ -367,4 +367,4 @@ for k, v in pairs(oldfs) do
     return retVal
   end
 end
-fsd = applyreadonly(fsd)
+fsd = applyreadonly(fsd) _G["fsd"] = fsd

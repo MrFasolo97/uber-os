@@ -37,4 +37,4 @@ archive.unpack = function(from, path)
   end
 end
 
-archive = applyreadonly(archive)
+archive = applyreadonly(archive) _G["archive"] = archive

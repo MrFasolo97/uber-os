@@ -52,4 +52,4 @@ romfs.exists = function(mountPath, device, path)
   return oldfs.exists("/rom" .. lPath)
 end
 
-romfs = applyreadonly(romfs)
+romfs = applyreadonly(romfs) _G["romfs"] = romfs
