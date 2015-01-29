@@ -57,7 +57,9 @@ local function updatePasswd()
   if not fs.exists(ROOT_DIR .. "/etc/passwd") then
     kernel.panic("/etc/passwd not found!")
   end
-  local passwdFile = fs.open(ROOT_DIR .. "/etc/passwd", "r")
+  local root
+  if thread then root = "" else root = ROOT_DIR end
+  local passwdFile = fs.open(root .. "/etc/passwd", "r")
   local user = passwdFile.readLine()
   local tmp
   while user do

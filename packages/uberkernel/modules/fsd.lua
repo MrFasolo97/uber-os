@@ -4,7 +4,7 @@ lua.include("copy")
 lua.include("split")
 
 fsd = {}
-local fsdf = {}
+fsdf = {}
 
 local loadFsDriver = function(drv)
   kernel.log("Loading Filesystem driver " .. drv)
@@ -277,18 +277,18 @@ end
 function fsdf.list(path)
   path = fsd.normalizePath(path)
   if fsd.testPerms(path, thread.getUID(coroutine.running()), "x") then
-    --Passing control to Filesystem
+    return true
   else
-    error("Access denied!")
+    return false, "Access denied!"
   end
 end
 
 function fsdf.makeDir(path)
   path = fsd.normalizePath(path)
   if fsd.testPerms(oldfs.getDir(path), thread.getUID(coroutine.running()), "w") then
-    --Passing control to Filesystem
+    return true
   else
-    error("Access denied")
+    return false, "Access denied"
   end
 end
 
@@ -296,9 +296,9 @@ function fsdf.copy(from, to)
   from = fsd.normalizePath(from)
   to = fsd.normalizePath(to)
   if fsd.testPerms(from, thread.getUID(coroutine.running()), "r") and fsd.testPerms(to  , thread.getUID(coroutine.running()), "w") then
-    --Passing control to Filesystem
+    return true
   else
-    error("Access denied!")
+    return false, "Access denied!"
   end
 end
 
@@ -306,18 +306,18 @@ function fsdf.move(from, to)
   from = fsd.normalizePath(from)
   to = fsd.normalizePath(to)
   if fsd.testPerms(oldfs.getDir(from), thread.getUID(coroutine.running()), "w") and fsd.testPerms(oldfs.getDir(to), thread.getUID(coroutine.running()), "w") then
-    --Passing control to Filesystem
+    return true
   else
-    error("Access denied!")
+    return false, "Access denied!"
   end
 end
 
 function fsdf.delete(path)
   path = fsd.normalizePath(path)
   if fsd.testPerms(oldfs.getDir(path), thread.getUID(coroutine.running()), "w") then
-    --Passing control to Filesystem
+    return true
   else
-    error("Access denied!")
+    return false, "Access denied!"
   end
 end
 
@@ -325,12 +325,12 @@ function fsdf.open(path, mode)
   path = fsd.normalizePath(path)
   local modes = {r = "r", rb = "r", w = "w", wb = "w", a = "w", ab = "w"}
   if not modes[mode] then
-    error("Invalid mode!")
+    return false, "Invalid mode!"
   end
   if fsd.testPerms(path, thread.getUID(coroutine.running()), modes[mode]) then
-    --Passing control to Filesystem
+    return true
   else
-    error("Access denied!")
+    return false, "Access denied!"
   end
 end
 
@@ -351,7 +351,16 @@ local parentHandlers = {} --{["exists"] = true, ["isDir"] = true, ["getDir"] = t
 
 for k, v in pairs(oldfs) do
   fsd[k] = function(...)
-    if fsdf[k] then fsdf[k](unpack(arg)) end
+    local status, err
+    if fsdf[k] then 
+      status, err = fsdf[k](unpack(arg))
+    else
+      status = true
+    end
+    if not status then
+      error(err)
+      return false
+    end
     local mount, mountPath
     if parentHandlers[k] then
       mount, mountPath = fsd.getMount(fsd.resolveLinks(arg[1]))

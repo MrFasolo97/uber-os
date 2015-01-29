@@ -53,6 +53,7 @@ for i = 1, #files do
       end
       if fs.getInfo(dir .. "/" .. files[i]).linkto then
         isLink = " -> " .. fs.getInfo(dir .. "/" .. files[i]).linkto
+        isDir = "l"
       else
         isLink = ""
       end

@@ -4,6 +4,7 @@ local kernelConsole = false
 local oldprint = print
 local oldwrite = write
 local oldread  = read
+local olderror = error
 local nativefs = fs
 local kernelCoroutine = coroutine.running()
 
@@ -17,10 +18,9 @@ local daemons = {}
 local isPanic = false
 --Unloading CraftOS APIs
 os.unloadAPI("io")
-local olderror = error
 
 
-error = function(msg)
+--[[error = function(msg)
   if not msg then olderror() return end
   if term.isColor() then
     term.setTextColor(colors.red)
@@ -31,10 +31,10 @@ error = function(msg)
     print(msg)
     olderror()
   end
-end
+end]]
 
 argv = { ... }
-local absoluteReadOnly = {readonlytable}
+local absoluteReadOnly = {}
 
 local oldfs = fs
 
@@ -50,12 +50,16 @@ local loadedModules = {}
 
 local threadManager = nil
 
-function applyreadonly(table)
+function applyreadonly(table, allowadd)
   local tmp = {}
   setmetatable(tmp, {
     __index = table,
     __newindex = function(table, key, value)
-      error("Attempt to modify read-only table")
+      if thread then
+        if thread.getUID(coroutine.running()) ~= 0 then
+          error("Attempt to modify read-only table") --Allowing root to crash system. This is ok.
+        end
+      end
     end,
     __metatable = false
   })
@@ -67,7 +71,11 @@ local oldrawset = rawset
 rawset = function(table, index, value)
   for i = 1, #absoluteReadOnly do
     if (table == absoluteReadOnly[i]) or (table[index] == absoluteReadOnly[i]) then
-      error("Attempt to modify read-only table")
+      if thread then
+        if thread.getUID(coroutine.running()) ~= 0 then
+          error("Attempt to modify read-only table") --Allowing root to crash system. This is ok.
+        end
+      end
       return 
     end
   end
@@ -152,6 +160,10 @@ local threadMan = function()
   local newStdout = function()
     return {isStdout = true}
   end
+  
+  local newStderr = function()
+    return {isStderr = true}
+  end
 
   rawset(thread, "onPanic", function(k)
     if k == kernelCoroutine then
@@ -179,7 +191,7 @@ local threadMan = function()
     end
   end)
    
-  rawset(thread, "startThread", function(fn, blockTerminate, desc, uid, stdin, stdout, daemon)
+  rawset(thread, "startThread", function(fn, blockTerminate, desc, uid, stdin, stdout, stderr, daemon)
     if thread.getUID(coroutine.running()) ~= 0 then
       daemon = nil
     end
@@ -205,15 +217,16 @@ local threadMan = function()
       uid = uid,
       stdin = stdin or newStdin(),
       stdout = stdout or newStdout(),
+      stderr = stderr or newStderr(), 
       daemon = daemon
     })
     return newpid, starting[#starting]
   end)
 
-  rawset(thread, "runFile", function(file, blockTerminate, pause, uid, stdin, stdout, daemon)
+  rawset(thread, "runFile", function(file, blockTerminate, pause, uid, stdin, stdout, stderr, daemon)
     local pid, t = thread.startThread(function()
       shell.run(file)
-    end, blockTerminate or true, daemon or file, uid or thread.getUID(coroutine.running()), stdin, stdout, daemon)
+    end, blockTerminate or true, daemon or file, uid or thread.getUID(coroutine.running()), stdin, stdout, stderr, daemon)
     if daemon and (thread.getUID(coroutine.running()) == 0) then
       t.ppid = 1
     end
@@ -238,7 +251,7 @@ local threadMan = function()
       kernel.log("Daemon " .. name .. " is already running.")
       return
     end
-    local pid = thread.runFile(file, true, false, nil, nil, nil, name)
+    local pid = thread.runFile(file, true, false, nil, nil, nil, nil, name)
     daemons[name] = pid
     fs.open("/var/lock/" .. name, "w").close()
     kernel.log("Daemon " .. name .. " started")
@@ -360,6 +373,7 @@ local threadMan = function()
   local oldPrint = print
   local oldWrite = write
   local oldRead = read
+  local oldError = error
 
   print = function( ... )
     local fOut = thread.status(thread.getPID(coroutine.running())).stdout
@@ -391,6 +405,27 @@ local threadMan = function()
     return x
   end
 
+  error = function(msg)
+    msg = msg or ""
+    if not msg then olderror() return end
+    local y = thread.status(thread.getPID(coroutine.running()))
+    local fErr = y.stderr
+    if not fErr.isStderr then
+      fErr.write(msg)
+      oldError()
+    else
+      if term.isColor() then
+        term.setTextColor(colors.red)
+        print(msg)
+        term.setTextColor(colors.white)
+        olderror()
+      else
+        print(msg)
+        olderror()
+      end
+    end
+  end
+
   local function tick(t, evt, ...)
     if kernelConsole then showKernelConsole() return end
     if isPanic then while true do coroutine.yield() end end
@@ -415,6 +450,9 @@ local threadMan = function()
       end
       if not t.stdin.isStdin then
         t.stdin.close()
+      end
+      if not t.stderr.isStderr then
+        t.stderr.close()
       end
     end
   end
@@ -461,7 +499,9 @@ local threadMan = function()
     rawset(thread, "setGlobalEventFilter", nil)
   end)
 
-  thread = applyreadonly(thread) _G["  thread"] =   thread
+  thread = applyreadonly(thread) _G["thread"] = thread
+
+  _G = applyreadonly(_G, true)
 
   if type(threadMain) == "function" then
     thread.startThread(threadMain)

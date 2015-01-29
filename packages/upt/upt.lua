@@ -99,14 +99,14 @@ local function install(packages, dontcheck)
       f.writeLine(table.concat(DEPENDS, " "))
       f.writeLine(table.concat(VERSION, ";"))
       for j = #flist, 1, -1 do
-        local x = fsd.stripPath("/tmp/" .. packages[i], flist[j])
+        local x = fsd.stripPath("/usr/pkg/" .. packages[i], flist[j])
         if not fs.isDir(x) then
           f.write(x .. "\n")
         end
       end
       f.write("//DIRLIST\n")
       for j = #flist, 1, -1 do
-        local x = fsd.stripPath("/tmp/" .. packages[i], flist[j])
+        local x = fsd.stripPath("/usr/pkg/" .. packages[i], flist[j])
         if fs.isDir(x) then
           f.write(x .. "\n")
         end
