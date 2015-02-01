@@ -20,7 +20,7 @@ while s ~= "exit" do
       end
       local S = string.split(s, "&&")
       for k, v in pairs(S) do
-        thread.runFile(v:gsub("^%s*(.-)%s*$", "%1"), false, not background)
+        thread.runFile(v:gsub("^%s*(.-)%s*$", "%1"), nil, not background)
       end
     end
   end

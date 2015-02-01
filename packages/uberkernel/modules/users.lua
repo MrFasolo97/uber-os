@@ -53,7 +53,7 @@ function users.login(name, pwd)
   return false
 end
 
-local function updatePasswd()
+local function loadPasswd()
   if not fs.exists(ROOT_DIR .. "/etc/passwd") then
     kernel.panic("/etc/passwd not found!")
   end
@@ -76,6 +76,16 @@ local function updatePasswd()
   passwdFile.close()
 end
 
+local function writePasswd()
+  local root
+  if thread then root = "" else root = ROOT_DIR end
+  local passwdFile = fs.open(root .. "/etc/passwd", "w")
+  for k, v in pairs(passwd) do
+    passwdFile.writeLine(v.name .. ":" .. v.pwd .. ":" .. tostring(v.uid) .. ":::" .. v.home .. ":" .. v.shell)
+  end
+  passwdFile.close()
+end
+
 function users.newUser(name, pwd, home, shell)
   if thread.getUID(coroutine.running()) ~= 0 then
     error("Only root can create users!")
@@ -85,13 +95,49 @@ function users.newUser(name, pwd, home, shell)
   for k, v in pairs(passwd) do
     if uid <= v.uid then uid = v.uid + 1 end
   end
-  local passwdFile = fs.open(ROOT_DIR .. "/etc/passwd", "a")
-  passwdFile.write(name .. ":" .. pwd .. ":" .. uid .. ":::" .. home .. ":" .. shell)
-  passwdFile.close()
-  updatePasswd()
+  passwd[#passwd + 1] = {
+    name = name,
+    pwd = pwd,
+    uid = uid,
+    home = home,
+    shell = shell
+  }
+  writePasswd()
 end
 
-updatePasswd()
+function users.modifyUser(uid, _name, _pwd, _home, _shell)
+  if thread.getUID(coroutine.running()) ~= 0 and
+    thread.getUID(coroutine.running()) ~= uid then
+    error("Only root or target user can modify users!")
+    return
+  end
+  for k, v in pairs(passwd) do
+    if v.uid == uid then
+      v.name = _name or v.name
+      v.pwd = _pwd or v.pwd
+      v.home = _home or v.home
+      v.shell = _shell or v.shell
+      break
+    end
+  end
+  writePasswd()
+end
+
+function users.deleteUser(uid)
+  if thread.getUID(coroutine.running()) ~= 0 then
+    error("Only root can delete users!")
+    return
+  end
+  for k, v in pairs(passwd) do
+    if v.uid == uid then
+      table.remove(passwd, k)
+      break
+    end
+  end
+  writePasswd()
+end
+
+loadPasswd()
 
 users = applyreadonly(users) _G["users"] = users
 

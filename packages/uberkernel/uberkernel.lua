@@ -8,7 +8,6 @@ local olderror = error
 local nativefs = fs
 local kernelCoroutine = coroutine.running()
 
-
 --Thread manager
 local threads = {}
 local starting = {}
@@ -16,22 +15,29 @@ local eventFilter = nil
 local initRan = false
 local daemons = {}
 local isPanic = false
+
+--Virtual terminals
+
+local tty = {}
+local curTty = 1
+local blockEvent = false
+
+kernel = {}
+
+function kernel.switchTty(n)
+  if thread.getUID(coroutine.running()) ~= 0 then return false end
+  if n < 1 or n > 6 then return false end
+  for k, v in pairs(tty) do v.setVisible(false) end
+  tty[n].setVisible(true)
+  curTty = n
+  for k, v in pairs(daemons) do
+    thread.status(v).tty = n 
+  end
+  return true
+end
+
 --Unloading CraftOS APIs
 os.unloadAPI("io")
-
-
---[[error = function(msg)
-  if not msg then olderror() return end
-  if term.isColor() then
-    term.setTextColor(colors.red)
-    print(msg)
-    term.setTextColor(colors.white)
-    olderror()
-  else
-    print(msg)
-    olderror()
-  end
-end]]
 
 argv = { ... }
 local absoluteReadOnly = {}
@@ -43,8 +49,6 @@ local fDebug = false
 local fSilent = false
 local fNoPanic = false
 local fLog = false
-
-local eventStack = {}
 
 local loadedModules = {}
 
@@ -130,13 +134,13 @@ local function showKernelConsole()
         oldprint(v.pid, " ", v.desc, " ", v.uid)
       end
     end
+    if string.sub(s, 1, 1) == ":" then loadstring(string.sub(s, 2, #s))() end
     if string.sub(s, 1, 5) == "kill " then
       if #s <= 5 then
         oldprint("Usage: kill <PID>")
       end
       local pid = tonumber(string.sub(s, 6, #s))
       for k, v in pairs(threads) do if v.pid == pid then 
-        kernel.sendEvent("THREADDEAD", pid)
         table.remove(threads, k)
         break 
       end end
@@ -190,8 +194,15 @@ local threadMan = function()
       end
     end
   end)
+
+  rawset(thread, "setUID", function(pid, uid, passwd)
+    local t = thread.status(pid or thread.getPID(coroutine.running()))
+    if users.login(users.getUsernameByUID(uid), passwd) then
+      t.uid = uid
+    end
+  end)
    
-  rawset(thread, "startThread", function(fn, blockTerminate, desc, uid, stdin, stdout, stderr, daemon)
+  rawset(thread, "startThread", function(fn, tty, desc, uid, stdin, stdout, stderr, daemon)
     if thread.getUID(coroutine.running()) ~= 0 then
       daemon = nil
     end
@@ -205,16 +216,17 @@ local threadMan = function()
     end
     table.insert(starting, {
       cr = coroutine.create(fn),
-      blockTerminate = blockTerminate or false,
+      blockTerminate = true,
+      tty = tty or curTty,
       error = nil,
       dead = false,
       filter = nil,
       kill = 0,
       pid = newpid,
-      lastevent = kernel.getLastEvent(),
       ppid = thread.getPID(coroutine.running()),
       desc = desc or "",
       uid = uid,
+      paused = false,
       stdin = stdin or newStdin(),
       stdout = stdout or newStdout(),
       stderr = stderr or newStderr(), 
@@ -223,20 +235,16 @@ local threadMan = function()
     return newpid, starting[#starting]
   end)
 
-  rawset(thread, "runFile", function(file, blockTerminate, pause, uid, stdin, stdout, stderr, daemon)
+  rawset(thread, "runFile", function(file, tty, pause, uid, stdin, stdout, stderr, daemon)
     local pid, t = thread.startThread(function()
       shell.run(file)
-    end, blockTerminate or true, daemon or file, uid or thread.getUID(coroutine.running()), stdin, stdout, stderr, daemon)
+    end, tty, daemon or file, uid or thread.getUID(coroutine.running()), stdin, stdout, stderr, daemon)
     if daemon and (thread.getUID(coroutine.running()) == 0) then
       t.ppid = 1
     end
     if pause then
-      while true do
-        local event, e1, e2, e3, e4, e5 = kernel.pullEvent()
-        if (event == "THREADDEAD") and (e1 == pid) then
-          return
-        end
-      end
+      thread.status(thread.getPID(coroutine.running())).paused = true
+      coroutine.yield()
     else
       return pid
     end
@@ -251,10 +259,11 @@ local threadMan = function()
       kernel.log("Daemon " .. name .. " is already running.")
       return
     end
-    local pid = thread.runFile(file, true, false, nil, nil, nil, nil, name)
+    local pid, t = thread.runFile(file, nil, false, nil, nil, nil, nil, name)
     daemons[name] = pid
     fs.open("/var/lock/" .. name, "w").close()
     kernel.log("Daemon " .. name .. " started")
+    os.sleep(0)
   end)
 
   rawset(thread, "stopDaemon", function(name)
@@ -279,23 +288,6 @@ local threadMan = function()
       return "stopped"
     end
   end)
-
-  rawset(thread, "getLastEvent", function(pid)
-    if pid == 0 then
-      return 0
-    end
-    local x = thread.status(pid).lastEvent
-    if x then
-      return x
-    else
-      return 0
-    end
-  end)
-
-  rawset(thread, "setLastEvent", function(pid, newLastEvent)
-    thread.status(pid).lastEvent = newLastEvent
-  end)
-
   rawset(thread, "kill", function(pid, level)
     if pid == 1 then
       kernel.log("Failed to kill init")
@@ -364,6 +356,10 @@ local threadMan = function()
   rawset(thread, "status", function(pid)
     for i = 1, #threads do
       if threads[i].pid == pid then
+        if thread.getUID(coroutine.running()) ~= 0 and
+          threads[i].uid ~= thread.getUID(coroutine.running()) then
+          error("Cannot get status: Access denied!")
+        end
         return threads[i]
       end
     end
@@ -376,7 +372,8 @@ local threadMan = function()
   local oldError = error
 
   print = function( ... )
-    local fOut = thread.status(thread.getPID(coroutine.running())).stdout
+    local x = thread.status(thread.getPID(coroutine.running()))
+    local fOut = x.stdout
     if fOut.isStdout then
       oldPrint(unpack(arg))
     else
@@ -430,8 +427,17 @@ local threadMan = function()
     if kernelConsole then showKernelConsole() return end
     if isPanic then while true do coroutine.yield() end end
     if t.dead then return end
+    if t.paused then return end
     if t.filter ~= nil and evt ~= t.filter then return end
     if evt == "terminate" then return end
+    if t.tty ~= curTty then
+      if evt == "key" or evt == "char" or evt == "paste" then
+        return
+      end
+    end
+    if blockEvent and (evt == "char" or evt == "key") then return end
+
+    term.redirect(tty[t.tty])
    
     coroutine.resume(t.cr, evt, ...)
     t.dead = (coroutine.status(t.cr) == "dead")
@@ -444,7 +450,8 @@ local threadMan = function()
         end
       end
       daemons = clone
-      kernel.sendEvent("THREADDEAD", t.pid)
+      thread.status(t.ppid).paused = false
+      tick(thread.status(t.ppid), "resume_event")
       if not t.stdout.isStdout then
         t.stdout.close()
       end
@@ -470,7 +477,7 @@ local threadMan = function()
       end
     end
     local e
-    if eventFilter then
+    if eventFilter and not flag then
       e = {eventFilter(coroutine.yield())}
     else
       e = {coroutine.yield()}
@@ -501,15 +508,27 @@ local threadMan = function()
 
   thread = applyreadonly(thread) _G["thread"] = thread
 
+  local tw, th = term.getSize()
+
+  for i = 1, 6 do
+    tty[i] = window.create(term.native(), 1, 1, tw, th, false)
+    tty[i].clear()
+  end
+  kernel.switchTty(1)
+
   _G = applyreadonly(_G, true)
 
   if type(threadMain) == "function" then
     thread.startThread(threadMain)
   else
     thread.startThread(function() 
-      kernel.log("Starting init")
-      shell.run("/sbin/init")
-    end, true, "init", uid)
+      parallel.waitForAny(
+        function()
+          kernel.log("Starting init")
+          shell.run("/sbin/init")
+        end
+      )
+    end, curTty, "init", uid)
   end
    
   while #threads > 0 or #starting > 0 do
@@ -522,7 +541,6 @@ end
 
   local oldPullEvent = os.pullEvent
   local oldPullEventRaw = os.pullEventRaw
-  kernel = {}
   kernel.root = ROOT_DIR
   kernel.panic = function(msg)
     write("[" .. os.clock() .. "] Kernel panic: " .. (msg or ""))
@@ -575,44 +593,6 @@ kernel.loadModule = function(module, panic)
     end
   end
 end
-
-kernel.getLastEvent = function()
-  return #eventStack
-end
-
-kernel.pullEvent = function()
-  local lastEvent = #eventStack
-  while #eventStack <= lastEvent do
-    lastEvent = thread.getLastEvent(thread.getPID(coroutine.running()))
-    sleep(0.05)
-  end
-  thread.setLastEvent(thread.getPID(coroutine.running()), lastEvent + 1)
-  return eventStack[lastEvent + 1].event,
-         eventStack[lastEvent + 1].a,
-         eventStack[lastEvent + 1].b,
-         eventStack[lastEvent + 1].c,
-         eventStack[lastEvent + 1].d,
-         eventStack[lastEvent + 1].e
-end
-
-kernel.sendEvent = function(event, a, b, c, d, e)
-  if event == "THREADDEAD" then
-    if coroutine.running() ~= kernelCoroutine then
-      kernel.log("Fake THREADDEAD event")
-      return false
-    end
-  end
-  eventStack[#eventStack + 1] = {
-    ["event"] = event,
-    ["a"] = a,
-    ["b"] = b,
-    ["c"] = c,
-    ["d"] = d,
-    ["e"] = e
-  }
-  return true
-end
-
 kernel.LISTMODULES = function()
   return fs.list(ROOT_DIR .. "/lib/modules")
 end
@@ -655,6 +635,7 @@ local function start()
       if k >= 2 then
         kernel.log("Killed process. PID = " .. thread.getPID(coroutine.running()))
         error() --Kill Process
+        return
       end
       if k == 1 then
         return "terminate"

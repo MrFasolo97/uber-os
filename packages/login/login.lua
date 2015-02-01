@@ -15,7 +15,7 @@ while true do
     kernel.log("Logging in as " .. username)
     write(motd)
     thread.runFile(users.getShell(users.getUIDByUsername(username)),
-        true, true, users.getUIDByUsername(username))
+        nil, true, users.getUIDByUsername(username))
   else
     print("Invalid login\n")
     sleep(3)

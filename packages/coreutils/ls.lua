@@ -33,8 +33,10 @@ for i = 1, #files do
 end
 local isDir = "-"
 local isLink = ""
+local flag = false
 for i = 1, #files do
   if (files[i]:sub(1, 1) ~= ".") or allFiles then
+    flag = true
     if fs.isDir(dir .. "/" .. files[i]) then
       if term.isColor() then
         term.setTextColor(colors.blue)
@@ -69,6 +71,4 @@ for i = 1, #files do
     isLink = ""
   end
 end
-if not more then
-  print()
-end
+if flag then print() end

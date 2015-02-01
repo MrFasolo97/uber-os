@@ -25,9 +25,7 @@ function run(level)
       shell.run("/etc/init.d/" .. string.sub(v, 4, #v) .. "restart")
     end
   end
-  while true do
-    kernel.pullEvent()
-  end
+  while true do sleep(999999) end
 end
 
 local argv = { ... }

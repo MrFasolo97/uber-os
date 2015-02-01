@@ -269,7 +269,36 @@ function fsd.umountDev(dev)
 end
 
 function fsd.getMounts()
-  return mounts
+  return deepcopy(mounts)
+end
+
+function fsd.pipe()
+  local readpipe, writepipe
+  readpipe = {}
+  writepipe = {}
+  local currentChar = 1
+  local text = ""
+  function readpipe.close() end
+  function writepipe.close() end
+  function readpipe.flush() end
+  function writepipe.flush() end
+  function readpipe.readAll()
+    currentChar = #text + 1
+    return string.sub(text, currentChar, #text)
+  end
+  function readpipe.readLine()
+    local x = string.sub(text, currentChar, #text)
+    x = string.sub(x, 1, string.find(x, "\n"))
+    currentChar = #x + 1
+    return x
+  end
+  function writepipe.write(str)
+    text = text .. str
+  end
+  function writepipe.writeLine(str)
+    text = text .. str .. "\n"
+  end
+  return readpipe, writepipe
 end
 
 ------------------------------------------

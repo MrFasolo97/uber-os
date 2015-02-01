@@ -52,6 +52,8 @@ local argv = { ... }
 
 if #argv == 0 then
 
+  if not lua then print("WARNING: Building unminified!") lua = {include = function() end} minify = function(a) return a end end
+
   local s = ""
   write("Enter directory to install: /")
   INSTALL_DIR = read()
