@@ -406,4 +406,16 @@ for k, v in pairs(oldfs) do
     return retVal
   end
 end
+
+local oldSetDir = shell.setDir
+
+shell.setDir = function(dir)
+  if not thread then return oldSetDir(dir) end
+  if fsd.testPerms(dir, thread.getUID(coroutine.running), "x") then
+    return oldSetDir(dir)
+  else
+    error("Access denied!")
+  end
+end
+
 fsd = applyreadonly(fsd) _G["fsd"] = fsd

@@ -36,9 +36,6 @@ function kernel.switchTty(n)
   return true
 end
 
---Unloading CraftOS APIs
-os.unloadAPI("io")
-
 argv = { ... }
 local absoluteReadOnly = {}
 
@@ -87,6 +84,8 @@ rawset = function(table, index, value)
 end
   
 local function showKernelConsole()
+  term.setTextColor(colors.white)
+  term.setBackgroundColor(colors.black)
   term.clear()
   term.setCursorPos(1, 1)
   oldprint("Kernel debug console <CTRL>+T")
@@ -168,13 +167,6 @@ local threadMan = function()
   local newStderr = function()
     return {isStderr = true}
   end
-
-  rawset(thread, "onPanic", function(k)
-    if k == kernelCoroutine then
-      isPanic = true
-    end
-  end)
-
   rawset(thread, "newPID", function()
     if not initRan then
       initRan = true
@@ -411,6 +403,7 @@ local threadMan = function()
       fErr.write(msg)
       oldError()
     else
+      kernel.log("An error: " .. msg)
       if term.isColor() then
         term.setTextColor(colors.red)
         print(msg)
@@ -423,9 +416,10 @@ local threadMan = function()
     end
   end
 
+
   local function tick(t, evt, ...)
     if kernelConsole then showKernelConsole() return end
-    if isPanic then while true do coroutine.yield() end end
+    if isPanic then while true do os.sleep(0) end end
     if t.dead then return end
     if t.paused then return end
     if t.filter ~= nil and evt ~= t.filter then return end
@@ -465,7 +459,7 @@ local threadMan = function()
   end
    
   local function tickAll()
-    if isPanic then while true do coroutine.yield() end end
+    if isPanic then while true do os.sleep(0) end end
     if #starting > 0 then
       local clone = starting
       starting = {}
@@ -521,13 +515,13 @@ local threadMan = function()
   if type(threadMain) == "function" then
     thread.startThread(threadMain)
   else
+    _G["print"] = print
+    _G["read"] = read
+    _G["write"] = write
+    _G["error"] = error
     thread.startThread(function() 
-      parallel.waitForAny(
-        function()
-          kernel.log("Starting init")
-          shell.run("/sbin/init")
-        end
-      )
+        kernel.log("Starting init")
+        shell.run("/sbin/init")
     end, curTty, "init", uid)
   end
    
@@ -543,12 +537,16 @@ end
   local oldPullEventRaw = os.pullEventRaw
   kernel.root = ROOT_DIR
   kernel.panic = function(msg)
+    if thread then
+      if thread.getUID(coroutine.running()) ~= 0 then
+        return false
+      end
+    end
     write("[" .. os.clock() .. "] Kernel panic: " .. (msg or ""))
     if fNoPanic then
       print(" ... no panic is active! Contining...")
     else
-      threads = {}
-      starting = {}
+      isPanic = true
       while true do
         sleep(0)
       end
@@ -604,8 +602,8 @@ end
 local function start()
   kernel.log("Boot directory = /" .. KERNEL_DIR)
   kernel.log("Root directory = /" .. ROOT_DIR)
-  if fs.exists("/" .. KERNEL_DIR .. "/var/log/kernel_log") then
-    fs.delete("/" .. KERNEL_DIR .. "/var/log/kernel_log")
+  if fs.exists(ROOT_DIR .. "/var/log/kernel_log") then
+    fs.delete(ROOT_DIR .. "/var/log/kernel_log")
   end
   if fs.exists(ROOT_DIR .. "/tmp") and fs.isDir(ROOT_DIR .. "/tmp") then
     for k, v in pairs(fs.list(ROOT_DIR .. "/tmp")) do
@@ -674,11 +672,7 @@ end
 
 kernel = applyreadonly(kernel) _G["kernel"] = kernel
 
-if #argv == 0 then
-  return
-end
-
-if argv[1] == "start" then
+if #argv == 0 or argv[1] == "start" then
   if #argv > 1 then
     for i = 2, #argv do
       if argv[i] == "fDebug" then fDebug = true end

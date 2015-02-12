@@ -1,7 +1,6 @@
 --UberSHell
 s = ""
 local history = {}
-local background = false
 local x = users.getHome(thread.getUID(coroutine.running()))
 shell.setDir(string.sub(x, 2, string.len(x)))
 local user = users.getUsernameByUID(thread.getUID(coroutine.running()))
