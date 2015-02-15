@@ -154,7 +154,7 @@ local threadMan = function()
 
   lua.include("copy")
 
-  thread = {["kerneld"] = 0}
+  thread = {}
 
   local newStdin = function()
     return {isStdin = true}
@@ -358,16 +358,11 @@ local threadMan = function()
     return nil
   end)
 
-  local oldPrint = print
-  local oldWrite = write
-  local oldRead = read
-  local oldError = error
-
   print = function( ... )
     local x = thread.status(thread.getPID(coroutine.running()))
     local fOut = x.stdout
     if fOut.isStdout then
-      oldPrint(unpack(arg))
+      oldprint(unpack(arg))
     else
       fOut.writeLine(table.concat(arg, ""))
     end
@@ -376,7 +371,7 @@ local threadMan = function()
   write = function(data)
     local fOut = thread.status(thread.getPID(coroutine.running())).stdout
     if fOut.isStdout then
-      oldWrite(data)
+      oldwrite(data)
     else
       fOut.write(data)
     end
@@ -387,7 +382,7 @@ local threadMan = function()
     local fIn = y.stdin
     local x
     if fIn.isStdin then
-      x = oldRead(mask, history)
+      x = oldread(mask, history)
     else
       x = fIn.readLine()
     end
@@ -401,7 +396,7 @@ local threadMan = function()
     local fErr = y.stderr
     if not fErr.isStderr then
       fErr.write(msg)
-      oldError()
+      olderror()
     else
       kernel.log("An error: " .. msg)
       if term.isColor() then
@@ -571,6 +566,24 @@ kernel.log = function(msg)
 end
 
 kernel.loadModule = function(module, panic)
+  if _G[module] then return true end
+  if _G["loadmodule_" .. module] then
+    kernel.log("Loading module " .. module)
+    status, err = pcall(_G["loadmodule_" .. module])
+    if status then
+      kernel.log("Loading module DONE")
+      table.insert(loadedModules, module)
+      _G["loadmodule_" .. module] = nil
+      return true
+    else
+      kernel.log("Loading module FAILED")
+      if panic then
+        kernel.panic("Failed to load module " .. module .. "\nError: " .. err)
+      else
+        error("Failed to load module" .. module .. "\nError: " .. err)
+      end
+    end
+  end
   for i = 1, #loadedModules do
     if loadedModules[i] == module then
       return true
@@ -590,13 +603,6 @@ kernel.loadModule = function(module, panic)
       error("Failed to load module" .. module .. "\nError: " .. err)
     end
   end
-end
-kernel.LISTMODULES = function()
-  return fs.list(ROOT_DIR .. "/lib/modules")
-end
-
-kernel.LISTFLAGS = function()
-  return {"Debug", "Silent", "NoPanic", "Log"}
 end
 
 local function start()
@@ -649,7 +655,7 @@ local function start()
     modules = fs.list(ROOT_DIR .. "/lib/modules")
   else
     modules = {}
-    for i = 2, #argv do
+    for i = 1, #argv do
       if string.sub(argv[i], 1, 1) == "m" then
         table.insert(modules, string.sub(argv[i], 2, #argv[i]))
       end
@@ -665,36 +671,15 @@ local function start()
   threadMan()
 end
 
-local function stop()
-  os.pullEvent = oldPullEvent
-  os.pullEventRaw = oldPullEventRaw
-end
-
 kernel = applyreadonly(kernel) _G["kernel"] = kernel
 
-if #argv == 0 or argv[1] == "start" then
-  if #argv > 1 then
-    for i = 2, #argv do
-      if argv[i] == "fDebug" then fDebug = true end
-      if argv[i] == "fNoPanic" then fNoPanic = true end
-      if argv[i] == "fLog" then fLog = true end
-      if argv[i] == "fSilent" then fSilent = true end
-    end
+if #argv > 0 then
+  for i = 1, #argv do
+    if argv[i] == "fDebug" then fDebug = true end
+    if argv[i] == "fNoPanic" then fNoPanic = true end
+    if argv[i] == "fLog" then fLog = true end
+    if argv[i] == "fSilent" then fSilent = true end
   end
-  start()
-  return
 end
-
-if argv[1] == "unload" then
-  stop()
-  return
-end
-
-if argv[1] == "restart" then
-  os.reboot()
-end
-
-if argv[1] == "stop" then
-  os.shutdown()
-end
-
+start()
+return

@@ -1,4 +1,4 @@
-BASE_PACKAGES = corelib coreutils fsdrv init login uberkernel uboot udev ush libarchive upt
+BASE_PACKAGES = corelib coreutils init login uberkernel uboot udev ush libarchive upt
 PACKAGES = $(BASE_PACKAGES) libjson luamin utar devutils ugtk
 
 all: clean prepare base configure
@@ -16,7 +16,7 @@ base: populatefs $(BASE_PACKAGES)
 complete: populatefs $(PACKAGES)
 
 populatefs:
-	mkdir -p out/{bin,boot,dev,etc/init.d,home,lib/{modules,drivers},root,sbin,sys/rom,tmp,var/{lib,lock,log,cache},usr/{bin,lib,local,share,pkg,src},mnt}
+	mkdir -p out/{bin,boot,dev,etc/init.d,home,lib,root,sbin,sys/rom,tmp,var/{lib,lock,log,cache},usr/{bin,lib,local,share,pkg,src},mnt}
 
 $(PACKAGES):
 	$(MAKE) -C packages/$@ clean

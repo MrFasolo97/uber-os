@@ -8,6 +8,12 @@ fsdf = {}
 
 local loadFsDriver = function(drv)
   kernel.log("Loading Filesystem driver " .. drv)
+  if _G["loadfsdriver_" .. drv] then
+    _G["loadfsdriver_" .. drv]()
+    _G["loadfsdriver_" .. drv] = nil
+    kernel.log("Loading Filesystem driver DONE")
+    return
+  end
   shell.run(kernel.root .. "/lib/drivers/fs/" .. drv)
   kernel.log("Loading Filesystem driver DONE")
 end
@@ -76,7 +82,7 @@ function fsd.normalizePath(path)
   if string.sub(path, #path, #path) == "/" then
     path = string.sub(path, 1, #path - 1)
   end
-  return path
+  return "/" .. shell.resolve(path)
 end
 
 function fsd.resolveLinks(path)
