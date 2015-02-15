@@ -9,12 +9,20 @@ fsdf = {}
 local loadFsDriver = function(drv)
   kernel.log("Loading Filesystem driver " .. drv)
   if _G["loadfsdriver_" .. drv] then
-    _G["loadfsdriver_" .. drv]()
+    status, err = pcall(_G["loadfsdriver_" .. drv])
+    if not status then
+      kernel.log("Loading Filesystem driver FAILED")
+      return
+    end
     _G["loadfsdriver_" .. drv] = nil
     kernel.log("Loading Filesystem driver DONE")
     return
   end
-  shell.run(kernel.root .. "/lib/drivers/fs/" .. drv)
+  status = shell.run(kernel.root .. "/lib/drivers/fs/" .. drv)
+  if not status then
+    kernel.log("Loading Filesystem driver FAILED")
+    return
+  end
   kernel.log("Loading Filesystem driver DONE")
 end
 
@@ -404,6 +412,11 @@ for k, v in pairs(oldfs) do
       mount, mountPath = fsd.getMount(fsd.resolveLinks(arg[1]))
     end
     local retVal
+    if k == "copy" or k == "move" then
+      if fs.isDir(arg[2]) then
+        arg[2] = fsd.normalizePath(arg[2]) .. "/"  .. oldfs.getName(arg[1])
+      end
+    end
     if getfenv()[mount.fs] and getfenv()[mount.fs][k] then
        retVal = getfenv()[mount.fs][k](mountPath, fsd.normalizePath(mount.dev), unpack(arg))
     else

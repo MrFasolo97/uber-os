@@ -398,7 +398,6 @@ local threadMan = function()
       fErr.write(msg)
       olderror()
     else
-      kernel.log("An error: " .. msg)
       if term.isColor() then
         term.setTextColor(colors.red)
         print(msg)

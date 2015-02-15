@@ -1,0 +1,2 @@
+DEPENDS = {}
+VERSION = {479, 0, 0}

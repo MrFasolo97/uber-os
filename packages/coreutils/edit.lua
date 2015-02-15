@@ -53,13 +53,13 @@ local sStatus = "Press Ctrl to access menu"
 local function load( _sPath )
 	tLines = {}
 	if fs.exists( _sPath ) then
-		local file = fs.open( _sPath, "r" )
-		local sLine = file.readLine()
+		local file = io.open( _sPath, "r" )
+		local sLine = file:read()
 		while sLine do
 			table.insert( tLines, sLine )
-			sLine = file.readLine()
+			sLine = file:read()
 		end
-		file.close()
+		file:close()
 	end
 	
 	if #tLines == 0 then
@@ -478,9 +478,16 @@ while bRunning do
 		elseif param == keys.delete then
 			-- Delete
 			if not bMenu and not bReadOnly then
-		   table.remove(tLines, y)
-       y = y - 1
-       redrawText()
+				if  x < string.len( tLines[y] ) + 1 then
+					local sLine = tLines[y]
+					tLines[y] = string.sub(sLine,1,x-1) .. string.sub(sLine,x+1)
+					redrawLine(y)
+				elseif y<#tLines then
+					tLines[y] = tLines[y] .. tLines[y+1]
+					table.remove( tLines, y+1 )
+					redrawText()
+					redrawMenu()
+				end
 			end
 		elseif param == keys.backspace then
 			-- Backspace
