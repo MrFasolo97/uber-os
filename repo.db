@@ -20,7 +20,6 @@ F/upt/Build.lua
 F/upt/upt.lua
 F/upt/PKGINFO.lua
 F/upt/Makefile
-F/upt/.upt.lua.swp
 D/libjson
 F/libjson/Build.lua
 F/libjson/libjson.lua
