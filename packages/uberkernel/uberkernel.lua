@@ -1,57 +1,82 @@
 --UberKernel
-KERNEL_DIR = fs.getDir(shell.getRunningProgram())
-local kernelConsole = false
+KERNEL_DIR = fs.getDir(shell.getRunningProgram()) --Kernel directory path
+local kernelConsole = false --Show the debug console
+
+local argv = { ... } --Kernel arguments
+
+--STD stream
+
+local newStdin = function() --Create new stdin stream
+  return {
+    isStdin = true,
+    close = function() end,
+    flush = function() end,
+    readLine = read,
+    readAll = function()
+      local z = ""
+      while true do
+        local x = read()
+        if x == "\\eof" then break end
+        z = z .. "\n" .. x
+      end
+      return z
+    end
+  }
+end
+
+local newStdout = function() --Create new stdout stream
+  return {
+    isStdout = true,
+    close = function() end,
+    flush = function() end,
+    write = function(x) write(x) end,
+    writeLine = function(x) write(x .. "\n") end
+  }
+end
+
+local newStderr = function() --Create new stderr stream
+  return {
+    isStderr = true,
+    close = function() end,
+    flush = function() end,
+    write = function(x) printError(x) end,
+    writeLine = function(x) printError(x) end
+  }
+end
+
+
+--Stock functions and APIs
+
 local oldprint = print
 local oldwrite = write
 local oldread  = read
 local olderror = error
+local oldPrintError = printError
 local nativefs = fs
 local kernelCoroutine = coroutine.running()
 
 --Thread manager
-local threads = {}
-local starting = {}
-local eventFilter = nil
-local initRan = false
-local daemons = {}
-local isPanic = false
+local threads = {} --Currently running threads
+local starting = {} --Threads, that are just started
+local eventFilter = nil --Event filter, yet unused
+local initRan = false --First process ran?
+local daemons = {} --Currently running deamons (PIDs)
+local isPanic = false --Is kernel in panic
 
---Virtual terminals
+kernel = {} --Main class
 
-local tty = {}
-local curTty = 1
-local blockEvent = false
-
-kernel = {}
-
-function kernel.switchTty(n)
-  if thread.getUID(coroutine.running()) ~= 0 then return false end
-  if n < 1 or n > 6 then return false end
-  for k, v in pairs(tty) do v.setVisible(false) end
-  tty[n].setVisible(true)
-  curTty = n
-  for k, v in pairs(daemons) do
-    thread.status(v).tty = n 
-  end
-  return true
-end
-
-argv = { ... }
-local absoluteReadOnly = {}
-
-local oldfs = fs
+local absoluteReadOnly = {} --Read-only tables
 
 --Boot flags
 local fDebug = false
 local fSilent = false
 local fNoPanic = false
 local fLog = false
+local fNoModeSet = false
 
-local loadedModules = {}
+local loadedModules = {} --Already loaded modules
 
-local threadManager = nil
-
-function applyreadonly(table, allowadd)
+function applyreadonly(table) --Make a table read-only
   local tmp = {}
   setmetatable(tmp, {
     __index = table,
@@ -82,8 +107,9 @@ rawset = function(table, index, value)
   end
   oldrawset(table, index, value)
 end
+
   
-local function showKernelConsole()
+local function showKernelConsole() --Show kernel debug console
   term.setTextColor(colors.white)
   term.setBackgroundColor(colors.black)
   term.clear()
@@ -149,25 +175,14 @@ local function showKernelConsole()
   kernelConsole = false
 end
 
-local threadMan = function()
+local threadMan = function() --Start the thread manager
   kernel.log("Starting thread manager")
 
   lua.include("copy")
 
-  thread = {}
+  thread = {} --Main thread manager class
 
-  local newStdin = function()
-    return {isStdin = true}
-  end
-
-  local newStdout = function()
-    return {isStdout = true}
-  end
-  
-  local newStderr = function()
-    return {isStderr = true}
-  end
-  rawset(thread, "newPID", function()
+  rawset(thread, "newPID", function() --Generate new PID
     if not initRan then
       initRan = true
       return 1
@@ -187,14 +202,14 @@ local threadMan = function()
     end
   end)
 
-  rawset(thread, "setUID", function(pid, uid, passwd)
+  rawset(thread, "setUID", function(pid, uid, passwd) --Change UID of process
     local t = thread.status(pid or thread.getPID(coroutine.running()))
-    if users.login(users.getUsernameByUID(uid), passwd) then
+    if thread.getUID(coroutine.running()) == 0 or users.login(users.getUsernameByUID(uid), passwd) then
       t.uid = uid
     end
   end)
    
-  rawset(thread, "startThread", function(fn, tty, desc, uid, stdin, stdout, stderr, daemon)
+  rawset(thread, "startThread", function(fn, reserved, desc, uid, stdin, stdout, stderr, daemon) --Run the thread
     if thread.getUID(coroutine.running()) ~= 0 then
       daemon = nil
     end
@@ -207,30 +222,29 @@ local threadMan = function()
       uid = thread.getUID(coroutine.running())
     end
     table.insert(starting, {
-      cr = coroutine.create(fn),
-      blockTerminate = true,
-      tty = tty or curTty,
-      error = nil,
-      dead = false,
-      filter = nil,
-      kill = 0,
-      pid = newpid,
-      ppid = thread.getPID(coroutine.running()),
-      desc = desc or "",
-      uid = uid,
-      paused = false,
-      stdin = stdin or newStdin(),
-      stdout = stdout or newStdout(),
-      stderr = stderr or newStderr(), 
+      cr = coroutine.create(fn), --Process coroutine
+      blockTerminate = true, --Unused
+      error = nil, --Is process errored
+      dead = false, --Is process dead
+      filter = nil, --Event filter(unused)
+      kill = 0, --Kill status
+      pid = newpid, --Process ID
+      ppid = thread.getPID(coroutine.running()), --Parent Process ID
+      desc = desc or "", --Description
+      uid = uid, --UID of user, running process
+      paused = false, --Is process paused
+      stdin = stdin or newStdin(), --Stdin stream for process
+      stdout = stdout or newStdout(), --Stdout stream for process
+      stderr = stderr or newStderr(), --Stderr stream for process
       daemon = daemon
     })
     return newpid, starting[#starting]
   end)
 
-  rawset(thread, "runFile", function(file, tty, pause, uid, stdin, stdout, stderr, daemon)
+  rawset(thread, "runFile", function(file, reserved, pause, uid, stdin, stdout, stderr, daemon) --Start file
     local pid, t = thread.startThread(function()
       shell.run(file)
-    end, tty, daemon or file, uid or thread.getUID(coroutine.running()), stdin, stdout, stderr, daemon)
+    end, nil, daemon or file, uid or thread.getUID(coroutine.running()), stdin, stdout, stderr, daemon)
     if daemon and (thread.getUID(coroutine.running()) == 0) then
       t.ppid = 1
     end
@@ -242,7 +256,7 @@ local threadMan = function()
     end
   end)
 
-  rawset(thread, "runDaemon", function(file, name)
+  rawset(thread, "runDaemon", function(file, name) --Start daemon
     if thread.getUID(coroutine.running()) ~= 0 then
       kernel.log("Cannot start daemon " .. name .. " - Access denied!")
       return 
@@ -258,7 +272,7 @@ local threadMan = function()
     os.sleep(0)
   end)
 
-  rawset(thread, "stopDaemon", function(name)
+  rawset(thread, "stopDaemon", function(name) --Stop daemon
     if thread.getUID(coroutine.running()) ~= 0 then
       kernel.log("Cannot stop daemon " .. name .. " - Access denied!")
       return
@@ -273,14 +287,14 @@ local threadMan = function()
     kernel.log("Daemon " .. name .. " stopped")
   end)
 
-  rawset(thread, "getDaemonStatus", function(name)
+  rawset(thread, "getDaemonStatus", function(name) --Get daemon status (running or stopped)
     if daemons[name] then
       return "running"
     else
       return "stopped"
     end
   end)
-  rawset(thread, "kill", function(pid, level)
+  rawset(thread, "kill", function(pid, level) --Kill process
     if pid == 1 then
       kernel.log("Failed to kill init")
       return 
@@ -298,7 +312,7 @@ local threadMan = function()
     end
   end)
 
-  rawset(thread, "isKilled", function(cr)
+  rawset(thread, "isKilled", function(cr) --Is process killed
     for i = 1, #threads do
       if threads[i].cr == cr then
         return threads[i].kill
@@ -312,7 +326,7 @@ local threadMan = function()
     return 0
   end)
 
-  rawset(thread, "getPID", function(cr)
+  rawset(thread, "getPID", function(cr) --Return PID of coroutine
     for i = 1, #threads do
       if threads[i].cr == cr then
         return threads[i].pid
@@ -326,7 +340,7 @@ local threadMan = function()
     return 0
   end)
 
-  rawset(thread, "getUID", function(cr)
+  rawset(thread, "getUID", function(cr) --Return UID of coroutine
     for i = 1, #threads do
       if threads[i].cr == cr then
         return threads[i].uid
@@ -341,11 +355,11 @@ local threadMan = function()
   end)
 
 
-  rawset(thread, "getRunningThreads", function(cr)
+  rawset(thread, "getRunningThreads", function(cr) --Return running threads
     return threads
   end)
 
-  rawset(thread, "status", function(pid)
+  rawset(thread, "status", function(pid) --Get process status
     for i = 1, #threads do
       if threads[i].pid == pid then
         if thread.getUID(coroutine.running()) ~= 0 and
@@ -358,7 +372,7 @@ local threadMan = function()
     return nil
   end)
 
-  print = function( ... )
+  print = function( ... ) --Print override
     local x = thread.status(thread.getPID(coroutine.running()))
     local fOut = x.stdout
     if fOut.isStdout then
@@ -368,7 +382,7 @@ local threadMan = function()
     end
   end
 
-  write = function(data)
+  write = function(data) --Write override
     local fOut = thread.status(thread.getPID(coroutine.running())).stdout
     if fOut.isStdout then
       oldwrite(data)
@@ -377,7 +391,7 @@ local threadMan = function()
     end
   end
 
-  read = function(mask, history)
+  read = function(mask, history) --Read override
     local y = thread.status(thread.getPID(coroutine.running()))
     local fIn = y.stdin
     local x
@@ -389,43 +403,23 @@ local threadMan = function()
     return x
   end
 
-  error = function(msg)
-    msg = msg or ""
-    if not msg then olderror() return end
+  printError = function(msg) --Error override
     local y = thread.status(thread.getPID(coroutine.running()))
     local fErr = y.stderr
     if not fErr.isStderr then
-      fErr.write(msg)
-      olderror()
+      fErr.write(msg .. "\n")
     else
-      if term.isColor() then
-        term.setTextColor(colors.red)
-        print(msg)
-        term.setTextColor(colors.white)
-        olderror()
-      else
-        print(msg)
-        olderror()
-      end
+      oldPrintError(msg)
     end
   end
 
-
-  local function tick(t, evt, ...)
+  local function tick(t, evt, ...) --Resume process
     if kernelConsole then showKernelConsole() return end
     if isPanic then while true do os.sleep(0) end end
     if t.dead then return end
     if t.paused then return end
     if t.filter ~= nil and evt ~= t.filter then return end
     if evt == "terminate" then return end
-    if t.tty ~= curTty then
-      if evt == "key" or evt == "char" or evt == "paste" then
-        return
-      end
-    end
-    if blockEvent and (evt == "char" or evt == "key") then return end
-
-    term.redirect(tty[t.tty])
    
     coroutine.resume(t.cr, evt, ...)
     t.dead = (coroutine.status(t.cr) == "dead")
@@ -452,7 +446,7 @@ local threadMan = function()
     end
   end
    
-  local function tickAll()
+  local function tickAll() --Main routine
     if isPanic then while true do os.sleep(0) end end
     if #starting > 0 then
       local clone = starting
@@ -487,22 +481,8 @@ local threadMan = function()
       end
     end
   end
-   
-  rawset(thread, "setGlobalEventFilter", function(fn)
-    if eventFilter ~= nil then error("This can only be set once!") end
-    eventFilter = fn
-    rawset(thread, "setGlobalEventFilter", nil)
-  end)
 
   thread = applyreadonly(thread) _G["thread"] = thread
-
-  local tw, th = term.getSize()
-
-  for i = 1, 6 do
-    tty[i] = window.create(term.native(), 1, 1, tw, th, false)
-    tty[i].clear()
-  end
-  kernel.switchTty(1)
 
   _G = applyreadonly(_G, true)
 
@@ -512,11 +492,11 @@ local threadMan = function()
     _G["print"] = print
     _G["read"] = read
     _G["write"] = write
-    _G["error"] = error
+    _G["printError"] = printError
     thread.startThread(function() 
         kernel.log("Starting init")
         shell.run("/sbin/init")
-    end, curTty, "init", uid)
+    end, nil, "init", uid)
   end
    
   while #threads > 0 or #starting > 0 do
@@ -554,10 +534,10 @@ kernel.log = function(msg)
   end
   local logFile 
   if fLog then
-    if oldfs.exists(ROOT_DIR .. "/var/log/kernel_log") then
-      logFile = oldfs.open(ROOT_DIR .. "/var/log/kernel_log", "a")
+    if nativefs.exists(ROOT_DIR .. "/var/log/kernel_log") then
+      logFile = nativefs.open(ROOT_DIR .. "/var/log/kernel_log", "a")
     else
-      logFile = oldfs.open(ROOT_DIR .. "/var/log/kernel_log", "w")
+      logFile = nativefs.open(ROOT_DIR .. "/var/log/kernel_log", "w")
     end
     logFile.write(logmsg .. "\n")
     logFile.close()
@@ -605,8 +585,37 @@ kernel.loadModule = function(module, panic)
 end
 
 local function start()
+  if (multishell or window) and not fNoModeSet then
+    local s = {"/" .. shell.getRunningProgram()}
+    for i = 1, #argv do
+      s[i + 1] = argv[i]
+    end
+    os.sleep(0)
+    local a = _G["printError"]
+    function _G.printError()
+      _G["printError"] = a
+      term.redirect(term.native())
+      _G["multishell"] = nil
+      _G["window"] = nil
+      term.setBackgroundColor(colors.black)
+      term.setTextColor(colors.white)
+      term.clear()
+      term.setCursorPos(1, 1)
+      os.run({}, "/rom/programs/shell", unpack(s))
+    end
+    os.queueEvent("terminate")
+    return
+  end
   kernel.log("Boot directory = /" .. KERNEL_DIR)
   kernel.log("Root directory = /" .. ROOT_DIR)
+
+  _G.applyreadonly = applyreadonly
+  _G.rawset = rawset
+
+  _G.stdin = newStdin()
+  _G.stdout = newStdout()
+  _G.stderr = newStderr()
+
   if fs.exists(ROOT_DIR .. "/var/log/kernel_log") then
     fs.delete(ROOT_DIR .. "/var/log/kernel_log")
   end
@@ -674,10 +683,12 @@ kernel = applyreadonly(kernel) _G["kernel"] = kernel
 
 if #argv > 0 then
   for i = 1, #argv do
-    if argv[i] == "fDebug" then fDebug = true end
-    if argv[i] == "fNoPanic" then fNoPanic = true end
-    if argv[i] == "fLog" then fLog = true end
-    if argv[i] == "fSilent" then fSilent = true end
+    if argv[i] == "debug" then fDebug = true end
+    if argv[i] == "nomodeset" then fNoModeSet = true end
+    if argv[i] == "nopanic" then fNoPanic = true end
+    if argv[i] == "log" then fLog = true end
+    if argv[i] == "silent" then fSilent = true end
+    if argv[i]:match("^.*=") == "root=" then _G["ROOT_DIR"] = argv[i]:sub(6) end
   end
 end
 start()

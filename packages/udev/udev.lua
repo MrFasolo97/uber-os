@@ -31,6 +31,7 @@ function udev.readDevice(dev)
       mounted = disk.getMountPath(tmp)
     })
   end
+  return textutils.serialize({})
 end
 
 local function updatePeripherals()
