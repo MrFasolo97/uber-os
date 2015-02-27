@@ -1,3 +1,5 @@
+thread.registerSignal("INT", function() end)
+
 local argv = { ... }
 local f = fs.open("/etc/issue", "r")
 local issue = f.readAll()

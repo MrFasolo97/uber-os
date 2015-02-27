@@ -1,5 +1,5 @@
 --Uber Device Manager
-
+thread.registerSignal("INT", function() end)
 udev = {}
 
 local devices = {}

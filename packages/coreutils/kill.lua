@@ -1,22 +1,13 @@
 argv = { ... }
 if #argv == 0 then
-  print("Usage: kill <PID> [TERM|KILL]")
+  print("Usage: kill <PID> [SIG]")
   return
 end
-
-local x, y
-
+local y
 if #argv == 1 then
-  y = "KILL"
+  y = "TERM"
 else
   y = argv[2]
 end
 
-if y == "KILL" then
-  x = 2
-end
-if y == "TERM" then
-  x = 1
-end
-
-thread.kill(tonumber(argv[1]), x)
+thread.kill(tonumber(argv[1]), y)

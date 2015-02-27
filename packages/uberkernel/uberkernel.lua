@@ -1,6 +1,5 @@
 --UberKernel
 KERNEL_DIR = fs.getDir(shell.getRunningProgram()) --Kernel directory path
-local kernelConsole = false --Show the debug console
 
 local argv = { ... } --Kernel arguments
 
@@ -115,73 +114,6 @@ rawset = function(table, index, value)
   oldrawset(table, index, value)
 end
 
-  
-local function showKernelConsole() --Show kernel debug console
-  term.setTextColor(colors.white)
-  term.setBackgroundColor(colors.black)
-  term.clear()
-  term.setCursorPos(1, 1)
-  oldprint("Kernel debug console <CTRL>+T")
-  oldprint("Type 'exit' to leave, 'help' for available commands")
-  local s = ""
-  local history = {}
-  while s ~= "exit" do
-    oldwrite("> ")
-    s = oldread(nil, history)
-    if s == "exit" then
-      kernelConsole = false
-      return
-    end
-    if s == "help" then
-      oldprint("exit, help, reboot, shutdown, saferb, killbutinit, killall, kill, rbtocraftos, umountall, ps")
-    end
-    if s == "reboot" then os.reboot() end
-    if s == "shutdown" then os.shutdown() end
-    if s == "saferb" then
-      os.reboot()
-    end
-    if s == "killbutinit" then
-      starting = {}
-      threads = {threads[1]}
-    end
-    if s == "killall" then
-      starting = {}
-      threads = {}
-    end
-    if s == "rbtocraftos" then
-      fs.move(ROOT_DIR .. "/startup", ROOT_DIR .. "/.startup_backup")
-      local x = fs.open(ROOT_DIR .. "/startup", "w")
-      x.write("ROOT_DIR=fs.getDir(shell.getRunningProgram())\
-      fs.delete(ROOT_DIR .. '/startup')\
-      fs.move(ROOT_DIR .. '/.startup_backup', ROOT_DIR .. '/startup')\
-      print('Be careful! UberOS will start on next reboot!')")
-      x.close()
-      os.reboot()
-    end
-    if s == "umountall" then
-      oldprint("WIP")
-    end
-    if s == "ps" then
-      for k, v in pairs(threads) do
-        oldprint(v.pid, " ", v.desc, " ", v.uid)
-      end
-    end
-    if string.sub(s, 1, 1) == ":" then loadstring(string.sub(s, 2, #s))() end
-    if string.sub(s, 1, 5) == "kill " then
-      if #s <= 5 then
-        oldprint("Usage: kill <PID>")
-      end
-      local pid = tonumber(string.sub(s, 6, #s))
-      for k, v in pairs(threads) do if v.pid == pid then 
-        table.remove(threads, k)
-        break 
-      end end
-    end
-    table.insert(history, s)
-  end
-  kernelConsole = false
-end
-
 local threadMan = function() --Start the thread manager
   kernel.log("Starting thread manager")
 
@@ -212,7 +144,7 @@ local threadMan = function() --Start the thread manager
   rawset(thread, "setUID", function(pid, uid, passwd) --Change UID of process
     local t = thread.status(pid or thread.getPID(coroutine.running()))
     if thread.getUID(coroutine.running()) == 0 or users.login(users.getUsernameByUID(uid), passwd) then
-      t.uid = uid
+      for k, v in pairs(threads) do if t.pid == v.pid then v.uid = uid end end
     end
   end)
    
@@ -233,11 +165,10 @@ local threadMan = function() --Start the thread manager
     end
     table.insert(starting, {
       cr = coroutine.create(fn), --Process coroutine
-      blockTerminate = true, --Unused
       error = nil, --Is process errored
       dead = false, --Is process dead
-      filter = nil, --Event filter(unused)
-      kill = 0, --Kill status
+      filter = nil, --Event filter(glitchy)
+      kill = false, --Kill status
       pid = newpid, --Process ID
       ppid = thread.getPID(coroutine.running()), --Parent Process ID
       desc = desc or "", --Description
@@ -246,7 +177,8 @@ local threadMan = function() --Start the thread manager
       stdin = stdin or newStdin(), --Stdin stream for process
       stdout = stdout or newStdout(), --Stdout stream for process
       stderr = stderr or newStderr(), --Stderr stream for process
-      daemon = daemon
+      daemon = daemon,
+      signals = {}
     })
     return newpid, starting[#starting]
   end)
@@ -259,7 +191,8 @@ local threadMan = function() --Start the thread manager
       t.ppid = 1
     end
     if pause then
-      thread.status(thread.getPID(coroutine.running())).paused = true
+      local ppid = thread.getPID(coroutine.running())
+      for k, v in pairs(threads) do if ppid == v.pid then v.paused = true end end
       coroutine.yield()
     else
       return pid
@@ -268,33 +201,31 @@ local threadMan = function() --Start the thread manager
 
   rawset(thread, "runDaemon", function(file, name) --Start daemon
     if thread.getUID(coroutine.running()) ~= 0 then
-      kernel.log("Cannot start daemon " .. name .. " - Access denied!")
+      printError("Cannot start daemon " .. name .. " - Access denied!")
       return 
     end
     if daemons[name] then
-      kernel.log("Daemon " .. name .. " is already running.")
+      printError("Daemon " .. name .. " is already running.")
       return
     end
     local pid, t = thread.runFile(file, nil, false, nil, nil, nil, nil, name)
     daemons[name] = pid
     fs.open("/var/lock/" .. name, "w").close()
-    kernel.log("Daemon " .. name .. " started")
     os.sleep(0)
   end)
 
   rawset(thread, "stopDaemon", function(name) --Stop daemon
     if thread.getUID(coroutine.running()) ~= 0 then
-      kernel.log("Cannot stop daemon " .. name .. " - Access denied!")
+      printError("Cannot stop daemon " .. name .. " - Access denied!")
       return
     end
     if not daemons[name] then
-      kernel.log("Daemon " .. name .. " is not running.")
+      printError("Daemon " .. name .. " is not running.")
       return
     end
-    thread.kill(daemons[name], 2)
+    thread.kill(daemons[name], "TERM")
     daemons[name] = nil
     fs.delete("/var/lock/" .. name)
-    kernel.log("Daemon " .. name .. " stopped")
   end)
 
   rawset(thread, "getDaemonStatus", function(name) --Get daemon status (running or stopped)
@@ -304,33 +235,29 @@ local threadMan = function() --Start the thread manager
       return "stopped"
     end
   end)
-  rawset(thread, "kill", function(pid, level) --Kill process
-    if pid == 1 then
-      kernel.log("Failed to kill init")
-      return 
-    end
-
+  rawset(thread, "registerSignal", function(sig, func)
     for i = 1, #threads do
-      if threads[i].pid == pid then
-        if (threads[i].uid == thread.getUID(coroutine.running())) or
-        (thread.getUID(coroutine.running()) == 0) then
-          threads[i].kill = level
-        else
-          kernel.log("Failed to kill process " .. pid .. " - Access Denied")
+      if threads[i].pid == thread.getPID(coroutine.running()) then
+        if (sig ~= "KILL") or threads[i].pid == 1 then
+          threads[i].signals[sig] = func
         end
       end
     end
   end)
 
-  rawset(thread, "isKilled", function(cr) --Is process killed
+  rawset(thread, "kill", function(pid, sig) --Send signal to process
     for i = 1, #threads do
-      if threads[i].cr == cr then
-        return threads[i].kill
-      end
-    end
-    for i = 1, #starting do
-      if starting[i].cr == cr then
-        return starting[i].kill
+      if threads[i].pid == pid then
+        if (thread.getUID(coroutine.running()) == 0) or
+           (thread.getUID(coroutine.running()) == threads[i].uid) then
+          if threads[i].signals[sig] then
+            threads[i].signals[sig]()
+          else
+            if sig == "KILL" then threads[i].kill = true end
+            if sig == "INT" then threads[i].kill = true end
+            if sig == "TERM" then threads[i].kill = true end
+          end
+        end
       end
     end
     return 0
@@ -365,19 +292,30 @@ local threadMan = function() --Start the thread manager
   end)
 
 
-  rawset(thread, "getRunningThreads", function(cr) --Return running threads
-    return threads
+  rawset(thread, "getRunningThreads", function() --Return running threads
+    local r = {}
+    for k, v in pairs(threads) do
+      r[k] = thread.status(v.pid)
+    end
+    return r
   end)
 
   rawset(thread, "status", function(pid) --Get process status
     for i = 1, #threads do
       if threads[i].pid == pid then
-        if thread.getUID(coroutine.running()) ~= 0 and
-          threads[i].uid ~= thread.getUID(coroutine.running()) then
-          printError("Cannot get status: Access denied!")
-          return nil
-        end
-        return threads[i]
+        return {
+          dead = threads[i].dead,
+          kill = threads[i].kill,
+          pid = pid,
+          ppid = threads[i].ppid,
+          desc = threads[i].desc,
+          uid = threads[i].uid,
+          paused = threads[i].paused,
+          stdin = threads[i].stdin,
+          stdout = threads[i].stdout,
+          stderr = threads[i].stderr,
+          daemon = threads[i].daemon
+        }
       end
     end
     return nil
@@ -405,14 +343,13 @@ local threadMan = function() --Start the thread manager
   end
 
   local function tick(t, evt, ...) --Resume process
-    if kernelConsole then showKernelConsole() return end
     if isPanic then while true do os.sleep(0) end end
     if t.dead then return end
     if t.paused then return end
     if t.filter ~= nil and evt ~= t.filter then return end
-    if evt == "terminate" then return end
+    if evt == "terminate" then thread.kill(t.pid, "INT") end
     kernel.doHook("before_resume", t.pid, evt, ...)
-    if t.kill < 2 then
+    if not t.kill then
       coroutine.resume(t.cr, evt, ...)
       t.dead = (coroutine.status(t.cr) == "dead")
     else
@@ -423,13 +360,12 @@ local threadMan = function() --Start the thread manager
       local clone = deepcopy(daemons)
       for k, v in pairs(daemons) do
         if k == t.daemon then
-          kernel.log("Daemon " .. t.daemon .. " stopped")
           clone[k] = nil
         end
       end
       daemons = clone
-      thread.status(t.ppid).paused = false
-      tick(thread.status(t.ppid), "resume_event")
+      for k, v in pairs(threads) do if t.ppid == v.pid then v.paused = false end end
+      for k, v in pairs(threads) do if t.ppid == v.pid then tick(v, "resume_event") end end
       t.stdout.close()
       t.stdin.close()
       t.stderr.close()
@@ -453,9 +389,6 @@ local threadMan = function() --Start the thread manager
       e = {eventFilter(coroutine.yield())}
     else
       e = {coroutine.yield()}
-    end
-    if e[1] == "terminate" then
-      kernelConsole = not kernelConsole
     end
     local dead = nil
     for k,v in ipairs(threads) do
@@ -652,17 +585,6 @@ local function start()
   shell.setAlias( "clr", ROOT_DIR .. "/bin/clear" )
   shell.setAlias( "sh", ROOT_DIR .. "/bin/ush")
 
-  os.pullEventRaw = function(a)
-    if thread then
-      local k = thread.isKilled(coroutine.running())
-      if k == 1 then
-        error() --Kill Process
-        return
-      end
-    end
-    return oldPullEventRaw(a)
-  end
-  
   os.pullEvent = os.pullEventRaw
   local modules
   if #argv <= 1 then

@@ -1,5 +1,9 @@
 --UberOS init
 
+thread.registerSignal("INT", function() end)
+thread.registerSignal("TERM", function() end)
+thread.registerSignal("KILL", function() end)
+
 lua.include("split")
 
 function usage()
