@@ -25,6 +25,8 @@ function run(level)
       shell.run("/etc/init.d/" .. string.sub(v, 4, #v) .. "restart")
     end
   end
+  if level == 0 then if acpi then acpi.shutdown() else os.shutdown() end end
+  if level == 6 then if acpi then acpi.reboot() else os.reboot() end end
   while true do sleep(999999) end
 end
 
@@ -39,5 +41,5 @@ elseif argv[1] == "--help" then
   kernel.log("Stopping init")
   return
 else
-  run(argv[1])
+  run(math.floor(tonumber(argv[1])))
 end

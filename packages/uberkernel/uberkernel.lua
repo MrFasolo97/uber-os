@@ -15,6 +15,8 @@ local olderror = error
 local oldPrintError = printError
 local nativefs = fs
 local kernelCoroutine = coroutine.running()
+local hooks = {} --Hooking system
+
 
 --STD stream
 
@@ -404,9 +406,14 @@ local threadMan = function() --Start the thread manager
     if t.paused then return end
     if t.filter ~= nil and evt ~= t.filter then return end
     if evt == "terminate" then return end
-   
-    coroutine.resume(t.cr, evt, ...)
-    t.dead = (coroutine.status(t.cr) == "dead")
+    kernel.doHook("before_resume", t.pid, evt, ...)
+    if t.kill < 2 then
+      coroutine.resume(t.cr, evt, ...)
+      t.dead = (coroutine.status(t.cr) == "dead")
+    else
+      t.dead = true
+    end
+    kernel.doHook("after_resume", t.pid, evt, ...)
     if t.dead and t.pid ~= 1 then
       local clone = deepcopy(daemons)
       for k, v in pairs(daemons) do
@@ -474,6 +481,7 @@ local threadMan = function() --Start the thread manager
     _G["newStdin"] = newStdin
     _G["newStdout"] = newStdout
     _G["newStderr"] = newStderr
+    os = applyreadonly(os) _G["os"] = os
     thread.startThread(function() 
         kernel.log("Starting init")
         shell.run("/sbin/init")
@@ -522,6 +530,23 @@ kernel.log = function(msg)
     end
     logFile.write(logmsg .. "\n")
     logFile.close()
+  end
+end
+
+kernel.registerHook = function(name, func)
+  if thread and thread.getUID(coroutine.running()) ~= 0 then
+    return false
+  end
+  if not hooks[name] then hooks[name] = {} end
+  table.insert(hooks[name], func)
+end
+
+kernel.doHook = function (name, ...) --Run hook
+  if thread and thread.getUID(coroutine.running()) ~= 0 then
+    return false
+  end
+  for k, v in pairs(hooks[name] or {}) do
+    v(unpack(arg))
   end
 end
 
@@ -625,13 +650,9 @@ local function start()
   os.pullEventRaw = function(a)
     if thread then
       local k = thread.isKilled(coroutine.running())
-      if k >= 2 then
-        kernel.log("Killed process. PID = " .. thread.getPID(coroutine.running()))
+      if k == 1 then
         error() --Kill Process
         return
-      end
-      if k == 1 then
-        return "terminate"
       end
     end
     return oldPullEventRaw(a)

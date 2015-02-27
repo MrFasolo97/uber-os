@@ -3,7 +3,7 @@ local x = {}
 
 for k, v in pairs(t) do
   table.insert(x, {
-    v.pid, v.desc, users.getUsernameByUID(v.uid)
+    math.floor(v.pid), v.desc, users.getUsernameByUID(v.uid)
   })
 end
 

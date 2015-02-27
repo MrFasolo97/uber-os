@@ -204,6 +204,12 @@ function fsd.loadFs(mountPath)
   end
 end
 
+function fsd.sync() 
+  for k, v in pairs(mounts) do
+    fsd.saveFs(k)
+  end
+end
+
 function fsd.deleteNode(node)
   if not nodes[node] then return end
   if nodes[node].onwer == thread.getUID(coroutine.running()) then
@@ -436,5 +442,8 @@ shell.setDir = function(dir)
     error("Access denied!")
   end
 end
+
+kernel.registerHook("acpi_shutdown", fsd.sync)
+kernel.registerHook("acpi_reboot", fsd.sync)
 
 fsd = applyreadonly(fsd) _G["fsd"] = fsd

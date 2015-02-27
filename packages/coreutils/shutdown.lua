@@ -1,8 +1,5 @@
-if term.isColour() then
-	term.setTextColour( colours.yellow )
+if acpi then
+  acpi.shutdown()
+else
+  os.shutdown()
 end
-print( "Goodbye" )
-term.setTextColour( colours.white )
-
-sleep( 1 )
-os.shutdown()

@@ -1,4 +1,4 @@
-SRC = lua fsd users
+SRC = lua fsd users acpi
 PWD = $(shell pwd)
 all	:	clean prepare $(SRC)
 clean: $(addsuffix .clean, $(SRC))

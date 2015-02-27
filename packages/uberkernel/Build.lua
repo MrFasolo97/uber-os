@@ -1,7 +1,7 @@
 --Build this package from inside UberOS
 lua.include("min")
 local SRC = {"uberkernel"}
-local SRC_MODULES = {"fsd", "lua", "users"}
+local SRC_MODULES = {"fsd", "lua", "users", "acpi"}
 local SRC_DRIVERS_FS = {"ccfs", "devfs", "romfs", "ufs"}
 local PWD = shell.dir()
 local argv = { ... }

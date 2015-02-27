@@ -1,4 +1,4 @@
-local SRC = {"lua", "fsd", "users"}
+local SRC = {"lua", "fsd", "users", "acpi"}
 local PWD = shell.dir()
 
 local argv = { ... }
