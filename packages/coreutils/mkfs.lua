@@ -2,7 +2,8 @@
 
 local argv = { ... }
 if #argv < 2 then
-  error("Usage: mkfs <FS> <DEVICE>")
+  print("Usage: mkfs <FS> <DEVICE>")
+  return
 end
 
 local x = argv[1]

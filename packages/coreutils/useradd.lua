@@ -3,7 +3,7 @@
 local argv = { ... }
 
 if #argv < 3 then
-  error("Usage: useradd <name> <home> <shell>")
+  print("Usage: useradd <name> <home> <shell>")
   return
 end
 

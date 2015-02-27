@@ -1,7 +1,8 @@
 local argv = { ... }
 
 if #argv < 2 then
-  error("Usage ln <TARGET> <LINK_NAME>")
+  print("Usage: ln <TARGET> <LINK_NAME>")
+  return
 end
 
 if fs.exists(fs.normalizePath(shell.resolve(argv[2]))) then error("Link already exists!") end

@@ -3,7 +3,7 @@
 local argv = { ... }
 
 if #argv < 1 then
-  error("Usage: userdel <name>")
+  print("Usage: userdel <name>")
   return
 end
 

@@ -4,45 +4,6 @@ local kernelConsole = false --Show the debug console
 
 local argv = { ... } --Kernel arguments
 
---STD stream
-
-local newStdin = function() --Create new stdin stream
-  return {
-    isStdin = true,
-    close = function() end,
-    flush = function() end,
-    readLine = read,
-    readAll = function()
-      local z = ""
-      while true do
-        local x = read()
-        if x == "\\eof" then break end
-        z = z .. "\n" .. x
-      end
-      return z
-    end
-  }
-end
-
-local newStdout = function() --Create new stdout stream
-  return {
-    isStdout = true,
-    close = function() end,
-    flush = function() end,
-    write = function(x) write(x) end,
-    writeLine = function(x) write(x .. "\n") end
-  }
-end
-
-local newStderr = function() --Create new stderr stream
-  return {
-    isStderr = true,
-    close = function() end,
-    flush = function() end,
-    write = function(x) printError(x) end,
-    writeLine = function(x) printError(x) end
-  }
-end
 
 
 --Stock functions and APIs
@@ -54,6 +15,46 @@ local olderror = error
 local oldPrintError = printError
 local nativefs = fs
 local kernelCoroutine = coroutine.running()
+
+--STD stream
+
+newStdin = function() --Create new stdin stream
+  return {
+    isStdin = true,
+    close = function() end,
+    flush = function() end,
+    readLine = oldread,
+    readAll = function(mask, history)
+      local z = ""
+      while true do
+        local x = oldread(mask, history)
+        if x == "\\eof" then break end
+        z = z .. "\n" .. x
+      end
+      return z
+    end
+  }
+end
+
+newStdout = function() --Create new stdout stream
+  return {
+    isStdout = true,
+    close = function() end,
+    flush = function() end,
+    write = function(x) oldwrite(x) end,
+    writeLine = function(x) oldwrite(x .. "\n") end
+  }
+end
+
+newStderr = function() --Create new stderr stream
+  return {
+    isStderr = true,
+    close = function() end,
+    flush = function() end,
+    write = function(x) oldPrintError(x) end,
+    writeLine = function(x) oldPrintError(x) end
+  }
+end
 
 --Thread manager
 local threads = {} --Currently running threads
@@ -213,6 +214,9 @@ local threadMan = function() --Start the thread manager
     if thread.getUID(coroutine.running()) ~= 0 then
       daemon = nil
     end
+    --[[stdin = stdin or thread.status(thread.getPID(coroutine.running())).stdin
+    stdout = stdout or thread.status(thread.getPID(coroutine.running())).stdout
+    stderr = stderr or thread.status(thread.getPID(coroutine.running())).stderr]]
     local newpid = thread.newPID()
     if not uid then
       uid = 0
@@ -373,44 +377,24 @@ local threadMan = function() --Start the thread manager
   end)
 
   print = function( ... ) --Print override
-    local x = thread.status(thread.getPID(coroutine.running()))
-    local fOut = x.stdout
-    if fOut.isStdout then
-      oldprint(unpack(arg))
-    else
-      fOut.writeLine(table.concat(arg, ""))
-    end
+    arg = arg or {}
+    local fOut = thread.status(thread.getPID(coroutine.running())).stdout
+    fOut.writeLine(table.concat(arg, ""))
   end
 
   write = function(data) --Write override
     local fOut = thread.status(thread.getPID(coroutine.running())).stdout
-    if fOut.isStdout then
-      oldwrite(data)
-    else
-      fOut.write(data)
-    end
+     fOut.write(data)
   end
 
   read = function(mask, history) --Read override
-    local y = thread.status(thread.getPID(coroutine.running()))
-    local fIn = y.stdin
-    local x
-    if fIn.isStdin then
-      x = oldread(mask, history)
-    else
-      x = fIn.readLine()
-    end
-    return x
+    local fIn = thread.status(thread.getPID(coroutine.running())).stdin
+    return fIn.readLine(mask, history)
   end
 
   printError = function(msg) --Error override
-    local y = thread.status(thread.getPID(coroutine.running()))
-    local fErr = y.stderr
-    if not fErr.isStderr then
-      fErr.write(msg .. "\n")
-    else
-      oldPrintError(msg)
-    end
+    local fErr = thread.status(thread.getPID(coroutine.running())).stderr
+    fErr.write(msg .. "\n")
   end
 
   local function tick(t, evt, ...) --Resume process
@@ -434,15 +418,9 @@ local threadMan = function() --Start the thread manager
       daemons = clone
       thread.status(t.ppid).paused = false
       tick(thread.status(t.ppid), "resume_event")
-      if not t.stdout.isStdout then
-        t.stdout.close()
-      end
-      if not t.stdin.isStdin then
-        t.stdin.close()
-      end
-      if not t.stderr.isStderr then
-        t.stderr.close()
-      end
+      t.stdout.close()
+      t.stdin.close()
+      t.stderr.close()
     end
   end
    
@@ -493,6 +471,9 @@ local threadMan = function() --Start the thread manager
     _G["read"] = read
     _G["write"] = write
     _G["printError"] = printError
+    _G["newStdin"] = newStdin
+    _G["newStdout"] = newStdout
+    _G["newStderr"] = newStderr
     thread.startThread(function() 
         kernel.log("Starting init")
         shell.run("/sbin/init")

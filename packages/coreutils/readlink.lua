@@ -7,5 +7,5 @@ local l = fs.getInfo(shell.resolve(argv[1])).linkto
 if l then
   print(l)
 else
-  error("Not a link!")
+  print(fs.normalizePath(shell.resolve(argv[1])))
 end

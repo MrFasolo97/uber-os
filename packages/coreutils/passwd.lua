@@ -15,7 +15,7 @@ local pwd = read(" ")
 write("Confirm password: ")
 local cpwd = read(" ")
 
-if pwd ~= cpwd then error("Password do not match!") return end
-if #pwd < 6 then error("UNIX password must contain at least 6 symbols") return end
+if pwd ~= cpwd then printError("Password do not match!") return end
+if #pwd < 6 then printError("UNIX password must contain at least 6 symbols") return end
 
 users.modifyUser(uid, nil, pwd, nil, nil)

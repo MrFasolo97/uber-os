@@ -3,7 +3,8 @@
 local argv = { ... }
 
 if #argv < 3 then
-  error("Usage: mount <DEV> <FS> <MOUNTPOINT>")
+  print("Usage: mount <DEV> <FS> <MOUNTPOINT>")
+  return
 end
 
 local x = fs.open(argv[1], "r")
