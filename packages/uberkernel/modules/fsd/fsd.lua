@@ -113,7 +113,7 @@ function fsd.newLink(name, path)
   if testPerms(name, thread.getUID(coroutine.running()), "w") then
     fsd.setNode(name, nil, nil, path)
   else
-    error("Access denied!")
+    printError("Access denied!")
   end
 end
 
@@ -121,7 +121,7 @@ function fsd.delLink(name, path)
   if testPerms(name, thread.getUID(coroutine.running()), "w") then
     fsd.setNode(name, nil, nil, false)
   else
-    error("Access denied!")
+    printError("Access denied!")
   end
 end
 
@@ -215,7 +215,7 @@ function fsd.deleteNode(node)
   if nodes[node].onwer == thread.getUID(coroutine.running()) then
     nodes[node] = nil
   else
-    error("Access denied!")
+    printError("Access denied!")
   end
 end
 
@@ -240,13 +240,13 @@ function fsd.setNode(node, owner, perms, linkto)
     nodes[node].perms = perms
     nodes[node].linkto = linkto
   else
-    error("Access denied!")
+    printError("Access denied!")
   end
 end
 
 function fsd.mount(dev, fs, path)
   if thread then
-    if thread.getUID(coroutine.running()) ~= 0 then error("Superuser is required to mount filesystem") end
+    if thread.getUID(coroutine.running()) ~= 0 then printError("Superuser is required to mount filesystem") end
   end
   if not getfenv()[fs] then
     kernel.log("Unable to mount " .. dev .. " as " .. fs .. " on " .. path .. " : Driver not loaded")
@@ -254,7 +254,7 @@ function fsd.mount(dev, fs, path)
   end
   if dev == "__ROOT_DEV__" then dev = ROOT_DIR end
   path = fsd.normalizePath(path)
-  if mounts[path] then error("Filesystem is already mounted") end
+  if mounts[path] then printError("Filesystem is already mounted") end
   kernel.log("Mounting " .. dev .. " as " .. fs .. " on " .. path)
   mounts[path] = {
     ["fs"] = fs,
@@ -266,7 +266,7 @@ end
 
 function fsd.umountPath(path)
   if thread then
-    if thread.getUID(coroutine.running()) ~= 0 then error("Superuser is required to unmount filesystem") end
+    if thread.getUID(coroutine.running()) ~= 0 then printError("Superuser is required to unmount filesystem") end
   end
   path = fsd.normalizePath(path)
   kernel.log("Unmounting at " .. path)
@@ -276,7 +276,7 @@ end
 
 function fsd.umountDev(dev)
   if thread then
-    if thread.getUID(coroutine.running()) ~= 0 then error("Superuser is required to unmount filesystem") end
+    if thread.getUID(coroutine.running()) ~= 0 then printError("Superuser is required to unmount filesystem") end
   end
   path = fsd.normalizePath(path)
   kernel.log("Unmounting " .. dev)
@@ -407,7 +407,7 @@ for k, v in pairs(oldfs) do
       status = true
     end
     if not status then
-      error(err)
+      printError(err)
       return false
     end
     local mount, mountPath
@@ -439,7 +439,7 @@ shell.setDir = function(dir)
   if fsd.testPerms(dir, thread.getUID(coroutine.running), "x") then
     return oldSetDir(dir)
   else
-    error("Access denied!")
+    printError("Access denied!")
   end
 end
 

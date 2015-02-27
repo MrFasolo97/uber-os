@@ -19,7 +19,7 @@ function lua.include(lib)
         return true
       else
         kernel.log("Failed to load library: " .. lib .. ".lua")
-        error("Failed to load library: " .. lib .. ".lua")
+        printError("Failed to load library: " .. lib .. ".lua")
       end
     end
   end

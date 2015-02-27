@@ -68,7 +68,7 @@ local isPanic = false --Is kernel in panic
 
 kernel = {} --Main class
 
-local absoluteReadOnly = {} --Read-only tables
+local readOnlyTables = {} --Read-only tables
 
 --Boot flags
 local fDebug = false
@@ -83,26 +83,30 @@ function applyreadonly(table) --Make a table read-only
   local tmp = {}
   setmetatable(tmp, {
     __index = table,
-    __newindex = function(table, key, value)
+    __newindex = function(_table, key, value)
       if thread then
         if thread.getUID(coroutine.running()) ~= 0 then
-          error("Attempt to modify read-only table") --Allowing root to crash system. This is ok.
+          printError("Attempt to modify read-only table") --Allowing root to crash system. This is ok.
+        else
+          table[key] = value
         end
       end
     end,
     __metatable = false
   })
-  absoluteReadOnly[#absoluteReadOnly + 1] = tmp
+  readOnlyTables[#readOnlyTables + 1] = tmp
   return tmp
 end
 
 local oldrawset = rawset
 rawset = function(table, index, value)
-  for i = 1, #absoluteReadOnly do
-    if (table == absoluteReadOnly[i]) or (table[index] == absoluteReadOnly[i]) then
+  for i = 1, #readOnlyTables do
+    if (table == readOnlyTables[i]) or (table[index] == readOnlyTables[i]) then
       if thread then
         if thread.getUID(coroutine.running()) ~= 0 then
-          error("Attempt to modify read-only table") --Allowing root to crash system. This is ok.
+          printError("Attempt to modify read-only table") --Allowing root to crash system. This is ok.
+        else
+          oldrawset(table, index, value)
         end
       end
       return 
@@ -370,7 +374,8 @@ local threadMan = function() --Start the thread manager
       if threads[i].pid == pid then
         if thread.getUID(coroutine.running()) ~= 0 and
           threads[i].uid ~= thread.getUID(coroutine.running()) then
-          error("Cannot get status: Access denied!")
+          printError("Cannot get status: Access denied!")
+          return nil
         end
         return threads[i]
       end
@@ -565,7 +570,7 @@ kernel.loadModule = function(module, panic)
       if panic then
         kernel.panic("Failed to load module " .. module .. "\nError: " .. err)
       else
-        error("Failed to load module" .. module .. "\nError: " .. err)
+        printError("Failed to load module" .. module .. "\nError: " .. err)
       end
     end
   end
@@ -585,7 +590,7 @@ kernel.loadModule = function(module, panic)
     if panic then
       kernel.panic("Failed to load module " .. module .. "\nError: " .. err)
     else
-      error("Failed to load module" .. module .. "\nError: " .. err)
+      printError("Failed to load module" .. module .. "\nError: " .. err)
     end
   end
 end

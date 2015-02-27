@@ -5,8 +5,8 @@ if #argv < 2 then
   return
 end
 
-if fs.exists(fs.normalizePath(shell.resolve(argv[2]))) then error("Link already exists!") end
-if not fs.exists(fs.normalizePath(shell.resolve(argv[1]))) then error("Target does not exists!") end
+if fs.exists(fs.normalizePath(shell.resolve(argv[2]))) then printError("Link already exists!") end
+if not fs.exists(fs.normalizePath(shell.resolve(argv[1]))) then printError("Target does not exists!") end
 
 if fs.isDir(fs.normalizePath(shell.resolve(argv[1]))) then
   fs.makeDir(fs.normalizePath(shell.resolve(argv[2])))

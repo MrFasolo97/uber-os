@@ -9,7 +9,7 @@ ccfs.list = function(mountPath, device, path)
   path = fsd.resolveLinks(path)
   path = fsd.stripPath(mountPath, path)
   if not fs.isDir(device .. path) then
-    error("Not a directory")
+    printError("Not a directory")
   end
   local p = oldfs.list(device .. path)
   if path == "/" then path = "" end

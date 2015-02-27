@@ -88,7 +88,7 @@ end
 
 function users.newUser(name, pwd, home, shell)
   if thread.getUID(coroutine.running()) ~= 0 then
-    error("Only root can create users!")
+    printError("Only root can create users!")
     return 
   end
   local uid = 1000
@@ -108,7 +108,7 @@ end
 function users.modifyUser(uid, _name, _pwd, _home, _shell)
   if thread.getUID(coroutine.running()) ~= 0 and
     thread.getUID(coroutine.running()) ~= uid then
-    error("Only root or target user can modify users!")
+    printError("Only root or target user can modify users!")
     return
   end
   for k, v in pairs(passwd) do
@@ -125,7 +125,7 @@ end
 
 function users.deleteUser(uid)
   if thread.getUID(coroutine.running()) ~= 0 then
-    error("Only root can delete users!")
+    printError("Only root can delete users!")
     return
   end
   for k, v in pairs(passwd) do

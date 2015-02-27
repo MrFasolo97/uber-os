@@ -5,7 +5,8 @@ local argv = { ... }
 lua.include("luamin")
 
 if #argv < 1 then
-  error("Usage: upt install|remove|get|get-install|update|upgrade")
+  print("Usage: upt install|remove|get|get-install|update|upgrade")
+  return
 end
 
 local function getPkgInfo(package, forcerepo)
@@ -88,7 +89,7 @@ local function buildDependencyTree(packages, tree)
 end
 
 local function install(packages, dontcheck)
-  if not fs.exists("/var/lib/upt/database") then error("Database not found. Run 'upt update' to download it.") end
+  if not fs.exists("/var/lib/upt/database") then printError("Database not found. Run 'upt update' to download it.") return end
   local oldDir = shell.dir()
   for i = 1, #packages do
     if fs.exists("/usr/pkg/" .. packages[i]) then
@@ -116,7 +117,7 @@ local function install(packages, dontcheck)
       return
     end
     if not fs.exists("/usr/src/" .. packages[i]) then
-      error("Package " .. packages[i] .. " not found!")
+      printError("Package " .. packages[i] .. " not found!") return
     end
     print("Building package " .. packages[i])
     shell.setDir("/usr/src/" .. packages[i])
@@ -125,7 +126,7 @@ local function install(packages, dontcheck)
       print("Checking dependencies...")
       for k, v in pairs(DEPENDS) do
         if not fs.exists("/var/lib/upt/" .. v) then
-          error("Dependency " .. v .. " not satisfied!")
+          printError("Dependency " .. v .. " not satisfied!") return
         end
         print("Dependency " .. v .. " ok")
       end
@@ -162,10 +163,10 @@ local function install(packages, dontcheck)
 end
 
 local function remove(packages)
-  if not fs.exists("/var/lib/upt/database") then error("Database not found. Run 'upt update' to download it.") end
+  if not fs.exists("/var/lib/upt/database") then printError("Database not found. Run 'upt update' to download it.") return end
   for i = 1, #packages do
     if not fs.exists("/var/lib/upt/" .. packages[i]) then
-      error("Package " .. packages[i] .. " not found!")
+      printError("Package " .. packages[i] .. " not found!") return
     end
     print("Removing package " .. packages[i])
     local f = fs.open("/var/lib/upt/" .. packages[i], "r")
@@ -197,7 +198,7 @@ end
 local function update()
   print("Updating package list...")
   local r = http.get("https://raw.githubusercontent.com/TsarN/uber-os/master/repo/repo.db")
-  if not r then error("Failed to get package list!") end
+  if not r then printError("Failed to get package list!") return end
   local f = fs.open("/var/lib/upt/database", "w")
   f.write(r.readAll())
   r.close()
@@ -206,8 +207,8 @@ local function update()
 end
 
 local function get(packages)
-  if not fs.exists("/var/lib/upt/database") then error("Database not found. Run 'upt update' to download it.") end
-  if not http then error("Http API not enabled") end
+  if not fs.exists("/var/lib/upt/database") then printError("Database not found. Run 'upt update' to download it.") return end
+  if not http then printError("Http API not enabled") return end
   local pkglist
   if not fs.exists("/var/lib/upt/database") then update() end
   local flist = fs.open("/var/lib/upt/database", "r")
@@ -221,10 +222,10 @@ local function get(packages)
         flag = false
       end
     end
-    if flag then error("Package not found!") end
+    if flag then printError("Package not found!") return end
     print("Downloading package " .. packages[i])
     local r = http.get("https://raw.githubusercontent.com/TsarN/uber-os/master/repo/" .. packages[i] .. ".utar")
-    if not r then error("Failed to download " .. packages[i] .. "! Make sure, that you have raw.githubusercontent.com whitelisted or try again later.") end
+    if not r then printError("Failed to download " .. packages[i] .. "! Make sure, that you have raw.githubusercontent.com whitelisted or try again later.") return end
     print("Saving package " .. packages[i])
     local f = fs.open("/tmp/" .. packages[i], "w") 
     f.write(r.readAll())
@@ -241,7 +242,7 @@ local function get(packages)
 end
 
 local function getInstall(packages)
-  if not fs.exists("/var/lib/upt/database") then error("Database not found. Run 'upt update' to download it.") end
+  if not fs.exists("/var/lib/upt/database") then printError("Database not found. Run 'upt update' to download it.") return end
   local flist = fs.open("/var/lib/upt/database", "r")
   pkglist = string.split(flist.readAll(), "\n")
   for k, v in pairs(pkglist) do pkglist[k] = string.split(v, " ")[1] end
@@ -253,7 +254,7 @@ local function getInstall(packages)
         flag = false
       end
     end
-    if flag then error("Package not found!") end
+    if flag then printError("Package not found!") return end
   end
   print("Building dependency tree...")
   local tree = buildDependencyTree(packages)
@@ -294,7 +295,7 @@ for i = 2, #argv do table.insert(p, argv[i]) end
 
 if argv[1] == "install" then 
   if #argv < 2 then
-    error("Usage: upt install <package1> [package2] ...")
+    print("Usage: upt install <package1> [package2] ...") return
   end
   install(p)
 end
@@ -309,21 +310,21 @@ end
 
 if argv[1] == "remove" then 
   if #argv < 2 then
-    error("Usage: upt remove <package1> [package2] ...")
+    print("Usage: upt remove <package1> [package2] ...") return
   end
   remove(p)
 end
 
 if argv[1] == "get" then 
   if #argv < 2 then
-    error("Usage: upt get <package1> [package2] ...")
+    print("Usage: upt get <package1> [package2] ...") return
   end
   get(p)
 end
 
 if argv[1] == "get-install" then
   if #argv < 2 then
-    error("Usage: upt get-install <package1> [package2] ...")
+    print("Usage: upt get-install <package1> [package2] ...") return
   end
   getInstall(p)
 end

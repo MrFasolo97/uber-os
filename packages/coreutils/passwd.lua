@@ -8,7 +8,7 @@ if argv[1] then uid = users.getUIDByUsername(argv[1]) end
 
 write("Current password: ") local password = read()
 
-if not users.login(users.getUsernameByUID(uid), password) then error("Password incorrect!") return end
+if not users.login(users.getUsernameByUID(uid), password) then printError("Password incorrect!") return end
 
 write("New Password: ")
 local pwd = read(" ")

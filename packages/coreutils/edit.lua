@@ -83,7 +83,7 @@ local function save( _sPath )
 				file.write( sLine .. "\n" )
 			end
 		else
-			error( "Failed to open ".._sPath )
+			printError( "Failed to open ".._sPath )
 		end
 	end
 	

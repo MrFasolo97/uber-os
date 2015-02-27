@@ -61,7 +61,7 @@ ufs.list = function(mountPath, device, path)
   path = fsd.resolveLinks(path)
   path = fsd.stripPath(mountPath, path)
   if not fs.isDir(device .. path) then
-    error("Not a directory")
+    printError("Not a directory")
   end
   local p = oldfs.list(device .. path)
   if path == "/" then path = "" end
@@ -107,14 +107,14 @@ end
 ufs.open = function(mountPath, device, path, mode)
   path = fsd.resolveLinks(path)
   path = fsd.stripPath(mountPath, path)
-  if fsd.normalizePath(path) == "/UFSDATA" then error("Internal error") return end
+  if fsd.normalizePath(path) == "/UFSDATA" then printError("Internal error") return end
   return oldfs.open(device .. path, mode)
 end
 
 ufs.makeDir = function(mountPath, device, path)
   path = fsd.resolveLinks(path)
   path = fsd.stripPath(mountPath, path)
-  if fsd.normalizePath(path) == "/UFSDATA" then error("Internal error") return end
+  if fsd.normalizePath(path) == "/UFSDATA" then printError("Internal error") return end
   oldfs.makeDir(device .. path)
   fs.setNode(mountPath .. "/" .. path)
 end
@@ -124,8 +124,8 @@ ufs.move = function(mountPath, device, from, to)
   to = fsd.resolveLinks(to)
   from = fsd.stripPath(mountPath, from)
   to = fsd.stripPath(mountPath, to)
-  if fsd.normalizePath(to) == "/UFSDATA" then error("Internal error") return end
-  if fsd.normalizePath(from) == "/UFSDATA" then error("Internal error") return end
+  if fsd.normalizePath(to) == "/UFSDATA" then printError("Internal error") return end
+  if fsd.normalizePath(from) == "/UFSDATA" then printError("Internal error") return end
   oldfs.move(device .. from, device .. to)
   fs.setNode(mountPath .. "/" .. to)
 end
@@ -135,8 +135,8 @@ ufs.copy = function(mountPath, device, from, to)
   to = fsd.resolveLinks(to)
   from = fsd.stripPath(mountPath, from)
   to = fsd.stripPath(mountPath, to)
-  if fsd.normalizePath(to) == "/UFSDATA" then error("Internal error") return end
-  if fsd.normalizePath(from) == "/UFSDATA" then error("Internal error") return end
+  if fsd.normalizePath(to) == "/UFSDATA" then printError("Internal error") return end
+  if fsd.normalizePath(from) == "/UFSDATA" then printError("Internal error") return end
   oldfs.copy(device .. from, device .. to)
   fs.setNode(mountPath .. "/" .. to)
 end
@@ -144,7 +144,7 @@ end
 
 ufs.delete = function(mountPath, device, path)
   path = fsd.stripPath(mountPath, path)
-  if fsd.normalizePath(path) == "/UFSDATA" then error("Internal error") return end
+  if fsd.normalizePath(path) == "/UFSDATA" then printError("Internal error") return end
   fsd.setNode(path, nil, nil, false)
   oldfs.delete(device .. path)
   fs.deleteNode(mountPath .. "/" .. path)
