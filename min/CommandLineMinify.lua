@@ -56,7 +56,7 @@ if #arg == 1 then
 		return
 	end
 	--
-	outf:write(Format_Mini(ast))
+	outf:write(sourceText)
 	outf:close()
 	--
 	print("Minification complete")
@@ -111,7 +111,7 @@ elseif #arg == 2 then
 		return
 	end
 	--
-	outf:write(Format_Mini(ast))
+	outf:write(sourceText)
 	outf:close()
 	--
 	print("Minification complete")

@@ -1,4 +1,4 @@
-SRC = split fixserialize copy
+SRC = base64
 PWD = $(shell pwd)
 all	:	prepare $(SRC)
 clean:

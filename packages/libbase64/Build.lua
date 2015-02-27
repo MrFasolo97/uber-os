@@ -1,6 +1,6 @@
 --Build this package from inside UberOS
 lua.include("min")
-local SRC = {"split", "fixserialize", "copy"}
+local SRC = {"base64"}
 local PWD = shell.dir()
 local DEST = "/lib"
 local EXTIN = ".lua"

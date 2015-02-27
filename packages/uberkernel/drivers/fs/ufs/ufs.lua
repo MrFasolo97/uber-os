@@ -23,7 +23,7 @@ ufs.saveFs = function(mountPath, device)
   local p = fsd.normalizePath(device)
   if p == "/" then p = "" end
   local FSDATA = oldfs.open(p .. "/UFSDATA", "w")
-  local WRITEDATA = "" -- = base64enc(fserialize(collectFiles(mountPath, mountPath, {})))
+  local WRITEDATA = "" 
   for k, v in pairs(collectFiles(mountPath, mountPath, {})) do
     WRITEDATA = WRITEDATA .. k .. ":" .. v.owner .. ":" .. v.perms .. ":"
     if v.linkto then WRITEDATA = WRITEDATA .. v.linkto end

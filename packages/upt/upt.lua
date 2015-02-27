@@ -9,6 +9,46 @@ if #argv < 1 then
   return
 end
 
+local db = {}
+local tree = {}
+
+local function parseDatabase()
+  if not fs.exists("/var/lib/upt/database") then printError("Database not found. Run 'upt update' to download it.") error() end
+  db = {}
+  tree = {}
+  print("Parsing database...")
+  local f = fs.open("/var/lib/upt/database", "r")
+  local isDir = false
+  for k, v in pairs(string.split(f.readAll(), "\n")) do
+    if v == "//DIRLIST" then isDir = true else
+      if isDir then
+        local x = string.split(v:sub(3), "/")
+        local y = tree
+        local fullPath = ""
+        for K, V in pairs(x) do
+          fullPath = fullPath .. "/" .. V
+          if not y[V] then 
+            if fullPath == v:sub(2) and v:sub(1, 1) == "F" then
+              y[V] = true
+              break
+            else
+              y[V] = {}
+            end
+          end
+          y = y[V]
+        end
+      else
+        local x = string.split(v, " ")
+        db[x[1]] = {}
+        db[x[1]].VERSION = string.split(x[2], ";")
+        db[x[1]].DEPENDS = string.split(x[3], ";")
+      end
+    end
+  end
+  f.close()
+  print("Parsing database done!")
+end
+
 local function getPkgInfo(package, forcerepo)
   local DEPENDS, VERSION
   if not forcerepo and fs.exists("/var/lib/upt/" .. package) then
@@ -18,15 +58,7 @@ local function getPkgInfo(package, forcerepo)
     f.close()
     return DEPENDS, VERSION 
   end
-  local f = fs.open("/var/lib/upt/database", "r")
-  for k, v in pairs(string.split(f.readAll(), "\n")) do
-    local x = string.split(v, " ")
-    VERSION = string.split(x[2], ";")
-    DEPENDS = string.split(x[3], ";") 
-    if x[1] == package then break end
-  end
-  f.close()
-  return DEPENDS, VERSION 
+  return db[package].DEPENDS, db[package].VERSION 
 end
 
 function listDeps(package, notinstalled)
@@ -164,6 +196,10 @@ end
 
 local function remove(packages)
   if not fs.exists("/var/lib/upt/database") then printError("Database not found. Run 'upt update' to download it.") return end
+  print()
+  write("Confirm? [Y/n]: ")
+  local x = read()
+  if x == "n" or x == "N" then return end
   for i = 1, #packages do
     if not fs.exists("/var/lib/upt/" .. packages[i]) then
       printError("Package " .. packages[i] .. " not found!") return
@@ -197,13 +233,33 @@ end
 
 local function update()
   print("Updating package list...")
-  local r = http.get("https://raw.githubusercontent.com/TsarN/uber-os/master/repo/repo.db")
+  local r = http.get("https://raw.githubusercontent.com/TsarN/uber-os/master/repo.db")
   if not r then printError("Failed to get package list!") return end
   local f = fs.open("/var/lib/upt/database", "w")
   f.write(r.readAll())
   r.close()
   f.close()
   print("Package list updated")
+end
+
+local function gitGetDir(gitPath, stripPath, path, t)
+  path = fsd.normalizePath(path)
+  gitPath = fsd.normalizePath(gitPath)
+  t = t or tree[gitPath:sub(2)]
+  for k, v in pairs(t) do
+    if type(v) == "table" then
+      fs.makeDir(path .. fsd.stripPath(stripPath, gitPath .. "/" .. k))
+      gitGetDir(gitPath .. "/" .. k, stripPath, path, v)
+    else
+      local f = fs.open(path .. fsd.stripPath(stripPath, gitPath .. "/" .. k), "w")
+      print("Downloading " .. gitPath .. "/" .. k)
+      local r = http.get("https://raw.githubusercontent.com/TsarN/uber-os/master/packages" .. gitPath .. "/" .. k)
+      if not r then error("Cannot get file!") end
+      f.write(r.readAll())
+      r.close()
+      f.close()
+    end
+  end
 end
 
 local function get(packages)
@@ -213,7 +269,7 @@ local function get(packages)
   if not fs.exists("/var/lib/upt/database") then update() end
   local flist = fs.open("/var/lib/upt/database", "r")
   pkglist = string.split(flist.readAll(), "\n")
-  for k, v in pairs(pkglist) do pkglist[k] = string.split(v, " ")[1] end
+  for k, v in pairs(pkglist) do if v == "//DIRLIST" then break end pkglist[k] = string.split(v, " ")[1] end
   flist.close()
   for i = 1, #packages do
     local flag = true
@@ -224,7 +280,7 @@ local function get(packages)
     end
     if flag then printError("Package not found!") return end
     print("Downloading package " .. packages[i])
-    local r = http.get("https://raw.githubusercontent.com/TsarN/uber-os/master/repo/" .. packages[i] .. ".utar")
+    --[[local r = http.get("https://raw.githubusercontent.com/TsarN/uber-os/master/repo/" .. packages[i] .. ".utar")
     if not r then printError("Failed to download " .. packages[i] .. "! Make sure, that you have raw.githubusercontent.com whitelisted or try again later.") return end
     print("Saving package " .. packages[i])
     local f = fs.open("/tmp/" .. packages[i], "w") 
@@ -236,7 +292,10 @@ local function get(packages)
     if fs.exists("/usr/pkg/" .. packages[i]) then fs.delete("/usr/pkg/" .. packages[i]) end
     fs.makeDir("/usr/pkg/" .. packages[i])
     archive.unpack("/tmp/" .. packages[i], "/usr/pkg/" .. packages[i])
-    fs.delete("/tmp/" .. packages[i])
+    fs.delete("/tmp/" .. packages[i])]]
+
+    gitGetDir(packages[i], "/", "/usr/src")
+
     print("Downloading package " .. packages[i] .. " done!")
   end
 end
@@ -245,7 +304,7 @@ local function getInstall(packages)
   if not fs.exists("/var/lib/upt/database") then printError("Database not found. Run 'upt update' to download it.") return end
   local flist = fs.open("/var/lib/upt/database", "r")
   pkglist = string.split(flist.readAll(), "\n")
-  for k, v in pairs(pkglist) do pkglist[k] = string.split(v, " ")[1] end
+  for k, v in pairs(pkglist) do if v == "//DIRLIST" then break end pkglist[k] = string.split(v, " ")[1] end
   flist.close()
   for i = 1, #packages do
     local flag = true
@@ -293,18 +352,22 @@ local p = {}
 
 for i = 2, #argv do table.insert(p, argv[i]) end
 
+
 if argv[1] == "install" then 
   if #argv < 2 then
     print("Usage: upt install <package1> [package2] ...") return
   end
+  parseDatabase()
   install(p)
 end
 
 if argv[1] == "update" then 
+  parseDatabase()
   update()
 end
 
 if argv[1] == "upgrade" then 
+  parseDatabase()
   upgrade()
 end
 
@@ -312,6 +375,7 @@ if argv[1] == "remove" then
   if #argv < 2 then
     print("Usage: upt remove <package1> [package2] ...") return
   end
+  parseDatabase()
   remove(p)
 end
 
@@ -319,6 +383,7 @@ if argv[1] == "get" then
   if #argv < 2 then
     print("Usage: upt get <package1> [package2] ...") return
   end
+  parseDatabase()
   get(p)
 end
 
@@ -326,5 +391,6 @@ if argv[1] == "get-install" then
   if #argv < 2 then
     print("Usage: upt get-install <package1> [package2] ...") return
   end
+  parseDatabase()
   getInstall(p)
 end
