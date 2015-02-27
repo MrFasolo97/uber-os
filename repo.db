@@ -1,4 +1,4 @@
-upt 0;2;1 uberkernel;corelib
+upt 0;2;1 uberkernel;corelib;luamin
 libjson 0;2;1 uberkernel
 ush 0;2;1 uberkernel;corelib
 init 0;2;1 uberkernel;corelib

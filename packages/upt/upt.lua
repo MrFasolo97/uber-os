@@ -362,7 +362,6 @@ if argv[1] == "install" then
 end
 
 if argv[1] == "update" then 
-  parseDatabase()
   update()
 end
 
