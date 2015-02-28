@@ -1,2 +1,2 @@
 DEPENDS = {}
-VERSION = {479, 0, 0}
+VERSION = "build-479"

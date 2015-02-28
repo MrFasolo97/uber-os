@@ -58,7 +58,7 @@ local function parseDatabase()
           local x = string.split(v, " ")
           db[x[1]] = {}
           for _, d in pairs({db[x[1]]}) do
-            d.VERSION = string.split(x[2], ";")
+            d.VERSION = x[2]
             d.DEPENDS = string.split(x[3], ";")
             d.REPO = name
           end
@@ -75,7 +75,7 @@ local function getPkgInfo(package, forcerepo)
   if not forcerepo and fs.exists("/var/lib/upt/" .. package) then
     local f = fs.open("/var/lib/upt/" .. package, "r")
     DEPENDS = string.split(f.readLine(), " ")
-    VERSION = string.split(f.readLine(), ";")
+    VERSION = f.readLine()
     f.close()
     return DEPENDS, VERSION 
   end
@@ -143,6 +143,10 @@ end
 
 local function install(packages, dontcheck)
   local oldDir = shell.dir()
+  local todo = {}
+  for k, v in pairs(packages) do
+    todo[v] = true
+  end
   for i = 1, #packages do
     sleep(0.05)
     if fs.exists("/usr/pkg/" .. packages[i]) then
@@ -151,7 +155,7 @@ local function install(packages, dontcheck)
       local flist = fs.recursList("/usr/pkg/" .. packages[i])
       local f = fs.open("/var/lib/upt/" .. packages[i], "w")
       f.writeLine(table.concat(DEPENDS, " "))
-      f.writeLine(table.concat(VERSION, ";"))
+      f.writeLine(VERSION)
       for j = #flist, 1, -1 do
         local x = fsd.stripPath("/usr/pkg/" .. packages[i], flist[j])
         if not fs.isDir(x) then
@@ -178,8 +182,10 @@ local function install(packages, dontcheck)
     if not dontcheck then
       print("Checking dependencies...")
       for k, v in pairs(DEPENDS) do
-        if not fs.exists("/var/lib/upt/" .. v) then
-          printError("Dependency " .. v .. " not satisfied!") return
+        if not fs.exists("/var/lib/upt/" .. v) and not todo[v] then
+          printError("Dependency " .. v .. " not satisfied!")
+          shell.setDir(oldDir)
+          return
         end
         print("Dependency " .. v .. " ok")
       end
@@ -194,7 +200,7 @@ local function install(packages, dontcheck)
     local flist = fs.recursList("/tmp/" .. packages[i])
     local f = fs.open("/var/lib/upt/" .. packages[i], "w")
     f.writeLine(table.concat(DEPENDS, " "))
-    f.writeLine(table.concat(VERSION, ";"))
+    f.writeLine(VERSION)
     for j = #flist, 1, -1 do
       local x = fsd.stripPath("/tmp/" .. packages[i], flist[j])
       if not fs.isDir(x) then
@@ -337,7 +343,7 @@ local function getInstall(packages)
   for k, v in pairs(tree) do
     write(k .. ":")
     DEPENDS, VERSION = getPkgInfo(k, true)
-    write(table.concat(VERSION, ".") .. " ")
+    write(VERSION .. " ")
   end
   print()
   write("Confirm? [Y/n]: ")
@@ -354,10 +360,8 @@ local function upgrade(force)
     DEPENDS1, VERSION1 = getPkgInfo(k, true)
     DEPENDS, VERSION = getPkgInfo(k)
     local flag = false
-    for i = 1, 3 do
-      if VERSION1[i] > VERSION[i] then flag = true break end
-      if force and VERSION1[i] ~= VERSION[i] then flag = true break end
-    end
+    if VERSION1 > VERSION then flag = true break end
+    if force and VERSION1 ~= VERSION then flag = true break end
     if flag then
       table.insert(toupg, k)
     end
@@ -420,7 +424,7 @@ if argv[1] == "list" then
   parseDatabase()
   local s = ""
   for k, v in pairs(db) do
-    s = s .. v.REPO .. "/" .. k .. " " .. table.concat(v.VERSION, ".") .. "\n"
+    s = s .. v.REPO .. "/" .. k .. " " .. v.VERSION .. "\n"
   end
   textutils.pagedPrint(s)
 end
