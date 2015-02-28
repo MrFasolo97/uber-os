@@ -10,3 +10,5 @@ $(SRC) :
 	mv $@_min.lua out/$@
 install:
 	cp out/* ../../out/bin
+	mkdir -p ../../out/var/lib/upt/db
+	printf "repo https://raw.githubusercontent.com/TsarN/uber-os/master\n" > ../../out/var/lib/upt/db/general

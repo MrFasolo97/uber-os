@@ -1,5 +1,5 @@
 --Build UberOS from inside UberOS
-local PACKAGES = {"corelib", "coreutils", "fsdrv", "init", "libjson", "login", "luamin", "uberkernel", "uboot", "udev", "ush"}
+local PACKAGES = {"corelib", "coreutils", "init", "login", "luamin", "uberkernel", "uboot", "udev", "ush", "upt"}
 local INSTALL_DIR = ""
 local PWD = shell.dir()
 

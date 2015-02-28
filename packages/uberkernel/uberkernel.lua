@@ -575,7 +575,6 @@ local function start()
   -- Setup paths
   local sPath = ".:" .. ROOT_DIR .."/bin:" .. ROOT_DIR .. "/sbin:" .. ROOT_DIR .. "/etc/init.d"
   shell.setPath( sPath )
-  shell.setPath = nil
 
   -- Setup aliases
   shell.setAlias( "ls", ROOT_DIR .. "/bin/ls")

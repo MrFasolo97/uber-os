@@ -11,41 +11,57 @@ end
 
 local db = {}
 local tree = {}
+local repos = {}
 
 local function parseDatabase()
-  if not fs.exists("/var/lib/upt/database") then printError("Database not found. Run 'upt update' to download it.") error() end
+  if not fs.exists("/var/lib/upt/db/general") then printError("Database not found. Run 'upt update' to download it.") error() end
   db = {}
   tree = {}
+  repos = {}
   print("Parsing database...")
-  local f = fs.open("/var/lib/upt/database", "r")
-  local isDir = false
-  for k, v in pairs(string.split(f.readAll(), "\n")) do
-    if v == "//DIRLIST" then isDir = true else
-      if isDir then
-        local x = string.split(v:sub(3), "/")
-        local y = tree
-        local fullPath = ""
-        for K, V in pairs(x) do
-          fullPath = fullPath .. "/" .. V
-          if not y[V] then 
-            if fullPath == v:sub(2) and v:sub(1, 1) == "F" then
-              y[V] = true
-              break
-            else
-              y[V] = {}
+  local gen = fs.open("/var/lib/upt/db/general", "r")
+  local databases = string.split(gen.readAll(), "\n")
+  gen.close()
+  for _, repo in pairs(databases) do
+    local tmp = string.split(repo, " ")
+    local name = tmp[1]
+    local url = tmp[2]
+    repos[name] = url
+    tree[url] = {}
+    local f = fs.open("/var/lib/upt/db/" .. name .. ".db", "r")
+    local isDir = false
+    for k, v in pairs(string.split(f.readAll(), "\n")) do
+      if v == "//DIRLIST" then isDir = true else
+        if isDir then
+          local x = string.split(v:sub(3), "/")
+          local y = tree[url]
+          local fullPath = ""
+          for K, V in pairs(x) do
+            fullPath = fullPath .. "/" .. V
+            if not y[V] then 
+              if fullPath == v:sub(2) and v:sub(1, 1) == "F" then
+                y[V] = true
+                break
+              else
+                y[V] = {}
+              end
             end
+            y = y[V]
           end
-          y = y[V]
+        else
+          local x = string.split(v, " ")
+          db[x[1]] = {}
+          db[name .. "/" .. x[1]] = {}
+          for _, d in pairs({db[x[1]], db[name .. "/" .. x[1]]}) do
+            d.VERSION = string.split(x[2], ";")
+            d.DEPENDS = string.split(x[3], ";")
+            d.REPO = name
+          end
         end
-      else
-        local x = string.split(v, " ")
-        db[x[1]] = {}
-        db[x[1]].VERSION = string.split(x[2], ";")
-        db[x[1]].DEPENDS = string.split(x[3], ";")
       end
     end
+    f.close()
   end
-  f.close()
   print("Parsing database done!")
 end
 
@@ -121,7 +137,6 @@ local function buildDependencyTree(packages, tree)
 end
 
 local function install(packages, dontcheck)
-  if not fs.exists("/var/lib/upt/database") then printError("Database not found. Run 'upt update' to download it.") return end
   local oldDir = shell.dir()
   for i = 1, #packages do
     if fs.exists("/usr/pkg/" .. packages[i]) then
@@ -195,7 +210,6 @@ local function install(packages, dontcheck)
 end
 
 local function remove(packages)
-  if not fs.exists("/var/lib/upt/database") then printError("Database not found. Run 'upt update' to download it.") return end
   print()
   write("Confirm? [Y/n]: ")
   local x = read()
@@ -233,28 +247,37 @@ end
 
 local function update()
   print("Updating package list...")
-  local r = http.get("https://raw.githubusercontent.com/TsarN/uber-os/master/repo.db")
-  if not r then printError("Failed to get package list!") return end
-  local f = fs.open("/var/lib/upt/database", "w")
-  f.write(r.readAll())
-  r.close()
-  f.close()
+  local gen = fs.open("/var/lib/upt/db/general", "r")
+  local databases = string.split(gen.readAll(), "\n")
+  gen.close()
+  for k, v in pairs(databases) do
+    local tmp = string.split(v, " ")
+    local name = tmp[1]
+    local url = tmp[2]
+    local r = http.get(url .. "/" .. name .. ".db")
+    if not r then printError("Failed to get " .. name) return end
+    local f = fs.open("/var/lib/upt/db/" .. name .. ".db", "w")
+    f.write(r.readAll())
+    r.close()
+    f.close()
+    print(name .. " updated")
+  end
   print("Package list updated")
 end
 
-local function gitGetDir(gitPath, stripPath, path, t)
+local function getDir(remotePath, stripPath, path, t, remoteUrl)
   path = fsd.normalizePath(path)
-  gitPath = fsd.normalizePath(gitPath)
-  t = t or tree[gitPath:sub(2)]
+  remotePath = fsd.normalizePath(remotePath)
+  t = t or tree[remoteUrl][remotePath:sub(2)]
   for k, v in pairs(t) do
     if type(v) == "table" then
-      fs.makeDir(path .. fsd.stripPath(stripPath, gitPath .. "/" .. k))
-      gitGetDir(gitPath .. "/" .. k, stripPath, path, v)
+      fs.makeDir(path .. fsd.stripPath(stripPath, remotePath .. "/" .. k))
+      getDir(remotePath .. "/" .. k, stripPath, path, v, remoteUrl)
     else
-      local f = fs.open(path .. fsd.stripPath(stripPath, gitPath .. "/" .. k), "w")
-      print("Downloading " .. gitPath .. "/" .. k)
-      local r = http.get("https://raw.githubusercontent.com/TsarN/uber-os/master/packages" .. gitPath .. "/" .. k)
-      if not r then error("Cannot get file!") end
+      local f = fs.open(path .. fsd.stripPath(stripPath, remotePath .. "/" .. k), "w")
+      print("Downloading " .. remoteUrl .. "/packages" .. remotePath .. "/" .. k)
+      local r = http.get(remoteUrl .. "/packages" .. remotePath .. "/" .. k)
+      if not r then printError("Cannot get file!") thread.kill(coroutine.running(), "TERM") end
       f.write(r.readAll())
       r.close()
       f.close()
@@ -263,18 +286,10 @@ local function gitGetDir(gitPath, stripPath, path, t)
 end
 
 local function get(packages)
-  if not fs.exists("/var/lib/upt/database") then printError("Database not found. Run 'upt update' to download it.") return end
-  if not http then printError("Http API not enabled") return end
-  local pkglist
-  if not fs.exists("/var/lib/upt/database") then update() end
-  local flist = fs.open("/var/lib/upt/database", "r")
-  pkglist = string.split(flist.readAll(), "\n")
-  for k, v in pairs(pkglist) do if v == "//DIRLIST" then break end pkglist[k] = string.split(v, " ")[1] end
-  flist.close()
   for i = 1, #packages do
     local flag = true
-    for k, v in pairs(pkglist) do
-      if packages[i] == v then
+    for k, v in pairs(db) do
+      if packages[i] == k then
         flag = false
       end
     end
@@ -294,22 +309,17 @@ local function get(packages)
     archive.unpack("/tmp/" .. packages[i], "/usr/pkg/" .. packages[i])
     fs.delete("/tmp/" .. packages[i])]]
 
-    gitGetDir(packages[i], "/", "/usr/src")
+    getDir(packages[i], "/", "/usr/src", nil, repos[db[packages[i]].REPO])
 
     print("Downloading package " .. packages[i] .. " done!")
   end
 end
 
 local function getInstall(packages)
-  if not fs.exists("/var/lib/upt/database") then printError("Database not found. Run 'upt update' to download it.") return end
-  local flist = fs.open("/var/lib/upt/database", "r")
-  pkglist = string.split(flist.readAll(), "\n")
-  for k, v in pairs(pkglist) do if v == "//DIRLIST" then break end pkglist[k] = string.split(v, " ")[1] end
-  flist.close()
   for i = 1, #packages do
     local flag = true
-    for k, v in pairs(pkglist) do
-      if packages[i] == v then
+    for k, v in pairs(db) do
+      if packages[i] == k then
         flag = false
       end
     end
