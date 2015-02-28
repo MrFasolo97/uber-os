@@ -5,19 +5,21 @@ local argv = { ... }
 lua.include("luamin")
 
 if #argv < 1 then
-  print("Usage: upt install|remove|get|get-install|update|upgrade")
+  print("Usage: upt install|remove|get|get-install|update|upgrade|force-upgrade|list|list-installed")
   return
 end
 
 local db = {}
 local tree = {}
-local repos = {}
+local repourls = {}
+local repopkgs = {}
 
 local function parseDatabase()
-  if not fs.exists("/var/lib/upt/db/general") then printError("Database not found. Run 'upt update' to download it.") error() end
+  if not fs.exists("/var/lib/upt/db/general") then printError("Database not found") error() end
   db = {}
   tree = {}
-  repos = {}
+  repourls = {}
+  repopkgs = {}
   print("Parsing database...")
   local gen = fs.open("/var/lib/upt/db/general", "r")
   local databases = string.split(gen.readAll(), "\n")
@@ -26,8 +28,12 @@ local function parseDatabase()
     local tmp = string.split(repo, " ")
     local name = tmp[1]
     local url = tmp[2]
-    repos[name] = url
+    repourls[name] = url
     tree[url] = {}
+    if not fs.exists("/var/lib/upt/db/" .. name .. ".db") then
+      printError("Database not found. Run 'upt update' to download it.")
+      error()
+    end
     local f = fs.open("/var/lib/upt/db/" .. name .. ".db", "r")
     local isDir = false
     for k, v in pairs(string.split(f.readAll(), "\n")) do
@@ -51,8 +57,7 @@ local function parseDatabase()
         else
           local x = string.split(v, " ")
           db[x[1]] = {}
-          db[name .. "/" .. x[1]] = {}
-          for _, d in pairs({db[x[1]], db[name .. "/" .. x[1]]}) do
+          for _, d in pairs({db[x[1]]}) do
             d.VERSION = string.split(x[2], ";")
             d.DEPENDS = string.split(x[3], ";")
             d.REPO = name
@@ -112,7 +117,7 @@ local function getInstalledPackages()
   local x = fs.list("/var/lib/upt")
   local r = {}
   for k, v in pairs(x) do
-    if v == "database" then else
+    if v == "db" then else
       r[v] = true
     end
   end
@@ -139,6 +144,7 @@ end
 local function install(packages, dontcheck)
   local oldDir = shell.dir()
   for i = 1, #packages do
+    sleep(0.05)
     if fs.exists("/usr/pkg/" .. packages[i]) then
       recursCopy("/usr/pkg/" .. packages[i], "")
       DEPENDS, VERSION = getPkgInfo(packages[i])
@@ -309,7 +315,7 @@ local function get(packages)
     archive.unpack("/tmp/" .. packages[i], "/usr/pkg/" .. packages[i])
     fs.delete("/tmp/" .. packages[i])]]
 
-    getDir(packages[i], "/", "/usr/src", nil, repos[db[packages[i]].REPO])
+    getDir(packages[i], "/", "/usr/src", nil, repourls[db[packages[i]].REPO])
 
     print("Downloading package " .. packages[i] .. " done!")
   end
@@ -341,7 +347,7 @@ local function getInstall(packages)
   for k, v in pairs(tree) do install({k}, true) end
 end
 
-local function upgrade()
+local function upgrade(force)
   local p = getInstalledPackages()
   local toupg = {}
   for k, v in pairs(p) do
@@ -350,6 +356,7 @@ local function upgrade()
     local flag = false
     for i = 1, 3 do
       if VERSION1[i] > VERSION[i] then flag = true break end
+      if force and VERSION1[i] ~= VERSION[i] then flag = true break end
     end
     if flag then
       table.insert(toupg, k)
@@ -380,6 +387,11 @@ if argv[1] == "upgrade" then
   upgrade()
 end
 
+if argv[1] == "force-upgrade" then
+  parseDatabase()
+  upgrade(true)
+end
+
 if argv[1] == "remove" then 
   if #argv < 2 then
     print("Usage: upt remove <package1> [package2] ...") return
@@ -402,4 +414,23 @@ if argv[1] == "get-install" then
   end
   parseDatabase()
   getInstall(p)
+end
+
+if argv[1] == "list" then
+  parseDatabase()
+  local s = ""
+  for k, v in pairs(db) do
+    s = s .. v.REPO .. "/" .. k .. " " .. table.concat(v.VERSION, ".") .. "\n"
+  end
+  textutils.pagedPrint(s)
+end
+
+if argv[1] == "list-installed" then
+  local s = ""
+  for k, v in pairs(getInstalledPackages()) do
+    local f = fs.open("/var/lib/upt/" .. k, "r")
+    f.readLine()
+    s = s .. k .. " " .. table.concat(string.split(f.readLine(), ";"), ".") .. "\n"
+  end
+  textutils.pagedPrint(s)
 end

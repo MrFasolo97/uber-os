@@ -1,19 +1,19 @@
 upt 0;4;0 uberkernel;corelib;luamin
-libjson 0;2;1 uberkernel
+libjson 1;0;0 uberkernel
 ush 0;2;1 uberkernel;corelib
-init 0;2;1 uberkernel;corelib
+init 0;3;0 uberkernel;corelib
 udev 0;2;1 uberkernel;corelib
-corelib 0;2;1 uberkernel
+corelib 1;0;0 uberkernel
 Bedrock 479;0;0 
 login 0;2;1 uberkernel;corelib
 libarchive 0;2;1 uberkernel
-luamin 0;2;1 uberkernel
-uberkernel 0;2;1 corelib
-libbase64 0;2;1 uberkernel
+luamin 1;0;0 uberkernel
+uberkernel 0;4;0 corelib
+libbase64 1;0;0 uberkernel
 coreutils 0;2;1 uberkernel;corelib
 utar 0;2;1 uberkernel;corelib;libarchive
 uboot 0;2;1 
-devutils 0;2;1 uberkernel;corelib;libarchive;luamin
+devutils 0;3;0 uberkernel;corelib;libarchive;luamin
 //DIRLIST
 D/upt
 F/upt/Build.lua
@@ -45,6 +45,10 @@ D/corelib
 F/corelib/Build.lua
 F/corelib/copy.lua
 F/corelib/fixserialize.lua
+D/corelib/out
+F/corelib/out/copy.lua
+F/corelib/out/fixserialize.lua
+F/corelib/out/split.lua
 F/corelib/PKGINFO.lua
 F/corelib/Makefile
 F/corelib/split.lua
@@ -62,6 +66,8 @@ F/login/logind.lua
 F/login/Makefile
 D/libarchive
 F/libarchive/Build.lua
+D/libarchive/out
+F/libarchive/out/libarchive.lua
 F/libarchive/libarchive.lua
 F/libarchive/PKGINFO.lua
 F/libarchive/Makefile
@@ -69,29 +75,61 @@ D/luamin
 F/luamin/util.lua
 F/luamin/Build.lua
 F/luamin/min.lua
+D/luamin/out
+F/luamin/out/util.lua
+F/luamin/out/min.lua
+F/luamin/out/parselua.lua
+F/luamin/out/scope.lua
 F/luamin/parselua.lua
 F/luamin/PKGINFO.lua
 F/luamin/scope.lua
 F/luamin/Makefile
 D/uberkernel
 F/uberkernel/Build.lua
+D/uberkernel/out
+F/uberkernel/out/uberkernel_img
+D/uberkernel/out/drivers
+D/uberkernel/out/drivers/fs
+F/uberkernel/out/drivers/fs/ufs
+F/uberkernel/out/drivers/fs/romfs
+F/uberkernel/out/drivers/fs/devfs
+F/uberkernel/out/drivers/fs/ccfs
+F/uberkernel/out/uberkernel
+D/uberkernel/out/modules
+F/uberkernel/out/modules/lua
+F/uberkernel/out/modules/fsd
+F/uberkernel/out/modules/users
+F/uberkernel/out/modules/acpi
 D/uberkernel/drivers
 D/uberkernel/drivers/fs
 D/uberkernel/drivers/fs/ufs
 F/uberkernel/drivers/fs/ufs/ufs.lua
 F/uberkernel/drivers/fs/ufs/Build.lua
+D/uberkernel/drivers/fs/ufs/out
+F/uberkernel/drivers/fs/ufs/out/ufs
 F/uberkernel/drivers/fs/ufs/Makefile
 F/uberkernel/drivers/fs/Build.lua
+D/uberkernel/drivers/fs/out
+F/uberkernel/drivers/fs/out/ufs
+F/uberkernel/drivers/fs/out/romfs
+F/uberkernel/drivers/fs/out/devfs
+F/uberkernel/drivers/fs/out/ccfs
 D/uberkernel/drivers/fs/romfs
 F/uberkernel/drivers/fs/romfs/Build.lua
+D/uberkernel/drivers/fs/romfs/out
+F/uberkernel/drivers/fs/romfs/out/romfs
 F/uberkernel/drivers/fs/romfs/Makefile
 F/uberkernel/drivers/fs/romfs/romfs.lua
 D/uberkernel/drivers/fs/devfs
 F/uberkernel/drivers/fs/devfs/devfs.lua
 F/uberkernel/drivers/fs/devfs/Build.lua
+D/uberkernel/drivers/fs/devfs/out
+F/uberkernel/drivers/fs/devfs/out/devfs
 F/uberkernel/drivers/fs/devfs/Makefile
 D/uberkernel/drivers/fs/ccfs
 F/uberkernel/drivers/fs/ccfs/Build.lua
+D/uberkernel/drivers/fs/ccfs/out
+F/uberkernel/drivers/fs/ccfs/out/ccfs
 F/uberkernel/drivers/fs/ccfs/ccfs.lua
 F/uberkernel/drivers/fs/ccfs/Makefile
 F/uberkernel/drivers/fs/Makefile
@@ -99,20 +137,33 @@ F/uberkernel/uberkernel.lua
 D/uberkernel/modules
 D/uberkernel/modules/lua
 F/uberkernel/modules/lua/Build.lua
+D/uberkernel/modules/lua/out
+F/uberkernel/modules/lua/out/lua
 F/uberkernel/modules/lua/lua.lua
 F/uberkernel/modules/lua/Makefile
 D/uberkernel/modules/fsd
 F/uberkernel/modules/fsd/fsd.lua
 F/uberkernel/modules/fsd/Build.lua
+D/uberkernel/modules/fsd/out
+F/uberkernel/modules/fsd/out/fsd
 F/uberkernel/modules/fsd/Makefile
 D/uberkernel/modules/users
 F/uberkernel/modules/users/Build.lua
+D/uberkernel/modules/users/out
+F/uberkernel/modules/users/out/users
 F/uberkernel/modules/users/users.lua
 F/uberkernel/modules/users/Makefile
 F/uberkernel/modules/Build.lua
+D/uberkernel/modules/out
+F/uberkernel/modules/out/lua
+F/uberkernel/modules/out/fsd
+F/uberkernel/modules/out/users
+F/uberkernel/modules/out/acpi
 D/uberkernel/modules/acpi
 F/uberkernel/modules/acpi/acpi.lua
 F/uberkernel/modules/acpi/Build.lua
+D/uberkernel/modules/acpi/out
+F/uberkernel/modules/acpi/out/acpi
 F/uberkernel/modules/acpi/Makefile
 F/uberkernel/modules/Makefile
 F/uberkernel/PKGINFO.lua
@@ -174,6 +225,10 @@ F/uboot/Makefile
 D/devutils
 F/devutils/Build.lua
 F/devutils/makepkg.lua
+D/devutils/out
+F/devutils/out/gendb
+F/devutils/out/makepkg
+F/devutils/out/makeallpkg
 F/devutils/makeallpkg.lua
 F/devutils/PKGINFO.lua
 F/devutils/gendb.lua
