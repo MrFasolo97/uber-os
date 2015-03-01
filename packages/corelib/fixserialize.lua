@@ -46,7 +46,9 @@ local function serializeImpl( t, tTracking, sIndent )
     end
 end
 
-function fserialize( t )
+local function serialize( t )
     local tTracking = {}
     return serializeImpl( t, tTracking, "" )
 end
+
+textutils.serialize = serialize

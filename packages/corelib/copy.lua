@@ -13,3 +13,4 @@ function deepcopy(orig)
     return copy
 end
 
+_G.deepcopy = deepcopy

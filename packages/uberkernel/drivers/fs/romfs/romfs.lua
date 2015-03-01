@@ -1,8 +1,7 @@
 --ROM File System Driver. Works with fsd.
 
-romfs = {}
+local romfs = {}
 
-local oldfs = deepcopy(fs)
 romfs.list = function(mountPath, device, path)
   path = fsd.normalizePath(path)
   path = fsd.resolveLinks(path)
@@ -72,4 +71,5 @@ romfs.delete = function(mountPath, device, path)
   fs.deleteNode(mountPath .. "/" .. path)
 end
 
-romfs = applyreadonly(romfs) _G["romfs"] = romfs
+romfs = applyreadonly(romfs)
+drivers.romfs = romfs

@@ -36,3 +36,5 @@ function string:split(delimiter)
         return self:gmatch( (".?"):rep( delimiter ) )
     end
 end
+
+_G.split = split

@@ -1,8 +1,6 @@
 --Uber File System Driver. Works with fsd.
 
-ufs = {}
-
-local oldfs = deepcopy(fs)
+local ufs = {}
 
 local function collectFiles(dir, stripPath, table)
   if not table then table = {} end
@@ -150,4 +148,5 @@ ufs.delete = function(mountPath, device, path)
   fs.deleteNode(mountPath .. "/" .. path)
 end
 
-ufs = applyreadonly(ufs) _G["ufs"] = ufs
+ufs = applyreadonly(ufs) 
+drivers.ufs = ufs

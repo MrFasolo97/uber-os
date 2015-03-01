@@ -1,7 +1,6 @@
 --DevFs Driver
 
-local oldfs = deepcopy(fs)
-devfs = {}
+local devfs = {}
 
 function devfs.list(mountPath, device, path)
   return udev.getMnemonics()
@@ -44,4 +43,5 @@ function devfs.open(mountPath, device, path, mode)
   return handle
 end
 
-devfs = applyreadonly(devfs) _G["devfs"] = devfs
+devfs = applyreadonly(devfs)
+drivers.devfs = devfs

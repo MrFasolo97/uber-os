@@ -20,13 +20,13 @@ function run(level)
   end)
   for k, v in pairs(lst) do
     if string.sub(v, 1, 1) == "R" then
-      shell.run("/etc/init.d/" .. string.sub(v, 4, #v) .. " start")
+      os.run({}, "/etc/init.d/" .. string.sub(v, 4, #v), "start")
     end
     if string.sub(v, 1, 1) == "S" then
-      shell.run("/etc/init.d/" .. string.sub(v, 4, #v) .. " stop")
+      os.run({}, "/etc/init.d/" .. string.sub(v, 4, #v), "stop")
     end
     if string.sub(v, 1, 1) == "K" then
-      shell.run("/etc/init.d/" .. string.sub(v, 4, #v) .. "restart")
+      os.run({}, "/etc/init.d/" .. string.sub(v, 4, #v), "restart")
     end
   end
   if level == 0 then if acpi then acpi.shutdown() else os.shutdown() end end

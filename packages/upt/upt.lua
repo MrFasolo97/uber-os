@@ -5,7 +5,7 @@ local argv = { ... }
 lua.include("luamin")
 
 if #argv < 1 then
-  print("Usage: upt install|remove|get|get-install|update|upgrade|force-upgrade|list|list-installed")
+  print("Usage: upt install|force-install|remove|get|get-install|update|upgrade|force-upgrade|list|list-installed")
   return
 end
 
@@ -380,6 +380,14 @@ if argv[1] == "install" then
   end
   parseDatabase()
   install(p)
+end
+
+if argv[1] == "force-install" then 
+  if #argv < 2 then
+    print("Usage: upt force-install <package1> [package2] ...") return
+  end
+  parseDatabase()
+  install(p, true)
 end
 
 if argv[1] == "update" then 

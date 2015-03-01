@@ -40,7 +40,7 @@ $(addsuffix .genimg, $(SRC_MODULES)):
 $(addsuffix .genimg, $(SRC_DRIVERS_FS)):
 	printf "_G['loadfsdriver_" >> out/uberkernel_img
 	printf $(basename $@) >> out/uberkernel_img
-	printf "']=function()\n" >> out/uberkernel_img
+	printf "']=function(oldfs,drivers)\n" >> out/uberkernel_img
 	cat out/drivers/fs/$(basename $@) >> out/uberkernel_img
 	printf "\nend\n" >> out/uberkernel_img
 

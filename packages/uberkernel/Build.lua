@@ -72,9 +72,8 @@ end
 
 local function install(root)
   root = root or ""
-  print("Installing into " .. fsd.normalizePath(root))
+  print("Installing into /" .. root)
   pcall(fs.copy, PWD .. "/out/uberkernel", root .. "/boot/uberkernel")
-  pcall(fs.copy, PWD .. "/out/kerneld", root .. "/etc/init.d/kerneld")
   for k, v in pairs(SRC_MODULES) do
      pcall(fs.copy, PWD .. "/out/" .. v, root .. "/lib/modules/" .. v)
   end
@@ -96,7 +95,7 @@ local function genimg()
   end
   for k, v in pairs(drivers_fs) do
     print("Injecting FS driver " .. v)
-    img.write('_G["loadfsdriver_' .. v .. '"]=function()\n')
+    img.write('_G["loadfsdriver_' .. v .. '"]=function(oldfs,drivers)\n')
     f = fs.open(PWD .. "/out/drivers/fs/" .. v, "r")
     img.write(f.readAll())
     f.close()

@@ -6,32 +6,37 @@ lua.include("split")
 fsd = {}
 fsdf = {}
 
-local loadFsDriver = function(drv)
+local drivers = {}
+local oldfs = fs
+
+fsd.loadFsDriver = function(drv)
+  if thread and thread.getUID(coroutine.running()) ~= 0 then
+    return false
+  end
   kernel.log("Loading Filesystem driver " .. drv)
   if _G["loadfsdriver_" .. drv] then
-    status, err = pcall(_G["loadfsdriver_" .. drv])
+    status, err = pcall(_G["loadfsdriver_" .. drv], oldfs, drivers)
     if not status then
       kernel.log("Loading Filesystem driver FAILED")
-      return
+      return false
     end
     _G["loadfsdriver_" .. drv] = nil
     kernel.log("Loading Filesystem driver DONE")
-    return
+    return true
   end
-  status = shell.run(kernel.root .. "/lib/drivers/fs/" .. drv)
+  status = os.run({oldfs = oldfs, drivers = drivers}, kernel.root .. "/lib/drivers/fs/" .. drv)
   if not status then
     kernel.log("Loading Filesystem driver FAILED")
-    return
+    return false
   end
   kernel.log("Loading Filesystem driver DONE")
+  return true
 end
 
-loadFsDriver("ufs")
-loadFsDriver("devfs")
-loadFsDriver("romfs")
-loadFsDriver("ccfs")
-
-local oldfs = deepcopy(fs)
+fsd.loadFsDriver("ufs")
+fsd.loadFsDriver("devfs")
+fsd.loadFsDriver("romfs")
+fsd.loadFsDriver("ccfs")
 
 local nodes = {} --[[
   NODE[path]:
@@ -90,7 +95,7 @@ function fsd.normalizePath(path)
   if string.sub(path, #path, #path) == "/" then
     path = string.sub(path, 1, #path - 1)
   end
-  return "/" .. shell.resolve(path)
+  return "/" .. oldfs.combine("", path)
 end
 
 function fsd.resolveLinks(path)
@@ -187,14 +192,14 @@ function fsd.getInfo(path, dontresolve)
 end
 
 function fsd.saveFs(mountPath)
-  local x = getfenv()[fsd.getMount(mountPath).fs].saveFs
+  local x = drivers[fsd.getMount(mountPath).fs].saveFs
   if x then
     x(mountPath, fsd.getMount(mountPath).dev)
   end
 end
 
 function fsd.loadFs(mountPath)
-  local x = getfenv()[fsd.getMount(mountPath).fs].loadFs
+  local x = drivers[fsd.getMount(mountPath).fs].loadFs
   if x then
     local tmp = x(mountPath, fsd.getMount(mountPath).dev)
     if mountPath == "/" then mountPath = "" end
@@ -248,7 +253,7 @@ function fsd.mount(dev, fs, path)
   if thread then
     if thread.getUID(coroutine.running()) ~= 0 then printError("Superuser is required to mount filesystem") end
   end
-  if not getfenv()[fs] then
+  if not drivers[fs] then
     kernel.log("Unable to mount " .. dev .. " as " .. fs .. " on " .. path .. " : Driver not loaded")
     return false
   end
@@ -423,8 +428,8 @@ for k, v in pairs(oldfs) do
         arg[2] = fsd.normalizePath(arg[2]) .. "/"  .. oldfs.getName(arg[1])
       end
     end
-    if getfenv()[mount.fs] and getfenv()[mount.fs][k] then
-       retVal = getfenv()[mount.fs][k](mountPath, fsd.normalizePath(mount.dev), unpack(arg))
+    if drivers[mount.fs] and drivers[mount.fs][k] then
+       retVal = drivers[mount.fs][k](mountPath, fsd.normalizePath(mount.dev), unpack(arg))
     else
       retVal = oldfs[k](unpack(arg))
     end
@@ -432,7 +437,7 @@ for k, v in pairs(oldfs) do
   end
 end
 
-local oldSetDir = shell.setDir
+--[[local oldSetDir = shell.setDir
 
 shell.setDir = function(dir)
   if not thread then return oldSetDir(dir) end
@@ -441,7 +446,7 @@ shell.setDir = function(dir)
   else
     printError("Access denied!")
   end
-end
+end]]
 
 kernel.registerHook("acpi_shutdown", fsd.sync)
 kernel.registerHook("acpi_reboot", fsd.sync)

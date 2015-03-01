@@ -1,8 +1,6 @@
 --ComputerCraft File System Driver. Works with fsd.
 
-ccfs = {}
-
-local oldfs = deepcopy(fs)
+local ccfs = {}
 
 ccfs.list = function(mountPath, device, path)
   path = fsd.normalizePath(path)
@@ -76,4 +74,5 @@ ccfs.delete = function(mountPath, device, path)
   fs.deleteNode(mountPath .. "/" .. path)
 end
 
-ccfs = applyreadonly(ccfs) _G["ccfs"] = ccfs
+ccfs = applyreadonly(ccfs)
+drivers.ccfs = ccfs

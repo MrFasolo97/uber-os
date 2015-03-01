@@ -1,9 +1,24 @@
 --UberKernel
-KERNEL_DIR = fs.getDir(shell.getRunningProgram()) --Kernel directory path
+local version = "UberKernel 0.4.1"
+local temp_dir
+if KERNEL_DIR then
+  temp_dir = KERNEL_DIR
+else
+  temp_dir = fs.getDir(shell.getRunningProgram())
+end
+local KERNEL_DIR = temp_dir 
 
 local argv = { ... } --Kernel arguments
+local fullargv = argv
+if shell then
+  fullargv = {"/" .. shell.getRunningProgram()}
+  for i = 1, #argv do
+    fullargv[i + 1] = argv[i]
+  end
+end
 
-
+local ccver = os.version()
+local luajver = _VERSION
 
 --Stock functions and APIs
 
@@ -185,7 +200,11 @@ local threadMan = function() --Start the thread manager
 
   rawset(thread, "runFile", function(file, reserved, pause, uid, stdin, stdout, stderr, daemon) --Start file
     local pid, t = thread.startThread(function()
-      shell.run(file)
+      if shell then
+        shell.run(file)
+      else
+        os.run({}, file)
+      end
     end, nil, daemon or file, uid or thread.getUID(coroutine.running()), stdin, stdout, stderr, daemon)
     if daemon and (thread.getUID(coroutine.running()) == 0) then
       t.ppid = 1
@@ -318,7 +337,23 @@ local threadMan = function() --Start the thread manager
         }
       end
     end
-    return nil
+    for i = 1, #starting do
+      if starting[i].pid == pid then
+        return {
+          dead = starting[i].dead,
+          kill = starting[i].kill,
+          pid = pid,
+          ppid = starting[i].ppid,
+          desc = starting[i].desc,
+          uid = starting[i].uid,
+          paused = starting[i].paused,
+          stdin = starting[i].stdin,
+          stdout = starting[i].stdout,
+          stderr = starting[i].stderr,
+          daemon = starting[i].daemon
+        }
+      end
+    end
   end)
 
   print = function( ... ) --Print override
@@ -422,7 +457,7 @@ local threadMan = function() --Start the thread manager
     os = applyreadonly(os) _G["os"] = os
     thread.startThread(function() 
         kernel.log("Starting init")
-        shell.run("/sbin/init")
+        os.run({}, "/sbin/init")
     end, nil, "init", uid)
   end
    
@@ -513,7 +548,7 @@ kernel.loadModule = function(module, panic)
     end
   end
   kernel.log("Loading module " .. module)
-  status, err = pcall(shell.run, ROOT_DIR .. "/lib/modules/" .. module)
+  status = os.run({}, ROOT_DIR .. "/lib/modules/" .. module)
   if status then
     kernel.log("Loading module DONE")
     table.insert(loadedModules, module)
@@ -529,26 +564,27 @@ kernel.loadModule = function(module, panic)
 end
 
 local function start()
-  if (multishell or window) and not fNoModeSet then
-    local s = {"/" .. shell.getRunningProgram()}
-    for i = 1, #argv do
-      s[i + 1] = argv[i]
-    end
+  if (shell or multishell or window) and not fNoModeSet then --tlco
+
     os.sleep(0)
     local a = _G["printError"]
     function _G.printError()
       _G["printError"] = a
       term.redirect(term.native())
+      _G["shell"] = nil
       _G["multishell"] = nil
       _G["window"] = nil
       term.setBackgroundColor(colors.black)
       term.setTextColor(colors.white)
       term.clear()
       term.setCursorPos(1, 1)
-      os.run({}, "/rom/programs/shell", unpack(s))
+      os.run({KERNEL_DIR = KERNEL_DIR}, unpack(fullargv))
     end
     os.queueEvent("terminate")
     return
+  end
+  os.version = function()
+    return version
   end
   kernel.log("Boot directory = /" .. KERNEL_DIR)
   kernel.log("Root directory = /" .. ROOT_DIR)
@@ -572,7 +608,7 @@ local function start()
     end
   end
 
-  -- Setup paths
+  --[[ Setup paths
   local sPath = ".:" .. ROOT_DIR .."/bin:" .. ROOT_DIR .. "/sbin:" .. ROOT_DIR .. "/etc/init.d"
   shell.setPath( sPath )
 
@@ -582,7 +618,7 @@ local function start()
   shell.setAlias( "mv", ROOT_DIR .. "/bin/mv" )
   shell.setAlias( "rm", ROOT_DIR .. "/bin/rm" )
   shell.setAlias( "clr", ROOT_DIR .. "/bin/clear" )
-  shell.setAlias( "sh", ROOT_DIR .. "/bin/ush")
+  shell.setAlias( "sh", ROOT_DIR .. "/bin/ush")]]
 
   os.pullEvent = os.pullEventRaw
   local modules
@@ -619,5 +655,16 @@ if #argv > 0 then
     if argv[i]:match("^.*=") == "root=" then _G["ROOT_DIR"] = argv[i]:sub(6) end
   end
 end
-start()
+local status, err = pcall(start)
+if not status then
+  oldwrite("\n\n[" .. os.clock() .."] Kernel oops\n")
+  oldwrite("This may occur because of an error in code\n")
+  oldwrite("Make sure, that you are using latest stable kernel\n")
+  oldwrite("Debug information:\n")
+  oldwrite("Computercraft Version: " .. ccver .. "\n")
+  oldwrite("LuaJ Version: " .. luajver .. "\n")
+  oldwrite("Error message: " .. err .. "\n")
+  oldwrite("Loaded modules: " .. table.concat(loadedModules, ", ") .. "\n")  
+  os.sleep(9999)
+end
 return

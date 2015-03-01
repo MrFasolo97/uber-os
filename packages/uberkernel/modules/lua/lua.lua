@@ -1,7 +1,7 @@
 --Lua functions
 
 lua = {}
-local libPaths = {".", "/lib"}
+local libPaths = {"/lib", "/usr/lib", "/usr/local/lib"}
 local loaded = {}
 
 function lua.include(lib)
@@ -12,7 +12,12 @@ function lua.include(lib)
   end
   for i = 1, #libPaths do
     if fs.exists(libPaths[i] .. "/" .. lib .. ".lua") then
-      status = shell.run(libPaths[i] .. "/" .. lib .. ".lua")
+      local status
+      if shell then
+        status = shell.run(libPaths[i] .. "/" .. lib .. ".lua")
+      else
+        status = os.run({}, libPaths[i] .. "/" .. lib .. ".lua")
+      end
       if status then
         table.insert(loaded, lib)
         kernel.log("Loaded library: " .. lib .. ".lua")
