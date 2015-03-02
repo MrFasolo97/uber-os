@@ -1,4 +1,4 @@
-upt 0.4.1 uberkernel;corelib;luamin
+upt 0.4.2 uberkernel;corelib;luamin
 libjson 1.0.0 uberkernel
 ush 0.3.0 uberkernel;corelib
 init 0.3.0 uberkernel;corelib

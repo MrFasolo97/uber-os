@@ -592,6 +592,10 @@ kernel.loadModule = function(module, panic)
 end
 
 local function start()
+  if not ROOT_DIR then 
+    kernel.panic("Root directory not found. Try passing root= option to kernel")
+    return
+  end
   if (shell or multishell) and not fNoModeSet then --tlco
 
     os.sleep(0)

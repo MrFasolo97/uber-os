@@ -8,16 +8,12 @@ local argv = { ... }
 
 local function clean()
   fs.delete(PWD .. "/out")
-  for k, v in pairs(SRC_MODULES) do
-    shell.setDir(PWD .. "/modules/" .. v)
-    shell.run("Build.lua", "clean")
-    shell.setDir(PWD)
-  end
-  for k, v in pairs(SRC_DRIVERS_FS) do
-    shell.setDir(PWD .. "/drivers/fs/" .. v)
-    shell.run("Build.lua", "clean")
-    shell.setDir(PWD)
-  end
+  shell.setDir(PWD .. "/modules")
+  shell.run("Build.lua", "clean")
+  shell.setDir(PWD)
+  shell.setDir(PWD .. "/drivers/fs")
+  shell.run("Build.lua", "clean")
+  shell.setDir(PWD)
 end
 
 local function prepare()

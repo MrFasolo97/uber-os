@@ -192,10 +192,14 @@ local function install(packages, dontcheck)
       print("All dependencies satisfied")
     end
     shell.run("/usr/src/" .. packages[i] .."/Build.lua")
+    if fs.exists("/tmp/" .. packages[i]) then
+      fs.delete("/tmp/" .. packages[i])
+    end
     fs.makeDir("/tmp/" .. packages[i])
     print("Installing package " .. packages[i])
     shell.run("/usr/src/" .. packages[i] .."/Build.lua install /tmp/" .. packages[i])
     shell.run("/usr/src/" .. packages[i] .."/Build.lua install")
+    shell.run("/usr/src/" .. packages[i] .."/Build.lua clean")
     print("Registring package " .. packages[i])
     local flist = fs.recursList("/tmp/" .. packages[i])
     local f = fs.open("/var/lib/upt/" .. packages[i], "w")
@@ -306,24 +310,20 @@ local function get(packages)
       end
     end
     if flag then printError("Package not found!") return end
-    print("Downloading package " .. packages[i])
-    --[[local r = http.get("https://raw.githubusercontent.com/TsarN/uber-os/master/repo/" .. packages[i] .. ".utar")
-    if not r then printError("Failed to download " .. packages[i] .. "! Make sure, that you have raw.githubusercontent.com whitelisted or try again later.") return end
-    print("Saving package " .. packages[i])
-    local f = fs.open("/tmp/" .. packages[i], "w") 
-    f.write(r.readAll())
-    f.close()
-    r.close()
-    print("Unpacking package " .. packages[i])
-    lua.include("libarchive")
-    if fs.exists("/usr/pkg/" .. packages[i]) then fs.delete("/usr/pkg/" .. packages[i]) end
-    fs.makeDir("/usr/pkg/" .. packages[i])
-    archive.unpack("/tmp/" .. packages[i], "/usr/pkg/" .. packages[i])
-    fs.delete("/tmp/" .. packages[i])]]
-
-    getDir(packages[i], "/", "/usr/src", nil, repourls[db[packages[i]].REPO])
-
-    print("Downloading package " .. packages[i] .. " done!")
+    flag = true
+    if fs.exists("/usr/src/" .. packages[i] .. "/PKGINFO.lua") then
+      shell.run("/usr/src/" .. packages[i] .. "/PKGINFO.lua")
+      if db[packages[i]].VERSION == VERSION then
+        flag = false
+      else
+        fs.delete("/usr/src/" .. packages[i])
+      end
+    end
+    if flag then
+      print("Downloading package " .. packages[i])
+      getDir(packages[i], "/", "/usr/src", nil, repourls[db[packages[i]].REPO])
+      print("Downloading package " .. packages[i] .. " done!")
+    end
   end
 end
 
