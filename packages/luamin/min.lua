@@ -370,3 +370,5 @@ minify = function(code)
     return false
   end
 end
+
+_G.minify = minify

@@ -122,7 +122,7 @@ function fsd.newLink(name, path)
   end
 end
 
-function fsd.delLink(name, path)
+function fsd.delLink(name)
   if testPerms(name, thread.getUID(coroutine.running()), "w") then
     fsd.setNode(name, nil, nil, false)
   else

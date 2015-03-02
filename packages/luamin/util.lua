@@ -89,3 +89,4 @@ util = applyreadonly({
 	splitLines = splitLines,
 	printf     = printf,
 })
+_G.util = util

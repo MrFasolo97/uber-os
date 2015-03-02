@@ -1,5 +1,5 @@
-BASE_PACKAGES = corelib coreutils init login uberkernel uboot udev ush libarchive upt luamin
-PACKAGES = $(BASE_PACKAGES) libjson utar devutils Bedrock libbase64 libargparse 
+BASE_PACKAGES = corelib coreutils init login uberkernel uboot udev ush upt luamin
+PACKAGES = $(BASE_PACKAGES) libjson utar devutils Bedrock libbase64 libargparse libarchive 
 
 all: clean prepare base configure
 

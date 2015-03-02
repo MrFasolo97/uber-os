@@ -1406,4 +1406,4 @@ local function ParseLua(src)
 end
 
 lua_parser = { LexLua = LexLua, ParseLua = ParseLua }
-	
+_G.lua_parser = lua_parser

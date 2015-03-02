@@ -193,3 +193,4 @@ local Scope = {
 }
 
 scope = Scope
+_G.scope = scope
