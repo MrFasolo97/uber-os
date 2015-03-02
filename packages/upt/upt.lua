@@ -354,14 +354,15 @@ local function getInstall(packages)
 end
 
 local function upgrade(force)
+  local DEPENDS, VERSION, DEPENDS1, VERSION1
   local p = getInstalledPackages()
   local toupg = {}
   for k, v in pairs(p) do
     DEPENDS1, VERSION1 = getPkgInfo(k, true)
     DEPENDS, VERSION = getPkgInfo(k)
     local flag = false
-    if VERSION1 > VERSION then flag = true break end
-    if force and VERSION1 ~= VERSION then flag = true break end
+    if VERSION1 > VERSION then flag = true end
+    if force and VERSION1 ~= VERSION then flag = true end
     if flag then
       table.insert(toupg, k)
     end
