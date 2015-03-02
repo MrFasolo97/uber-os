@@ -30,9 +30,11 @@ if s:sub(1, 1) ~= "/" then s = "/" .. s end
 print("Default = " .. s)
 print("")
 local tmp = ""
+local history = {s}
 while true do
   write("boot: ")
-  tmp = read()
+  tmp = read(nil, history)
+  table.insert(history, tmp)
   if tmp == "" then
     print("Booting default ...")
     if boot(s) then return end

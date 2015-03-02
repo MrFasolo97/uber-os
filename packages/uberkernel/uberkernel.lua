@@ -1,5 +1,5 @@
 --UberKernel
-local version = "UberKernel 0.4.1"
+local version = "UberKernel Beta"
 local temp_dir
 if KERNEL_DIR then
   temp_dir = KERNEL_DIR
@@ -322,6 +322,8 @@ local threadMan = function() --Start the thread manager
   rawset(thread, "status", function(pid) --Get process status
     for i = 1, #threads do
       if threads[i].pid == pid then
+        if (thread.getUID(coroutine.running()) == threads[i].uid) or
+           (thread.getUID(coroutine.running()) == 0) then
         return {
           dead = threads[i].dead,
           kill = threads[i].kill,
@@ -335,10 +337,24 @@ local threadMan = function() --Start the thread manager
           stderr = threads[i].stderr,
           daemon = threads[i].daemon
         }
+        else
+        return {
+          dead = threads[i].dead,
+          kill = threads[i].kill,
+          pid = pid,
+          ppid = threads[i].ppid,
+          desc = threads[i].desc,
+          uid = threads[i].uid,
+          paused = threads[i].paused,
+          daemon = threads[i].daemon
+        }
+      end
       end
     end
     for i = 1, #starting do
       if starting[i].pid == pid then
+        if (thread.getUID(coroutine.running()) == starting[i].uid) or
+           (thread.getUID(coroutine.running()) == 0) then
         return {
           dead = starting[i].dead,
           kill = starting[i].kill,
@@ -352,28 +368,40 @@ local threadMan = function() --Start the thread manager
           stderr = starting[i].stderr,
           daemon = starting[i].daemon
         }
+        else
+        return {
+          dead = starting[i].dead,
+          kill = starting[i].kill,
+          pid = pid,
+          ppid = starting[i].ppid,
+          desc = starting[i].desc,
+          uid = starting[i].uid,
+          paused = starting[i].paused,
+          daemon = starting[i].daemon
+        }
+      end
       end
     end
   end)
 
   print = function( ... ) --Print override
     arg = arg or {}
-    local fOut = thread.status(thread.getPID(coroutine.running())).stdout
+    local fOut = (thread.status(thread.getPID(coroutine.running())) or {stdout = newStdout()}).stdout
     fOut.writeLine(table.concat(arg, ""))
   end
 
   write = function(data) --Write override
-    local fOut = thread.status(thread.getPID(coroutine.running())).stdout
+    local fOut = (thread.status(thread.getPID(coroutine.running())) or {stdout = newStdout()}).stdout
      fOut.write(data)
   end
 
   read = function(mask, history) --Read override
-    local fIn = thread.status(thread.getPID(coroutine.running())).stdin
+    local fIn = (thread.status(thread.getPID(coroutine.running())) or {stdin = newStdin()}).stdin
     return fIn.readLine(mask, history)
   end
 
   printError = function(msg) --Error override
-    local fErr = thread.status(thread.getPID(coroutine.running())).stderr
+    local fErr = (thread.status(thread.getPID(coroutine.running())) or {stderr = newStderr()}).stderr
     fErr.write(msg .. "\n")
   end
 
@@ -442,7 +470,7 @@ local threadMan = function() --Start the thread manager
 
   thread = applyreadonly(thread) _G["thread"] = thread
 
-  _G = applyreadonly(_G, true)
+  _G = applyreadonly(_G)
 
   if type(threadMain) == "function" then
     thread.startThread(threadMain)
@@ -564,16 +592,15 @@ kernel.loadModule = function(module, panic)
 end
 
 local function start()
-  if (shell or multishell or window) and not fNoModeSet then --tlco
+  if (shell or multishell) and not fNoModeSet then --tlco
 
     os.sleep(0)
     local a = _G["printError"]
     function _G.printError()
       _G["printError"] = a
       term.redirect(term.native())
-      _G["shell"] = nil
-      _G["multishell"] = nil
-      _G["window"] = nil
+      shell = nil
+      multishell = nil
       term.setBackgroundColor(colors.black)
       term.setTextColor(colors.white)
       term.clear()
