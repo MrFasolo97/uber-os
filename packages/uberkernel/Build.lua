@@ -73,10 +73,7 @@ end
 local function install(root)
   root = root or ""
   print("Installing into /" .. root)
-  pcall(fs.copy, PWD .. "/out/uberkernel", root .. "/boot/uberkernel")
-  for k, v in pairs(SRC_MODULES) do
-     pcall(fs.copy, PWD .. "/out/" .. v, root .. "/lib/modules/" .. v)
-  end
+  pcall(fs.copy, PWD .. "/out/uberkernel_img", root .. "/boot/uberkernel")
 end
 
 local function genimg()
