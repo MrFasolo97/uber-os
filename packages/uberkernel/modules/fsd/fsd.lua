@@ -9,6 +9,23 @@ fsdf = {}
 local drivers = {}
 local oldfs = fs
 
+local oldCopy = oldfs.copy
+local oldMove = oldfs.move
+
+function oldfs.copy(from, to)
+  if oldfs.exists(to) then
+    oldfs.delete(to)
+  end
+  return oldCopy(from, to)
+end
+
+function oldfs.move(from, to)
+  if oldfs.exists(to) then
+    oldfs.delete(to)
+  end
+  return oldMove(from, to)
+end
+
 fsd.loadFsDriver = function(drv)
   if thread and thread.getUID(coroutine.running()) ~= 0 then
     return false
