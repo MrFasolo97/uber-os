@@ -1,6 +1,12 @@
+local bootDirectory = "/boot"
+
 local oldPullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
 local function boot(str)
+  if str:sub(1, #bootDirectory) ~= bootDirectory then
+    print("This path is not whitelisted!")
+    return false
+  end
   local path = ""
   for i = 1, #str do
     if string.sub(str, i, i) ~= " " then
@@ -19,7 +25,8 @@ local function boot(str)
   shell.run(str)
   return true
 end
-
+term.setBackgroundColor(colors.black)
+term.setTextColor(colors.white)
 term.clear()
 term.setCursorPos(1, 1)
 print("Uber Bootloader v0.1")
@@ -39,6 +46,7 @@ while true do
     print("Booting default ...")
     if boot(s) then return end
   else
+    if tmp:sub(1, 1) ~= "/" then tmp = "/" .. tmp end
     if boot(tmp) then return end
   end
 end

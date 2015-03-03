@@ -1,5 +1,10 @@
 --Uber Packaging Tool
 
+if thread.getUID(coroutine.running()) ~= 0 then
+  printError("You cannot run upt unless you are root")
+  return
+end
+
 local argv = { ... }
 
 lua.include("luamin")

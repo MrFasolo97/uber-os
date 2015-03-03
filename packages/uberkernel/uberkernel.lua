@@ -193,12 +193,13 @@ local threadMan = function() --Start the thread manager
       stdout = stdout or newStdout(), --Stdout stream for process
       stderr = stderr or newStderr(), --Stderr stream for process
       daemon = daemon,
-      signals = {}
+      signals = {},
+      skip = false
     })
     return newpid, starting[#starting]
   end)
 
-  rawset(thread, "runFile", function(file, reserved, pause, uid, stdin, stdout, stderr, daemon) --Start file
+  rawset(thread, "runFile", function(file, shell, pause, uid, stdin, stdout, stderr, daemon) --Start file
     local pid, t = thread.startThread(function()
       if shell then
         shell.run(file)
@@ -428,7 +429,7 @@ local threadMan = function() --Start the thread manager
       end
       daemons = clone
       for k, v in pairs(threads) do if t.ppid == v.pid then v.paused = false end end
-      for k, v in pairs(threads) do if t.ppid == v.pid then tick(v, "resume_event") end end
+      for k, v in pairs(threads) do if t.ppid == v.pid then tick(v, "resume_event") v.skip = true end end
       t.stdout.close()
       t.stdin.close()
       t.stderr.close()
@@ -437,6 +438,8 @@ local threadMan = function() --Start the thread manager
    
   local function tickAll() --Main routine
     if isPanic then while true do os.sleep(0) end end
+    for k, v in pairs(starting) do v.skip = false end
+    for k, v in pairs(threads) do v.skip = false end
     if #starting > 0 then
       local clone = starting
       starting = {}
@@ -455,7 +458,9 @@ local threadMan = function() --Start the thread manager
     end
     local dead = nil
     for k,v in ipairs(threads) do
-      tick(v, unpack(e))
+      if not v.skip then
+        tick(v, unpack(e))
+      end
       if v.dead then
         if dead == nil then dead = {} end
         table.insert(dead, k - #dead)
@@ -593,6 +598,7 @@ end
 
 local function start()
   if not ROOT_DIR then 
+    os.pullEvent = os.pullEventRaw
     kernel.panic("Root directory not found. Try passing root= option to kernel")
     return
   end
@@ -614,6 +620,7 @@ local function start()
     os.queueEvent("terminate")
     return
   end
+  os.pullEvent = os.pullEventRaw
   os.version = function()
     return version
   end
@@ -639,19 +646,6 @@ local function start()
     end
   end
 
-  --[[ Setup paths
-  local sPath = ".:" .. ROOT_DIR .."/bin:" .. ROOT_DIR .. "/sbin:" .. ROOT_DIR .. "/etc/init.d"
-  shell.setPath( sPath )
-
-  -- Setup aliases
-  shell.setAlias( "ls", ROOT_DIR .. "/bin/ls")
-  shell.setAlias( "cp", ROOT_DIR .. "/bin/cp" )
-  shell.setAlias( "mv", ROOT_DIR .. "/bin/mv" )
-  shell.setAlias( "rm", ROOT_DIR .. "/bin/rm" )
-  shell.setAlias( "clr", ROOT_DIR .. "/bin/clear" )
-  shell.setAlias( "sh", ROOT_DIR .. "/bin/ush")]]
-
-  os.pullEvent = os.pullEventRaw
   local modules
   if #argv <= 1 then
     kernel.loadModule("lua", true) --Main dependency

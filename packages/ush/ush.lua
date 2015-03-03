@@ -194,5 +194,5 @@ while not bExit do
     if #sLine > 0 then
       table.insert( tCommandHistory, sLine )
     end
-    shell.run( sLine )
+    thread.runFile(sLine, shell, true)
 end
