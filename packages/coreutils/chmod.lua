@@ -12,10 +12,10 @@ end
 
 for i = x, #argv do
   if x == 2 then
-    fsd.setNode(fsd.normalizePath(shell.resolve(argv[i])), nil, x - 1)
+    fsd.setNode(fsd.normalizePath(shell.resolve(argv[i])), nil, argv[x - 1])
   else
     for k, v in pairs(fsd.recursList(shell.resolve(argv[i]))) do
-      fsd.setNode(v, nil, x - 1)
+      fsd.setNode(v, nil, argv[x - 1])
     end
   end
 end

@@ -98,13 +98,11 @@ function applyreadonly(table) --Make a table read-only
   setmetatable(tmp, {
     __index = table,
     __newindex = function(_table, key, value)
-      if thread then
-        if thread.getUID(coroutine.running()) ~= 0 then
+        if thread and thread.getUID(coroutine.running()) ~= 0 then
           printError("Attempt to modify read-only table") --Allowing root to crash system. This is ok.
         else
           table[key] = value
         end
-      end
     end,
     __metatable = false
   })
@@ -116,13 +114,11 @@ local oldrawset = rawset
 rawset = function(table, index, value)
   for i = 1, #readOnlyTables do
     if (table == readOnlyTables[i]) or (table[index] == readOnlyTables[i]) then
-      if thread then
-        if thread.getUID(coroutine.running()) ~= 0 then
+        if thread and thread.getUID(coroutine.running()) ~= 0 then
           printError("Attempt to modify read-only table") --Allowing root to crash system. This is ok.
         else
           oldrawset(table, index, value)
         end
-      end
       return 
     end
   end
@@ -475,8 +471,6 @@ local threadMan = function() --Start the thread manager
 
   thread = applyreadonly(thread) _G["thread"] = thread
 
-  _G = applyreadonly(_G)
-
   if type(threadMain) == "function" then
     thread.startThread(threadMain)
   else
@@ -488,6 +482,7 @@ local threadMan = function() --Start the thread manager
     _G["newStdout"] = newStdout
     _G["newStderr"] = newStderr
     os = applyreadonly(os) _G["os"] = os
+    table.insert(readOnlyTables, _G)
     thread.startThread(function() 
         kernel.log("Starting init")
         os.run({}, "/sbin/init")
