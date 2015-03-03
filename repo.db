@@ -1,4 +1,4 @@
-upt 0.4.3 uberkernel;corelib;luamin
+upt 0.4.4 uberkernel;corelib;luamin
 libjson 1.0.0 uberkernel
 ush 0.3.1 uberkernel;corelib
 init 0.3.0 uberkernel;corelib
@@ -13,7 +13,7 @@ libargparse 1.0.0
 libbase64 1.0.0 uberkernel
 coreutils 0.2.3 uberkernel;corelib
 utar 0.2.1 uberkernel;corelib;libarchive
-uboot 1.0.1 
+uboot 1.0.2 
 devutils 0.3.0 uberkernel;corelib;libarchive;luamin
 //DIRLIST
 D/upt

@@ -146,6 +146,48 @@ local function buildDependencyTree(packages, tree)
   return tree
 end
 
+local function remove(packages, noconfirm)
+  if not noconfirm then
+    print()
+    write("Confirm? [Y/n]: ")
+    local x = read()
+  end
+  if x == "n" or x == "N" then return end
+  for i = 1, #packages do
+    if not fs.exists("/var/lib/upt/" .. packages[i]) then
+      printError("Package " .. packages[i] .. " not found!") return
+    end
+    if not noconfirm then
+      print("Removing package " .. packages[i])
+    end
+    local f = fs.open("/var/lib/upt/" .. packages[i], "r")
+    f.readLine()
+    f.readLine()
+    local x = f.readLine()
+    local d = false
+    while x do
+      if x == "//DIRLIST" then
+        x = f.readLine()
+        d = true
+        if not x then break end
+      end
+      if not d then
+        fs.delete(x)
+      else
+        if #fs.list(x) == 0 then
+          fs.delete(x)
+        end
+      end
+      x = f.readLine()
+    end
+    f.close()
+    fs.delete("/var/lib/upt/" .. packages[i])
+    if not noconfirm then
+      print("Removing package " .. packages[i] .. " done!")
+    end
+  end
+end
+
 local function install(packages, dontcheck)
   local oldDir = shell.dir()
   local todo = {}
@@ -201,6 +243,9 @@ local function install(packages, dontcheck)
       fs.delete("/tmp/" .. packages[i])
     end
     fs.makeDir("/tmp/" .. packages[i])
+    if fs.exists("/var/lib/upt/" .. packages[i]) then
+      remove({packages[i]}, true)
+    end
     print("Installing package " .. packages[i])
     shell.run("/usr/src/" .. packages[i] .."/Build.lua install /tmp/" .. packages[i])
     shell.run("/usr/src/" .. packages[i] .."/Build.lua install")
@@ -228,42 +273,6 @@ local function install(packages, dontcheck)
     print("Installing package " .. packages[i] .. " done!")
   end
   shell.setDir(oldDir)
-end
-
-local function remove(packages)
-  print()
-  write("Confirm? [Y/n]: ")
-  local x = read()
-  if x == "n" or x == "N" then return end
-  for i = 1, #packages do
-    if not fs.exists("/var/lib/upt/" .. packages[i]) then
-      printError("Package " .. packages[i] .. " not found!") return
-    end
-    print("Removing package " .. packages[i])
-    local f = fs.open("/var/lib/upt/" .. packages[i], "r")
-    f.readLine()
-    f.readLine()
-    local x = f.readLine()
-    local d = false
-    while x do
-      if x == "//DIRLIST" then
-        x = f.readLine()
-        d = true
-        if not x then break end
-      end
-      if not d then
-        fs.delete(x)
-      else
-        if #fs.list(x) == 0 then
-          fs.delete(x)
-        end
-      end
-      x = f.readLine()
-    end
-    f.close()
-    fs.delete("/var/lib/upt/" .. packages[i])
-    print("Removing package " .. packages[i] .. " done!")
-  end
 end
 
 local function update()

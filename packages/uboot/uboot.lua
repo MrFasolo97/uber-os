@@ -3,6 +3,8 @@ local bootDirectory = "/boot"
 local oldPullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
 local function boot(str)
+  str = fs.combine("", str)
+  if str:sub(1, 1) ~= "/" then str = "/" .. str end
   if str:sub(1, #bootDirectory) ~= bootDirectory then
     print("This path is not whitelisted!")
     return false
@@ -46,7 +48,6 @@ while true do
     print("Booting default ...")
     if boot(s) then return end
   else
-    if tmp:sub(1, 1) ~= "/" then tmp = "/" .. tmp end
     if boot(tmp) then return end
   end
 end
