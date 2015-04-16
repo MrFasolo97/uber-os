@@ -1,14 +1,19 @@
+-- Change Directory
 
 local tArgs = { ... }
-if #tArgs < 1 then
-	print( "Usage: cd <path>" )
-	return
+
+local sNewDir = nil
+
+if #tArgs == 0 then
+  -- go home
+  sNewDir = users.getHome( users.getActiveUID() )
+else
+  -- go to the first directory listed
+  sNewDir = shell.resolve( tArgs[1] )
 end
 
-local sNewDir = shell.resolve( tArgs[1] )
 if fs.isDir( sNewDir ) then
-	shell.setDir( sNewDir )
+  shell.setDir( sNewDir )
 else
-  	print( "Not a directory" )
-  	return
+  print( "Not a directory" )
 end
