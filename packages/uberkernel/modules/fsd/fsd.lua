@@ -260,7 +260,7 @@ function fsd.find(wildcard)
   local result = {}
   for k, v in pairs(l) do
     if count_char(v, "/") == z then
-      if string.match(v, wildcard) then
+      if string.match(v, wildcard) and v ~= "/" then
         table.insert(result, v)
       end
     end
