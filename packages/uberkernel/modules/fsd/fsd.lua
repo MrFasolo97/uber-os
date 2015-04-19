@@ -154,10 +154,19 @@ function fsd.stripPath(base, full)
   return l
 end
 
-function fsd.recursList(path, cache)
-  if not cache then cache = {} end
+function fsd.recursList(path, cache, include_start)
+  if not cache then
+    if include_start then
+      cache = {fsd.normalizePath(path)}
+    else
+      cache = {}
+    end
+  end
   path = fsd.normalizePath(path)
   local l = fs.list(path)
+  if not l then
+    return cache
+  end
   for k, v in pairs(l) do
     local p = fsd.normalizePath(path .. "/" .. v)
     table.insert(cache, p)
@@ -187,8 +196,11 @@ end
 
 function fsd.getInfo(path, dontresolve)
   path = fsd.normalizePath(path)
+  if path == "/" then
+    return {owner = 0, perms = 755}
+  end
   if nodes[path] then
-    return nodes[path]
+    return deepcopy(nodes[path])
   end
   if not dontresolve then
     path = fsd.resolveLinks(path)
@@ -202,7 +214,7 @@ function fsd.getInfo(path, dontresolve)
   components[1] = "/"
   for i = #components, 1, -1 do
     if nodes[components[i]] then
-      return nodes[components[i]]
+      return deepcopy(nodes[components[i]])
     end
   end
   return {owner = 0, perms = 777}
@@ -213,6 +225,47 @@ function fsd.saveFs(mountPath)
   if x then
     x(mountPath, fsd.getMount(mountPath).dev)
   end
+end
+
+local function count_char(str, char)
+  local count = 0
+  for i = 0, #str do
+    if char == str:sub(i, i) then
+      count = count + 1
+    end
+  end
+  return count
+end
+
+function fsd.find(wildcard)
+  local lpath = ""
+  wildcard = fsd.normalizePath(wildcard, true)
+  if wildcard == "/" then return {} end
+  for k, v in pairs(string.split(wildcard, "/")) do
+    if string.match(v, "%*") then
+      break
+    else
+      lpath = lpath .. v .. "/"
+    end
+  end
+  local l
+  if not fs.exists(lpath) then return {} end
+  if fs.isDir(lpath) then
+    l = fsd.recursList(lpath, nil, true)
+  else
+    return {lpath}
+  end
+  local z = count_char(wildcard, "/")
+  wildcard = fsd.normalizePath(wildcard:gsub("%*", ".*"), true)
+  local result = {}
+  for k, v in pairs(l) do
+    if count_char(v, "/") == z then
+      if string.match(v, wildcard) then
+        table.insert(result, v)
+      end
+    end
+  end
+  return result
 end
 
 function fsd.loadFs(mountPath)
@@ -243,6 +296,10 @@ end
 
 function fsd.setNode(node, owner, perms, linkto)
   node = fs.normalizePath(node)
+  if node == "/" then
+    nodes["/"] = {owner = 0, perms = 755}
+    return
+  end
   if not nodes[node] then
     nodes[node] = deepcopy(fsd.getInfo(node))
   end
@@ -257,7 +314,8 @@ function fsd.setNode(node, owner, perms, linkto)
   else
     linkto = fs.normalizePath(linkto)
   end
-  if fsd.getInfo(node).owner == thread.getUID(coroutine.running()) then
+  if fsd.getInfo(node).owner == thread.getUID(coroutine.running()) or 
+    thread.getUID(coroutine.running()) == 0 then
     nodes[node].owner = owner
     nodes[node].perms = perms
     nodes[node].linkto = linkto
@@ -345,6 +403,7 @@ end
 
 ------------------------------------------
 
+
 function fsdf.list(path)
   path = fsd.normalizePath(path)
   if fsd.testPerms(path, thread.getUID(coroutine.running()), "x") then
@@ -421,36 +480,38 @@ end
 local parentHandlers = {} --{["exists"] = true, ["isDir"] = true, ["getDir"] = true}
 
 for k, v in pairs(oldfs) do
-  fsd[k] = function(...)
-    local status, err
-    if fsdf[k] then 
-      status, err = fsdf[k](unpack(arg))
-    else
-      status = true
-    end
-    if not status then
-      printError(err)
-      return false
-    end
-    local mount, mountPath
-    if parentHandlers[k] then
-      mount, mountPath = fsd.getMount(fsd.resolveLinks(arg[1]))
-      mount, mountPath = fsd.getMount(oldfs.getDir(mountPath))
-    else
-      mount, mountPath = fsd.getMount(fsd.resolveLinks(arg[1]))
-    end
-    local retVal
-    if k == "copy" or k == "move" then
-      if fs.isDir(arg[2]) then
-        arg[2] = fsd.normalizePath(arg[2]) .. "/"  .. oldfs.getName(arg[1])
+  if not fsd[k] then
+    fsd[k] = function(...)
+      local status, err
+      if fsdf[k] then 
+        status, err = fsdf[k](unpack(arg))
+      else
+        status = true
       end
+      if not status then
+        printError(err)
+        return false
+      end
+      local mount, mountPath
+      if parentHandlers[k] then
+        mount, mountPath = fsd.getMount(fsd.resolveLinks(arg[1]))
+        mount, mountPath = fsd.getMount(oldfs.getDir(mountPath))
+      else
+        mount, mountPath = fsd.getMount(fsd.resolveLinks(arg[1]))
+      end
+      local retVal
+      if k == "copy" or k == "move" then
+        if fs.isDir(arg[2]) then
+          arg[2] = fsd.normalizePath(arg[2]) .. "/"  .. oldfs.getName(arg[1])
+        end
+      end
+      if drivers[mount.fs] and drivers[mount.fs][k] then
+         retVal = drivers[mount.fs][k](mountPath, fsd.normalizePath(mount.dev), unpack(arg))
+      else
+        retVal = oldfs[k](unpack(arg))
+      end
+      return retVal
     end
-    if drivers[mount.fs] and drivers[mount.fs][k] then
-       retVal = drivers[mount.fs][k](mountPath, fsd.normalizePath(mount.dev), unpack(arg))
-    else
-      retVal = oldfs[k](unpack(arg))
-    end
-    return retVal
   end
 end
 

@@ -21,6 +21,7 @@ for i = 2, #args do
     more = true
   end
 end
+local files
 dir = fs.normalizePath(dir)
 files = fs.list(dir)
 local maxlen = 0

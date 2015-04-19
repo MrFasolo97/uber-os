@@ -1,8 +1,15 @@
 
 local argv = { ... }
-if #argv < 2 then
-	print( "Usage: mv <source> <destination>" )
+local x = 2
+if argv[1] == "-v" then x = 3 end
+if #argv < x then
+	print( "Usage: mv [-v] <source> <destination>" )
 	return
 end
 
-fs.move(shell.resolve(argv[1]), shell.resolve(argv[2]))
+for k, v in pairs(fs.find(shell.resolve(argv[x - 1]))) do
+  fs.move(v, shell.resolve(argv[x]))
+  if x == 3 then
+    print("Copied from " .. v .. " to " .. fsd.normalizePath(shell.resolve(argv[x])))
+  end
+end

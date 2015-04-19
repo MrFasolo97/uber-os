@@ -1,4 +1,37 @@
 --UberKernel
+
+local ccver = "1.0" --Precise ComputerCraft version
+
+if not fs.exists("/rom/help/changelog") then
+  print("Failed to find ComputerCraft version")
+  print("Please report this bug at GitHub page")
+  printError("Failed to start kernel")
+  return
+end
+
+local fChangelog = fs.open("/rom/help/changelog", "r")
+local sChangelog = fChangelog.readLine()
+fChangelog.close()
+
+ccver = sChangelog:match("New Features in ComputerCraft ([%d%.]+):")
+
+if ccver < "1.6" then
+  print("ComputerCraft " .. ccver .. " is not supported by this version of kernel")
+  print("Minimum required version: 1.6")
+  print("Please, update your ComputerCraft")
+  printError("Failed to start kernel")
+  return
+end
+
+
+if ccver < "1.63" then --Patch fs.getDir. Without this patch kernel will crash on CC before 1.63
+  print("[CC < 1.63]: Patching fs.getDir")
+  fs.getDir = function(dir)
+    assert(type(dir) == "string", "string expected got " .. type(dir))
+    return dir:match("^/?(.*)/.+$")
+  end
+end
+
 local version = "UberKernel Beta"
 local temp_dir
 if KERNEL_DIR then
@@ -17,7 +50,6 @@ if shell then
   end
 end
 
-local ccver = os.version()
 local luajver = _VERSION
 
 --Stock functions and APIs
@@ -405,11 +437,11 @@ local threadMan = function() --Start the thread manager
   local function tick(t, evt, ...) --Resume process
     if isPanic then while true do os.sleep(0) end end
     if t.dead then return end
-    if t.paused then return end
-    if t.filter ~= nil and evt ~= t.filter then return end
-    if evt == "terminate" then thread.kill(t.pid, "INT") end
-    kernel.doHook("before_resume", t.pid, evt, ...)
     if not t.kill then
+      if t.paused then return end
+      if t.filter ~= nil and evt ~= t.filter then return end
+      if evt == "terminate" then thread.kill(t.pid, "INT") end
+      kernel.doHook("before_resume", t.pid, evt, ...)
       coroutine.resume(t.cr, evt, ...)
       t.dead = (coroutine.status(t.cr) == "dead")
     else
