@@ -2,7 +2,7 @@
 lua.include("min")
 local SRC = {"uberkernel"}
 local SRC_MODULES = {"fsd", "lua", "users", "acpi"}
-local SRC_DRIVERS_FS = {"ccfs", "devfs", "romfs", "ufs"}
+local SRC_DRIVERS_FS = {"ccfs", "devfs", "romfs", "ufs", "tmpfs"}
 local PWD = shell.dir()
 local argv = { ... }
 

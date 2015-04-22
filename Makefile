@@ -38,7 +38,7 @@ configure-prepare:
 configure-passwd:
 	printf "root::0:::/root:/bin/ush\n" > out/etc/passwd
 configure-fstab:
-	printf "__ROOT_DEV__ / ufs defaults 0 0\n/dev/ram /dev devfs defaults 0 0\n/rom /sys/rom romfs defaults 0 0\n" > out/etc/fstab
+	printf "__ROOT_DEV__ / ufs defaults 0 0\n/dev/ram /dev devfs defaults 0 0\n/rom /sys/rom romfs defaults 0 0\ntmpfs /tmp tmpfs" > out/etc/fstab
 configure-rc: configure-rc0 configure-rc1 configure-rc2 configure-rc3 configure-rc4 configure-rc5 configure-rc6 
 configure-rc0:
 	printf "" > out/etc/rc.d/rc0

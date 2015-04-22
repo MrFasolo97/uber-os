@@ -1,6 +1,6 @@
 PWD = $(shell pwd)
 SRC_MODULES = fsd lua users acpi
-SRC_DRIVERS_FS = ccfs devfs romfs ufs
+SRC_DRIVERS_FS = ccfs devfs romfs ufs tmpfs
 all	:	prepare modules drivers-fs main
 clean: clean-drivers-fs clean-modules
 	rm -rf out

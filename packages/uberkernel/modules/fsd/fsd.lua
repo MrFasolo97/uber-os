@@ -13,39 +13,46 @@ local nativefs = deepcopy(fs)
 
 function fs.copy(from, to)
   if not fs.exists(from) then return end
-  local f = fs.open(from, "r")
-  local t = fs.open(to, "w")
-  t.write(f.readAll())
-  f.close()
-  t.close()
+  if fs.isDir(from) then
+    if not fs.exists(to) then
+      fs.makeDir(to)
+    end
+    local l = fs.list(from)
+    for k, v in pairs(l) do
+      fs.copy(fs.combine(from, v), fs.combine(to, v))
+    end
+  else
+    local f = fs.open(from, "r")
+    local t = fs.open(to, "w")
+    t.write(f.readAll())
+    f.close()
+    t.close()
+  end
+
 end
 
 function fs.move(from, to)
   if not fs.exists(from) then return end
-  local f = fs.open(from, "r")
-  local t = fs.open(to, "w")
-  t.write(f.readAll())
-  f.close()
-  t.close()
+  if fs.isDir(from) then
+    if not fs.exists(to) then
+      fs.makeDir(to)
+    end
+    local l = fs.list(from)
+    for k, v in pairs(l) do
+      fs.copy(fs.combine(from, v), fs.combine(to, v))
+    end
+  else
+    local f = fs.open(from, "r")
+    local t = fs.open(to, "w")
+    t.write(f.readAll())
+    f.close()
+    t.close()
+  end
   fs.delete(from)
 end
 
 local oldCopy = oldfs.copy
 local oldMove = oldfs.move
-
-function oldfs.copy(from, to)
-  if oldfs.exists(to) then
-    oldfs.delete(to)
-  end
-  return oldCopy(from, to)
-end
-
-function oldfs.move(from, to)
-  if oldfs.exists(to) then
-    oldfs.delete(to)
-  end
-  return oldMove(from, to)
-end
 
 fsd.loadFsDriver = function(drv)
   if thread and thread.getUID(coroutine.running()) ~= 0 then
@@ -75,6 +82,7 @@ fsd.loadFsDriver("ufs")
 fsd.loadFsDriver("devfs")
 fsd.loadFsDriver("romfs")
 fsd.loadFsDriver("ccfs")
+fsd.loadFsDriver("tmpfs")
 
 local nodes = {} --[[
   NODE[path]:
@@ -204,6 +212,9 @@ end
 
 function fsd.getMount(path)
   path = fsd.normalizePath(path)
+  if mounts[path] then
+    path = nativefs.getDir(path)
+  end
   local components = string.split(path, "/")
   for i = 2, #components do
     components[i] = components[i - 1] .. "/" .. components[i]
@@ -213,7 +224,7 @@ function fsd.getMount(path)
   for i = #components, 1, -1 do
     for j, v in pairs(mounts) do
       if components[i] == j then
-        if skip and (j ~= "/") then skip = false else return v, j end
+        if skip and (j ~= "/") then skip = false else return deepcopy(v), j end
       end
     end
   end
@@ -471,8 +482,11 @@ end
 
 function fsdf.delete(path)
   path = fsd.normalizePath(path)
-  if (fsd.testPerms(fsd.resolveLinks(oldfs.getDir(path), true), thread.getUID(coroutine.running()), "w")) and not mounts[path] then
+  if (fsd.testPerms(fsd.resolveLinks(oldfs.getDir(path), true), thread.getUID(coroutine.running()), "w")) then
     fsd.deleteNode(fsd.resolveLinks(path, true))
+    if mounts[path] then
+      fsd.umountPath(path)
+    end
     return true
   else
     return false, "Access denied"
@@ -505,7 +519,6 @@ if not mounts["/"] then
   kernel.panic("Unable to mount root filesystem")
 end
 
-local parentHandlers = {} --{["exists"] = true, ["isDir"] = true, ["getDir"] = true}
 
 for k, v in pairs(oldfs) do
   if not fsd[k] then
@@ -521,12 +534,7 @@ for k, v in pairs(oldfs) do
         return false, err
       end
       local mount, mountPath
-      if parentHandlers[k] then
-        mount, mountPath = fsd.getMount(fsd.resolveLinks(arg[1]))
-        mount, mountPath = fsd.getMount(oldfs.getDir(mountPath))
-      else
-        mount, mountPath = fsd.getMount(fsd.resolveLinks(arg[1]))
-      end
+      mount, mountPath = fsd.getMount(fsd.resolveLinks(arg[1]))
       local retVal
       if k == "copy" or k == "move" then
         if fs.isDir(arg[2]) then

@@ -1,4 +1,4 @@
-local SRC = {"ccfs", "devfs", "romfs", "ufs"}
+local SRC = {"ccfs", "devfs", "romfs", "ufs", "tmpfs"}
 local PWD = shell.dir()
 
 local argv = { ... }
