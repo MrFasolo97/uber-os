@@ -8,12 +8,12 @@ Bedrock build-479
 login 0.2.1 uberkernel;corelib
 libarchive 0.2.1 uberkernel
 luamin 1.0.0 uberkernel
-uberkernel 0.9.1.0-beta corelib
+uberkernel 0.9.1.1-beta corelib
 libargparse 1.0.0 
 libbase64 1.0.0 uberkernel
-coreutils 0.3.0 uberkernel;corelib
+coreutils 0.3.1 uberkernel;corelib
 utar 0.2.1 uberkernel;corelib;libarchive
-uboot 1.0.2 
+uboot 1.0.3 
 devutils 0.3.0 uberkernel;corelib;libarchive;luamin
 //DIRLIST
 D/upt

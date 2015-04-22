@@ -54,11 +54,11 @@ function users.login(name, pwd)
 end
 
 local function loadPasswd()
-  if not fs.exists(ROOT_DIR .. "/etc/passwd") then
+  if not fs.exists(ROOT_DIR .. "/etc/passwd") and not fs.exists("/etc/passwd") then
     kernel.panic("/etc/passwd not found!")
   end
   local root
-  if thread then root = "" else root = ROOT_DIR end
+  if fs.exists("/etc/passwd") then root = "" else root = ROOT_DIR end
   local passwdFile = fs.open(root .. "/etc/passwd", "r")
   local user = passwdFile.readLine()
   local tmp

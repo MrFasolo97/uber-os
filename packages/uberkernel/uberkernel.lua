@@ -17,10 +17,18 @@ ccver = sChangelog:match("New Features in ComputerCraft ([%d%.]+):")
 
 if ccver < "1.6" then
   print("ComputerCraft " .. ccver .. " is not supported by this version of kernel")
-  print("Minimum required version: 1.6")
+  print("Supported versions: 1.6-1.73")
   print("Please, update your ComputerCraft")
   printError("Failed to start kernel")
   return
+end
+
+if ccver >= "1.74" and shell then
+  print("ComputerCraft " .. ccver .. " is not supported by this version of kernel")
+  print("It is recomended to downgrade your version of CC")
+  print("Proceed on your own risk")
+  print("Press any key to continue...")
+  os.pullEvent("key")
 end
 
 
@@ -28,7 +36,11 @@ if ccver < "1.63" then --Patch fs.getDir. Without this patch kernel will crash o
   print("[CC < 1.63]: Patching fs.getDir")
   fs.getDir = function(dir)
     assert(type(dir) == "string", "string expected got " .. type(dir))
-    return dir:match("^/?(.*)/.+$")
+    if dir:match("/") then
+      return dir:match("^/?(.*)/.+$")
+    else
+      return ""
+    end
   end
 end
 
@@ -249,7 +261,7 @@ local threadMan = function() --Start the thread manager
 
   rawset(thread, "runDaemon", function(file, name) --Start daemon
     if thread.getUID(coroutine.running()) ~= 0 then
-      printError("Cannot start daemon " .. name .. " - Access denied!")
+      printError("Cannot start daemon " .. name .. " - Access denied")
       return 
     end
     if daemons[name] then
@@ -264,7 +276,7 @@ local threadMan = function() --Start the thread manager
 
   rawset(thread, "stopDaemon", function(name) --Stop daemon
     if thread.getUID(coroutine.running()) ~= 0 then
-      printError("Cannot stop daemon " .. name .. " - Access denied!")
+      printError("Cannot stop daemon " .. name .. " - Access denied")
       return
     end
     if not daemons[name] then

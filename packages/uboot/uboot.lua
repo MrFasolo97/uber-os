@@ -1,4 +1,10 @@
-local bootDirectory = "/boot"
+if not shell.getRunningProgram():match("/") then
+  ROOT_DIR = ""
+else
+  ROOT_DIR = shell.getRunningProgram():match("^/?(.*)/.+$")
+end
+local bootDirectory = ROOT_DIR .. "/boot"
+if bootDirectory:sub(1, 1) ~= "/" then bootDirectory = "/" .. bootDirectory end
 
 local oldPullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
@@ -32,7 +38,6 @@ term.setTextColor(colors.white)
 term.clear()
 term.setCursorPos(1, 1)
 print("Uber Bootloader v0.1")
-ROOT_DIR = fs.getDir(shell.getRunningProgram())
 print("Root directory: /" .. ROOT_DIR)
 local s = ROOT_DIR .. "/boot/uberkernel mlua musers mfsd macpi log root=" .. ROOT_DIR
 if s:sub(1, 1) ~= "/" then s = "/" .. s end

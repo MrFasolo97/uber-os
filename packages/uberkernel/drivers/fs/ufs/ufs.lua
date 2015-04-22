@@ -7,7 +7,7 @@ local function collectFiles(dir, stripPath, table)
   dir = fsd.normalizePath(dir)  
   local fixPath = fsd.stripPath(stripPath, dir)
   table[dir] = fsd.getInfo(dir)
-  local err, files = pcall(fs.list, dir)
+  local err, files = pcall(fs.list, dir, true)
   if not err then return table end
   if dir == "/" then dir = "" end
   for k, v in pairs(files) do

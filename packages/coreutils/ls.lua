@@ -24,6 +24,7 @@ end
 local files
 dir = fs.normalizePath(dir)
 files = fs.list(dir)
+if not files then return end
 local maxlen = 0
 local tmp
 for i = 1, #files do

@@ -6,8 +6,29 @@ lua.include("split")
 fsd = {}
 fsdf = {}
 
+
 local drivers = {}
 local oldfs = fs
+local nativefs = deepcopy(fs)
+
+function fs.copy(from, to)
+  if not fs.exists(from) then return end
+  local f = fs.open(from, "r")
+  local t = fs.open(to, "w")
+  t.write(f.readAll())
+  f.close()
+  t.close()
+end
+
+function fs.move(from, to)
+  if not fs.exists(from) then return end
+  local f = fs.open(from, "r")
+  local t = fs.open(to, "w")
+  t.write(f.readAll())
+  f.close()
+  t.close()
+  fs.delete(from)
+end
 
 local oldCopy = oldfs.copy
 local oldMove = oldfs.move
@@ -68,6 +89,23 @@ local mounts = {} --[[
   dev = /dev/hdd (device)
 ]]
 
+function fsd.normalizePath(path, resolvelinks)
+  if not path then return "/" end
+  path = string.gsub(path, "/+", "/")
+  if path == "" then return "/" end
+  if string.sub(path, 1, 1) ~= "/" then
+    path = "/" .. path
+  end
+  if path == "/" then
+    return "/"
+  end
+  if string.sub(path, #path, #path) == "/" then
+    path = string.sub(path, 1, #path - 1)
+  end
+  path = "/" .. oldfs.combine("", path)
+  if resolvelinks then return fsd.resolveLinks(path) else return path end
+end
+
 function fsd.normalizePerms(perms)
   local tmp = tostring(perms)
   local arr = {}
@@ -99,30 +137,15 @@ function fsd.testPerms(path, user, perm)
   end
 end
 
-function fsd.normalizePath(path)
-  if not path then return "/" end
-  path = string.gsub(path, "/+", "/")
-  if path == "" then return "/" end
-  if string.sub(path, 1, 1) ~= "/" then
-    path = "/" .. path
-  end
-  if path == "/" then
-    return "/"
-  end
-  if string.sub(path, #path, #path) == "/" then
-    path = string.sub(path, 1, #path - 1)
-  end
-  return "/" .. oldfs.combine("", path)
-end
 
-function fsd.resolveLinks(path)
+function fsd.resolveLinks(path, exceptlast)
   path = fsd.normalizePath(path)
   local components = string.split(path, "/")
   local newpath = "/"
   for i = 1, #components do
     local v = components[i]
     local node = fsd.getInfo(newpath .. v, true)
-    if node.linkto then
+    if node.linkto and (not exceptlast or i < #components) then
       newpath = fsd.normalizePath(node.linkto) .. "/"
     else
       newpath = newpath .. v .. "/"
@@ -135,7 +158,7 @@ function fsd.newLink(name, path)
   if testPerms(name, thread.getUID(coroutine.running()), "w") then
     fsd.setNode(name, nil, nil, path)
   else
-    printError("Access denied!")
+    printError("Access denied")
   end
 end
 
@@ -143,7 +166,7 @@ function fsd.delLink(name)
   if testPerms(name, thread.getUID(coroutine.running()), "w") then
     fsd.setNode(name, nil, nil, false)
   else
-    printError("Access denied!")
+    printError("Access denied")
   end
 end
 
@@ -154,7 +177,7 @@ function fsd.stripPath(base, full)
   return l
 end
 
-function fsd.recursList(path, cache, include_start)
+function fsd.recursList(path, cache, include_start, force, dontfollow)
   if not cache then
     if include_start then
       cache = {fsd.normalizePath(path)}
@@ -163,15 +186,17 @@ function fsd.recursList(path, cache, include_start)
     end
   end
   path = fsd.normalizePath(path)
-  local l = fs.list(path)
+  local l = fs.list(path, force)
   if not l then
     return cache
   end
   for k, v in pairs(l) do
     local p = fsd.normalizePath(path .. "/" .. v)
-    table.insert(cache, p)
-    if fs.isDir(p) then
-      fsd.recursList(p, cache)
+      table.insert(cache, p)
+    if not (fsd.getInfo(p).linkto and dontfollow) then
+      if fs.isDir(p) then
+        fsd.recursList(p, cache)
+      end
     end
   end
   return cache
@@ -199,11 +224,11 @@ function fsd.getInfo(path, dontresolve)
   if path == "/" then
     return {owner = 0, perms = 755}
   end
+  if not dontresolve then
+    path = fsd.resolveLinks(path, true)
+  end
   if nodes[path] then
     return deepcopy(nodes[path])
-  end
-  if not dontresolve then
-    path = fsd.resolveLinks(path)
   end
   local components = string.split(path, "/")
   for i = 1, #components do
@@ -237,9 +262,9 @@ local function count_char(str, char)
   return count
 end
 
-function fsd.find(wildcard)
+function fsd.find(wildcard, dontfollow)
   local lpath = ""
-  wildcard = fsd.normalizePath(wildcard, true)
+  wildcard = fsd.normalizePath(wildcard)
   if wildcard == "/" then return {} end
   for k, v in pairs(string.split(wildcard, "/")) do
     if string.match(v, "%*") then
@@ -251,16 +276,17 @@ function fsd.find(wildcard)
   local l
   if not fs.exists(lpath) then return {} end
   if fs.isDir(lpath) then
-    l = fsd.recursList(lpath, nil, true)
+    l = fsd.recursList(lpath, nil, true, false, dontfollow)
   else
     return {lpath}
   end
   local z = count_char(wildcard, "/")
-  wildcard = fsd.normalizePath(wildcard:gsub("%*", ".*"), true)
+  wildcard = wildcard:gsub("%*", ".*")
+  wildcard = fsd.normalizePath(wildcard)
   local result = {}
   for k, v in pairs(l) do
     if count_char(v, "/") == z then
-      if string.match(v, wildcard) and v ~= "/" then
+      if string.match(v, "^" .. wildcard .. "$") and v ~= "/" then
         table.insert(result, v)
       end
     end
@@ -286,16 +312,17 @@ function fsd.sync()
 end
 
 function fsd.deleteNode(node)
+  node = fsd.normalizePath(node)
   if not nodes[node] then return end
-  if nodes[node].onwer == thread.getUID(coroutine.running()) then
+  if fsd.testPerms(oldfs.getDir(node), thread.getUID(coroutine.running()), "w") then 
     nodes[node] = nil
   else
-    printError("Access denied!")
+    printError("Access denied")
   end
 end
 
 function fsd.setNode(node, owner, perms, linkto)
-  node = fs.normalizePath(node)
+  node = fs.normalizePath(node, true)
   if node == "/" then
     nodes["/"] = {owner = 0, perms = 755}
     return
@@ -320,7 +347,7 @@ function fsd.setNode(node, owner, perms, linkto)
     nodes[node].perms = perms
     nodes[node].linkto = linkto
   else
-    printError("Access denied!")
+    printError("Access denied")
   end
 end
 
@@ -404,17 +431,17 @@ end
 ------------------------------------------
 
 
-function fsdf.list(path)
-  path = fsd.normalizePath(path)
-  if fsd.testPerms(path, thread.getUID(coroutine.running()), "x") then
+function fsdf.list(path, force)
+  path = fsd.normalizePath(path, true)
+  if fsd.testPerms(path, thread.getUID(coroutine.running()), "x") or (thread.getUID(coroutine.running()) == 0 and force) then
     return true
   else
-    return false, "Access denied!"
+    return false, "Access denied"
   end
 end
 
 function fsdf.makeDir(path)
-  path = fsd.normalizePath(path)
+  path = fsd.normalizePath(path, true)
   if fsd.testPerms(oldfs.getDir(path), thread.getUID(coroutine.running()), "w") then
     return true
   else
@@ -423,36 +450,37 @@ function fsdf.makeDir(path)
 end
 
 function fsdf.copy(from, to)
-  from = fsd.normalizePath(from)
-  to = fsd.normalizePath(to)
-  if fsd.testPerms(from, thread.getUID(coroutine.running()), "r") and fsd.testPerms(to  , thread.getUID(coroutine.running()), "w") then
+  from = fsd.normalizePath(from, true)
+  to = fsd.normalizePath(to, true)
+  if fsd.testPerms(from, thread.getUID(coroutine.running()), "r") and fsd.testPerms(to, thread.getUID(coroutine.running()), "w") then
     return true
   else
-    return false, "Access denied!"
+    return false, "Access denied"
   end
 end
 
 function fsdf.move(from, to)
-  from = fsd.normalizePath(from)
-  to = fsd.normalizePath(to)
+  from = fsd.normalizePath(from, true)
+  to = fsd.normalizePath(to, true)
   if fsd.testPerms(oldfs.getDir(from), thread.getUID(coroutine.running()), "w") and fsd.testPerms(oldfs.getDir(to), thread.getUID(coroutine.running()), "w") then
     return true
   else
-    return false, "Access denied!"
+    return false, "Access denied"
   end
 end
 
 function fsdf.delete(path)
   path = fsd.normalizePath(path)
-  if fsd.testPerms(oldfs.getDir(path), thread.getUID(coroutine.running()), "w") then
+  if (fsd.testPerms(fsd.resolveLinks(oldfs.getDir(path), true), thread.getUID(coroutine.running()), "w")) and not mounts[path] then
+    fsd.deleteNode(fsd.resolveLinks(path, true))
     return true
   else
-    return false, "Access denied!"
+    return false, "Access denied"
   end
 end
 
 function fsdf.open(path, mode)
-  path = fsd.normalizePath(path)
+  path = fsd.normalizePath(path, true)
   local modes = {r = "r", rb = "r", w = "w", wb = "w", a = "w", ab = "w"}
   if not modes[mode] then
     return false, "Invalid mode!"
@@ -460,7 +488,7 @@ function fsdf.open(path, mode)
   if fsd.testPerms(path, thread.getUID(coroutine.running()), modes[mode]) then
     return true
   else
-    return false, "Access denied!"
+    return false, "Access denied"
   end
 end
 
@@ -490,7 +518,7 @@ for k, v in pairs(oldfs) do
       end
       if not status then
         printError(err)
-        return false
+        return false, err
       end
       local mount, mountPath
       if parentHandlers[k] then
@@ -522,7 +550,7 @@ shell.setDir = function(dir)
   if fsd.testPerms(dir, thread.getUID(coroutine.running), "x") then
     return oldSetDir(dir)
   else
-    printError("Access denied!")
+    printError("Access denied")
   end
 end]]
 

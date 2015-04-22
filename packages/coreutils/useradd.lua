@@ -7,7 +7,7 @@ if #argv < 3 then
   return
 end
 
-if thread.getUID(coroutine.running()) ~= 0 then printError("Access denied!") return end
+if thread.getUID(coroutine.running()) ~= 0 then printError("Access denied") return end
 
 write("Password: ")
 local pwd = read(" ")
