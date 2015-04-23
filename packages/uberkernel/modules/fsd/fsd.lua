@@ -210,9 +210,9 @@ function fsd.recursList(path, cache, include_start, force, dontfollow)
   return cache
 end
 
-function fsd.getMount(path)
+function fsd.getMount(path, parent)
   path = fsd.normalizePath(path)
-  if mounts[path] then
+  if parent and mounts[path] then
     path = nativefs.getDir(path)
   end
   local components = string.split(path, "/")
@@ -519,6 +519,7 @@ if not mounts["/"] then
   kernel.panic("Unable to mount root filesystem")
 end
 
+local parentHandlers = {["exists"] = true, ["delete"] = true, ["isDir"] = true}
 
 for k, v in pairs(oldfs) do
   if not fsd[k] then
@@ -534,7 +535,11 @@ for k, v in pairs(oldfs) do
         return false, err
       end
       local mount, mountPath
-      mount, mountPath = fsd.getMount(fsd.resolveLinks(arg[1]))
+      if parentHandlers[k] then
+        mount, mountPath = fsd.getMount(fsd.resolveLinks(arg[1]), true)
+      else
+        mount, mountPath = fsd.getMount(fsd.resolveLinks(arg[1]))
+      end
       local retVal
       if k == "copy" or k == "move" then
         if fs.isDir(arg[2]) then

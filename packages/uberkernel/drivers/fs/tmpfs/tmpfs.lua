@@ -1,7 +1,7 @@
 --Temporary File System Driver. Works with fsd.
 
 local tmpfs = {}
-mountPaths = {}
+local mountPaths = {}
 
 tmpfs.loadFs = function(mountPath)
   if not mountPaths[mountPath] then
@@ -11,6 +11,9 @@ tmpfs.loadFs = function(mountPath)
 end
 
 tmpfs.list = function(mountPath, device, path)
+  if not mountPaths[mountPath] then
+    mountPaths[mountPath] = {files = {}, dirs = {}}
+  end
   path = fsd.normalizePath(path)
   path = fsd.resolveLinks(path)
   path = fsd.stripPath(mountPath, path)
@@ -32,6 +35,9 @@ tmpfs.list = function(mountPath, device, path)
 end
 
 tmpfs.exists = function(mountPath, device, path)
+  if not mountPaths[mountPath] then
+    mountPaths[mountPath] = {files = {}, dirs = {}}
+  end
   path = fsd.normalizePath(path)
   path = fsd.resolveLinks(path)
   if mountPath == path then return true end
@@ -42,6 +48,9 @@ tmpfs.exists = function(mountPath, device, path)
 end
 
 tmpfs.isDir = function(mountPath, device, path)
+  if not mountPaths[mountPath] then
+    mountPaths[mountPath] = {files = {}, dirs = {}}
+  end
   path = fsd.normalizePath(path)
   path = fsd.resolveLinks(path)
   if mountPath == path then return true end
@@ -51,6 +60,9 @@ tmpfs.isDir = function(mountPath, device, path)
 end
 
 tmpfs.open = function(mountPath, device, path, mode)
+  if not mountPaths[mountPath] then
+    mountPaths[mountPath] = {files = {}, dirs = {}}
+  end
   if fs.isDir(path) then return end
   path = fsd.resolveLinks(path)
   path = fsd.stripPath(mountPath, path)
@@ -106,12 +118,18 @@ tmpfs.open = function(mountPath, device, path, mode)
 end
 
 tmpfs.makeDir = function(mountPath, device, path)
+  if not mountPaths[mountPath] then
+    mountPaths[mountPath] = {files = {}, dirs = {}}
+  end
   path = fsd.resolveLinks(path)
   path = fsd.stripPath(mountPath, path)
   mountPaths[mountPath].dirs[path] = true, path
 end
 
 tmpfs.delete = function(mountPath, device, path)
+  if not mountPaths[mountPath] then
+    mountPaths[mountPath] = {files = {}, dirs = {}}
+  end
   path = fsd.stripPath(mountPath, path)
   mountPaths[mountPath].files[path] = nil
   mountPaths[mountPath].dirs[path] = nil
@@ -133,4 +151,3 @@ end
 
 tmpfs = applyreadonly(tmpfs)
 drivers.tmpfs = tmpfs
-_G.mountPaths = mountPaths
