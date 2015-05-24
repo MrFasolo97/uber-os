@@ -172,6 +172,11 @@ end
 local threadMan = function() --Start the thread manager
     kernel.log("Starting thread manager")
 
+    local nativeCoroutineCreate = coroutine.create
+    coroutine.create = function()
+        printError("coroutine.create is not supported\nUse thread API instead")
+    end
+
     thread = {} --Main thread manager class
 
     rawset(thread, "newPID", function() --Generate new PID
@@ -217,7 +222,7 @@ local threadMan = function() --Start the thread manager
             uid = thread.getUID(coroutine.running())
         end
         table.insert(starting, {
-            cr = coroutine.create(fn), --Process coroutine
+            cr = nativeCoroutineCreate(fn), --Process coroutine
             error = nil, --Is process errored
             dead = false, --Is process dead
             filter = nil, --Event filter(glitchy)
