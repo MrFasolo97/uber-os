@@ -1,20 +1,20 @@
-upt 0.4.4 uberkernel;corelib;luamin
-libjson 1.0.0 uberkernel
-ush 0.3.1 uberkernel;corelib
-init 0.3.0 uberkernel;corelib
-udev 0.2.1 uberkernel;corelib
-corelib 1.0.1 uberkernel
+upt 0.4.4 luamin
+libjson 1.0.1 
+ush 0.3.2 
+init 0.3.1 
+udev 0.2.2 
 Bedrock build-479 
-login 0.2.1 uberkernel;corelib
-libarchive 0.2.1 uberkernel
-luamin 1.0.0 uberkernel
-uberkernel 0.9.2.1-beta corelib
-libargparse 1.0.0 
-libbase64 1.0.0 uberkernel
-coreutils 0.3.1 uberkernel;corelib
-utar 0.2.1 uberkernel;corelib;libarchive
+login 0.2.2 
+ugui 0.1 
+libarchive 0.2.2 
+luamin 1.0.1 
+uberkernel 0.9.2.2-beta 
+libargparse 1.0.1 
+libbase64 1.0.1 
+coreutils 0.3.2 
+utar 0.2.2 libarchive
 uboot 1.0.3 
-devutils 0.3.0 uberkernel;corelib;libarchive;luamin
+devutils 0.3.1 libarchive;luamin
 //DIRLIST
 D/upt
 F/upt/Build.lua
@@ -42,13 +42,6 @@ F/udev/Build.lua
 F/udev/PKGINFO.lua
 F/udev/udev.lua
 F/udev/Makefile
-D/corelib
-F/corelib/Build.lua
-F/corelib/copy.lua
-F/corelib/fixserialize.lua
-F/corelib/PKGINFO.lua
-F/corelib/Makefile
-F/corelib/split.lua
 D/Bedrock
 F/Bedrock/Bedrock.lua
 F/Bedrock/Build.lua
@@ -61,6 +54,11 @@ F/login/login.lua
 F/login/PKGINFO.lua
 F/login/logind.lua
 F/login/Makefile
+D/ugui
+F/ugui/Build.lua
+F/ugui/ugui.lua
+F/ugui/PKGINFO.lua
+F/ugui/Makefile
 D/libarchive
 F/libarchive/Build.lua
 F/libarchive/libarchive.lua

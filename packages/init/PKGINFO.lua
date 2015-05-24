@@ -1,2 +1,2 @@
-DEPENDS = {"uberkernel", "corelib"}
-VERSION = "0.3.0"
+DEPENDS = {}
+VERSION = "0.3.1"

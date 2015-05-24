@@ -7,12 +7,12 @@
 local bedrockPath = "/usr/include/bedrock"
 os.loadAPI(bedrockPath .. "/Bedrock")
 if Bedrock then
-  Bedrock.BasePath = bedrockPath
-  local oldBedrockInitialise = Bedrock.Initialise
-  Bedrock.Initialise = function(self, path)
-    Bedrock.ProgramPath = path or shell.getRunningProgram()
-    local x = oldBedrockInitialise(self)
-    Bedrock.ProgramPath = nil
-    return x
-  end
+    Bedrock.BasePath = bedrockPath
+    local oldBedrockInitialise = Bedrock.Initialise
+    Bedrock.Initialise = function(self, path)
+        Bedrock.ProgramPath = path or shell.getRunningProgram()
+        local x = oldBedrockInitialise(self)
+        Bedrock.ProgramPath = nil
+        return x
+    end
 end

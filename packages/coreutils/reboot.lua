@@ -1,5 +1,5 @@
 if acpi then
-  acpi.reboot()
+    acpi.reboot()
 else
-  os.reboot()
+    os.reboot()
 end

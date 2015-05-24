@@ -2,5 +2,5 @@
 
 local x = fs.list("/usr/src")
 for k, v in pairs(x) do
-  shell.run("makepkg " .. v)
+    shell.run("makepkg " .. v)
 end

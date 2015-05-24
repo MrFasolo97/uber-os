@@ -1,2 +1,2 @@
-DEPENDS = {"uberkernel", "corelib", "luamin"}
+DEPENDS = {"luamin"}
 VERSION = "0.4.4"

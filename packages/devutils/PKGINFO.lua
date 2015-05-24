@@ -1,2 +1,2 @@
-DEPENDS = {"uberkernel", "corelib", "libarchive", "luamin"}
-VERSION = "0.3.0"
+DEPENDS = {"libarchive", "luamin"}
+VERSION = "0.3.1"

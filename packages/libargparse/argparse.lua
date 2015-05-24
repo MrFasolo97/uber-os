@@ -2,7 +2,7 @@
 -- Parameter
 ------------------------------------------------------------------
 
-argparse = {}
+local argparse = {}
 
 local Parameter = {}
 function Parameter:matches(arg, options, tArgs)
@@ -10,7 +10,7 @@ function Parameter:matches(arg, options, tArgs)
         return false
     end
     arg = arg:sub(2)
-    
+
     if not (arg:find("^"..self.name.."$") or arg:find("^"..self.sShortcut.."$")) then
         return false
     end
@@ -47,7 +47,7 @@ function Switch:matches(arg, options, tArgs)
         return false
     end
     arg = arg:sub(2)
-    
+
     if not (arg:find("^"..self.name.."$") or arg:find("^"..self.sShortcut.."$")) then
         return false
     end
@@ -150,17 +150,17 @@ end
 function Parser:parse(options, ...)
     local tArgs = {...}
     for arg in function() return table.remove(tArgs, 1) end do
-        if not self:parseArg(arg, options, tArgs) then
-            print(tArgs.error or ("Unknown argument: "..arg))
-            self:printUsage()
-            return false
-        end
+    if not self:parseArg(arg, options, tArgs) then
+        print(tArgs.error or ("Unknown argument: "..arg))
+        self:printUsage()
+        return false
     end
-    return options
+end
+return options
 end
 
 function argparse.new()
     local parser = setmetatable({parameters={},switches={},arguments={}}, {__index=Parser})
     return parser
 end
-argparse = applyreadonly(argparse) _G.argparse = argparse
+return applyreadonly(argparse)

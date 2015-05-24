@@ -1,8 +1,8 @@
 --Build this package from inside UberOS
 local minify = lua.include("min")
-local SRC = {"upt"}
+local SRC = {"ugui"}
 local PWD = shell.dir()
-local DEST = "/bin"
+local DEST = "/usr/bin"
 local EXTIN = ".lua"
 local EXTOUT = ""
 local argv = { ... }
@@ -34,10 +34,6 @@ local function install(root)
     for k, v in pairs(SRC) do
         pcall(fs.copy, PWD .. "/out/" .. v .. EXTOUT, root .. DEST .. "/" .. v .. EXTOUT)
     end
-    pcall(fs.makeDir, root .. "/var/lib/upt/db")
-    local f = fs.open(root .. "/var/lib/upt/db/general", "w")
-    f.writeLine("repo https://raw.githubusercontent.com/TsarN/uber-os/master")
-    f.close()
 end
 
 if #argv == 0 then clean() prepare() build() return end

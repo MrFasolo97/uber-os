@@ -1,5 +1,5 @@
 if acpi then
-  acpi.shutdown()
+    acpi.shutdown()
 else
-  os.shutdown()
+    os.shutdown()
 end

@@ -1,4 +1,4 @@
-SRC = split fixserialize copy
+SRC = ugui
 PWD = $(shell pwd)
 all	:	prepare $(SRC)
 clean:
@@ -7,6 +7,6 @@ prepare:
 	mkdir -p out
 $(SRC) :
 	cd ../../min && lua CommandLineMinify.lua $(PWD)/$@.lua
-	mv $@_min.lua out/$@.lua
+	mv $@_min.lua out/$@
 install:
-	cp out/* ../../out/lib
+	cp out/* ../../out/usr/bin

@@ -3,8 +3,8 @@
 local argv = { ... }
 
 if #argv < 3 then
-  print("Usage: useradd <name> <home> <shell>")
-  return
+    print("Usage: useradd <name> <home> <shell>")
+    return
 end
 
 if thread.getUID(coroutine.running()) ~= 0 then printError("Access denied") return end

@@ -1,2 +1,2 @@
-DEPENDS = {"uberkernel"}
-VERSION = "1.0.0"
+DEPENDS = {}
+VERSION = "1.0.1"

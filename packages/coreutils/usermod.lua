@@ -3,8 +3,8 @@
 local argv = { ... }
 
 if #argv < 3 then
-  print("Usage: usermod <name> name|home|shell <value>")
-  return
+    print("Usage: usermod <name> name|home|shell <value>")
+    return
 end
 
 local uid = users.getUIDByUsername(argv[1])
