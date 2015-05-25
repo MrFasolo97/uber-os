@@ -25,7 +25,7 @@ ufs.saveFs = function(mountPath, device)
     for k, v in pairs(collectFiles(mountPath, mountPath, {})) do
         WRITEDATA = WRITEDATA .. k .. ":" .. v.owner .. ":" .. v.perms .. ":"
         if v.linkto then WRITEDATA = WRITEDATA .. v.linkto end
-        WRITEDATA = WRITEDATA .. "\n"
+        WRITEDATA = WRITEDATA .. ":" .. v.gid .. "\n"
     end
     FSDATA.write(WRITEDATA)
     FSDATA.close()
@@ -45,7 +45,8 @@ ufs.loadFs = function(mountPath, device)
         res[tmp[1]] = {
             owner = tonumber(tmp[2]),
             perms = tmp[3],
-            linkto = tmp[4]
+            linkto = tmp[4],
+            gid = tonumber(tmp[5])
         }
         if tmp[4] == "" then
             res[tmp[1]].linkto = nil

@@ -62,7 +62,7 @@ for i = 1, #files do
                 isLink = ""
             end
             print(isDir, table.concat(fsd.normalizePerms(fsd.getInfo(dir .. "/" .. files[i]).perms), ""), " ", 
-            users.getUsernameByUID(fsd.getInfo(dir .. "/" .. files[i]).owner), isLink)
+            users.getUsernameByUID(fsd.getInfo(dir .. "/" .. files[i]).owner), " ", users.getNameByGID(fsd.getInfo("/" .. files[i]).gid), isLink)
         else
             write(files[i] .. " ")
         end

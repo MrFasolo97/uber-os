@@ -2,6 +2,11 @@
 
 local argv = { ... }
 
+if #argv < 1 then
+    print("Usage: chmod [-Rv] <mode> <file1> [file2] ...")
+    return
+end
+
 local x = 2
 local recurs = false
 local verbose = false

@@ -84,6 +84,7 @@ fsd.loadFsDriver("tmpfs")
 local nodes = {} --[[
 NODE[path]:
 owner = 0 (UID of owner)
+gid = 0(GID of group)
 perms = 755 (permissions)
 [linkto] = /bin (symlink to)
 ]]
@@ -135,6 +136,10 @@ function fsd.testPerms(path, user, perm)
         if perm == "r" then return string.sub(norm[1], 1, 1) == "r" end
         if perm == "w" then return string.sub(norm[1], 2, 2) == "w" end
         if perm == "x" then return string.sub(norm[1], 3, 3) == "x" end
+    elseif users.isUserInGroup(user, info.gid) then
+        if perm == "r" then return string.sub(norm[2], 1, 1) == "r" end
+        if perm == "w" then return string.sub(norm[2], 2, 2) == "w" end
+        if perm == "x" then return string.sub(norm[2], 3, 3) == "x" end
     else
         if perm == "r" then return string.sub(norm[3], 1, 1) == "r" end
         if perm == "w" then return string.sub(norm[3], 2, 2) == "w" end
@@ -230,7 +235,7 @@ end
 function fsd.getInfo(path, dontresolve)
     path = fsd.normalizePath(path)
     if path == "/" then
-        return {owner = 0, perms = 755}
+        return {owner = 0, perms = 755, gid = 0}
     end
     if not dontresolve then
         path = fsd.resolveLinks(path, true)
@@ -250,7 +255,7 @@ function fsd.getInfo(path, dontresolve)
             return deepcopy(nodes[components[i]])
         end
     end
-    return {owner = 0, perms = 777}
+    return {owner = 0, perms = 777, gid = 0}
 end
 
 function fsd.saveFs(mountPath)
@@ -329,17 +334,25 @@ function fsd.deleteNode(node)
     end
 end
 
-function fsd.setNode(node, owner, perms, linkto)
+function fsd.setNode(node, owner, perms, linkto, gid)
     node = fs.normalizePath(node, true)
     if node == "/" then
-        nodes["/"] = {owner = 0, perms = 755}
+        nodes["/"] = {owner = 0, perms = 755, gid = 0}
         return
     end
+    local override = false
     if not nodes[node] then
-        nodes[node] = deepcopy(fsd.getInfo(node))
+        if fsd.testPerms(node, thread.getUID(coroutine.running()), "w") then
+            nodes[node] = deepcopy(fsd.getInfo(node))
+            override = true
+        else
+            printError("Access denied")
+            return 
+        end
     end
     owner = owner or nodes[node].owner
     perms = perms or nodes[node].perms
+    gid = gid or nodes[node].gid
     if linkto == false then
         linkto = nil
         elseif linkto == nil then
@@ -350,8 +363,9 @@ function fsd.setNode(node, owner, perms, linkto)
             linkto = fs.normalizePath(linkto)
         end
         if fsd.getInfo(node).owner == thread.getUID(coroutine.running()) or 
-            thread.getUID(coroutine.running()) == 0 then
+            thread.getUID(coroutine.running()) == 0 or override then
             nodes[node].owner = owner
+            nodes[node].gid = gid
             nodes[node].perms = perms
             nodes[node].linkto = linkto
         else
@@ -418,13 +432,14 @@ function fsd.setNode(node, owner, perms, linkto)
         function readpipe.flush() end
         function writepipe.flush() end
         function readpipe.readAll()
-            currentChar = #text + 1
-            return string.sub(text, currentChar, #text)
+            --currentChar = #text + 1
+            --return string.sub(text, currentChar, #text)
+            return text
         end
         function readpipe.readLine()
             local x = string.sub(text, currentChar, #text)
             x = string.sub(x, 1, string.find(x, "\n"))
-            currentChar = #x + 1
+            currentChar = currentChar + #x
             return x
         end
         function writepipe.write(str)

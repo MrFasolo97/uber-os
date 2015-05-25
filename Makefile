@@ -1,7 +1,7 @@
 SHELL = /bin/bash
 
 BASE_PACKAGES = coreutils init login uberkernel uboot udev ush upt luamin
-PACKAGES = $(BASE_PACKAGES) libjson utar devutils Bedrock libbase64 libargparse libarchive 
+PACKAGES = $(BASE_PACKAGES) libjson utar devutils Bedrock libbase64 libargparse libarchive
 
 all: clean prepare base configure
 
@@ -31,12 +31,14 @@ source:
 	rm -rf out/usr/src/Build.lua
 	rm -rf out/usr/src/CONFIG
 
-configure: configure-prepare configure-passwd configure-fstab configure-rc
+configure: configure-prepare configure-passwd configure-group configure-fstab configure-rc
 configure-prepare:
 	touch out/etc/{motd,issue}
 	mkdir out/etc/rc.d
 configure-passwd:
-	printf "root::0:::/root:/bin/ush\n" > out/etc/passwd
+	printf "root::0:0::/root:/bin/ush\n" > out/etc/passwd
+configure-group:
+	printf "root:x:0:root\nnetwork:x:1:\nusers:x:100:\n" > out/etc/group
 configure-fstab:
 	printf "__ROOT_DEV__ / ufs defaults 0 0\n/dev/ram /dev devfs defaults 0 0\n/rom /sys/rom romfs defaults 0 0\ntmpfs /tmp tmpfs" > out/etc/fstab
 configure-rc: configure-rc0 configure-rc1 configure-rc2 configure-rc3 configure-rc4 configure-rc5 configure-rc6 

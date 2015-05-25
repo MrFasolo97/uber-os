@@ -8,10 +8,10 @@ login 0.2.2
 ugui 0.1 
 libarchive 0.2.2 
 luamin 1.0.1 
-uberkernel 0.9.2.3-beta 
+uberkernel 0.9.4-beta 
 libargparse 1.0.1 
 libbase64 1.0.1 
-coreutils 0.3.2 
+coreutils 0.4.0 
 utar 0.2.2 libarchive
 uboot 1.0.3 
 devutils 0.3.1 libarchive;luamin
@@ -162,7 +162,9 @@ F/coreutils/cd.lua
 F/coreutils/PKGINFO.lua
 F/coreutils/rm.lua
 F/coreutils/cp.lua
+F/coreutils/groupadd.lua
 F/coreutils/alias.lua
+F/coreutils/groupdel.lua
 F/coreutils/Makefile
 F/coreutils/mv.lua
 F/coreutils/userdel.lua

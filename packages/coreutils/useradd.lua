@@ -2,8 +2,8 @@
 
 local argv = { ... }
 
-if #argv < 3 then
-    print("Usage: useradd <name> <home> <shell>")
+if #argv < 4 then
+    print("Usage: useradd <name> <group> <home> <shell>")
     return
 end
 
@@ -17,4 +17,4 @@ local cpwd = read(" ")
 if pwd ~= cpwd then printError("Password do not match!") return end
 if #pwd < 6 then printError("UNIX password must contain at least 6 symbols") return end
 
-users.newUser(argv[1], pwd, argv[2], argv[3])
+users.newUser(argv[1], users.getGIDByName(argv[2]), pwd, argv[3], argv[4])

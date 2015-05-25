@@ -1,6 +1,6 @@
 --Build this package from inside UberOS
 local minify = lua.include("min")
-local SRC = {"alias", "chown", "drive", "exit", "label", "lua", "modprobe", "ps", "shutdown", "cd", "clear", "edit", "id", "log", "mv", "reboot", "chmod", "cp", "eject", "kill", "ls", "mkdir", "rm", "mount", "umount", "ln", "readlink", "passwd", "useradd", "usermod", "userdel", "su", "sync"}
+local SRC = {"alias", "chown", "drive", "exit", "label", "lua", "modprobe", "ps", "shutdown", "cd", "clear", "edit", "id", "log", "mv", "reboot", "chmod", "cp", "eject", "kill", "ls", "mkdir", "rm", "mount", "umount", "ln", "readlink", "passwd", "useradd", "usermod", "userdel", "su", "sync", "groupadd", "groupdel"}
 local PWD = shell.dir()
 local DEST = "/bin"
 local EXTIN = ".lua"
