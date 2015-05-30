@@ -5,6 +5,8 @@ An Unix like operating system for Minecraft mod ComputerCraft
 
 This operating system is still under heavy development
 
+Licensed under GPLv3
+
 Features
 ----------
   Multithreading system and daemons
