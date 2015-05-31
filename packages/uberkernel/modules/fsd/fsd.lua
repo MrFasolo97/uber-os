@@ -205,7 +205,7 @@ function fsd.recursList(path, cache, include_start, force, dontfollow)
         table.insert(cache, p)
         if not (fsd.getInfo(p).linkto and dontfollow) then
             if fs.isDir(p) then
-                fsd.recursList(p, cache)
+                fsd.recursList(p, cache, nil, force, dontfollow)
             end
         end
     end
