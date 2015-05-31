@@ -7,7 +7,7 @@ tmpfs.loadFs = function(mountPath)
     if not mountPaths[mountPath] then
         mountPaths[mountPath] = {files = {}, dirs = {}}
     end
-    return {}
+    return {}, true
 end
 
 tmpfs.list = function(mountPath, device, path)

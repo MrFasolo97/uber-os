@@ -1,19 +1,19 @@
 upt 0.4.4 luamin
 libjson 1.0.1 
 ush 0.3.2 
-init 0.3.1 
+init 1.0 
 udev 0.2.2 
 Bedrock build-479 
 login 0.2.2 
 ugui 0.1 
 libarchive 0.2.2 
 luamin 1.0.1 
-uberkernel 0.9.4-beta 
+uberkernel 0.9.4.1-beta 
 libargparse 1.0.1 
 libbase64 1.0.1 
-coreutils 0.4.0 
+coreutils 0.4.1 
 utar 0.2.2 libarchive
-uboot 1.0.3 
+uboot 1.0.4 
 devutils 0.3.1 libarchive;luamin
 //DIRLIST
 D/upt

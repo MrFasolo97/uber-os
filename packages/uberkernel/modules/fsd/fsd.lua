@@ -310,12 +310,16 @@ end
 function fsd.loadFs(mountPath)
     local x = drivers[fsd.getMount(mountPath).fs].loadFs
     if x then
-        local tmp = x(mountPath, fsd.getMount(mountPath).dev)
+        local tmp, r = x(mountPath, fsd.getMount(mountPath).dev)
+        if not r then
+            return false
+        end
         if mountPath == "/" then mountPath = "" end
         for k, v in pairs(tmp) do
             nodes[mountPath .. k] = v
         end
     end
+    return true
 end
 
 function fsd.sync() 
@@ -383,13 +387,21 @@ function fsd.setNode(node, owner, perms, linkto, gid)
         end
         if dev == "__ROOT_DEV__" then dev = ROOT_DIR end
         path = fsd.normalizePath(path)
-        if mounts[path] then printError("Filesystem is already mounted") end
+        if mounts[path] then
+            kernel.log("Unable to mount " .. dev .. " as " .. fs .. " on " .. path .. " : Filesystem already mounted")
+            return false
+        end
         kernel.log("Mounting " .. dev .. " as " .. fs .. " on " .. path)
         mounts[path] = {
             ["fs"] = fs,
             ["dev"] = dev
         }
-        fsd.loadFs(path, dev)
+        local r = fsd.loadFs(path, dev)
+        if not r then
+            mounts[path] = nil
+            kernel.log("Unable to mount " .. dev .. " as " .. fs .. " on " .. path)
+            return false
+        end
         return true
     end
 

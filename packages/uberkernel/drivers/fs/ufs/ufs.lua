@@ -52,7 +52,7 @@ ufs.loadFs = function(mountPath, device)
             res[tmp[1]].linkto = nil
         end
     end
-    return res
+    return res, true
 end
 
 ufs.list = function(mountPath, device, path)
