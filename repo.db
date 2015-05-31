@@ -13,7 +13,7 @@ libargparse 1.0.1
 libbase64 1.0.1 
 coreutils 0.4.1 
 utar 0.2.2 libarchive
-uboot 1.0.3 
+uboot 1.0.4 
 devutils 0.3.1 libarchive;luamin
 //DIRLIST
 D/upt
