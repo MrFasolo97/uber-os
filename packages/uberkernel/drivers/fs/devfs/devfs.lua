@@ -2,6 +2,15 @@
 
 local devfs = {}
 
+function devfs.loadFs()
+    if udev then
+        return {}, true
+    else
+        printError("[devfs] udev not found!")
+        return nil, false
+    end
+end
+
 function devfs.list(mountPath, device, path)
     return udev.getMnemonics()
 end

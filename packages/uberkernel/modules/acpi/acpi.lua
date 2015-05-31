@@ -11,7 +11,12 @@ function acpi.shutdown()
     for k, v in pairs(thread.getRunningThreads()) do
         thread.kill(v.pid, "TERM")
     end
+    kernel.log("Running acpi_shutdown hook")
     kernel.doHook("acpi_shutdown")
+    kernel.log("Sending SIGKILL to all processes")
+    for k, v in pairs(thread.getRunningThreads()) do
+        thread.kill(v.pid, "KILL")
+    end
     nativeShutdown()
 end
 
@@ -23,7 +28,12 @@ function acpi.reboot()
     for k, v in pairs(thread.getRunningThreads()) do
         thread.kill(v.pid, "TERM")
     end
+    kernel.log("Running acpi_reboot hook")
     kernel.doHook("acpi_reboot")
+    kernel.log("Sending SIGKILL to all processes")
+    for k, v in pairs(thread.getRunningThreads()) do
+        thread.kill(v.pid, "KILL")
+    end
     nativeReboot()
 end
 
