@@ -1,10 +1,5 @@
 
 local tArgs = { ... }
-if #tArgs > 0 then
-    print( "This is an interactive Lua prompt." )
-    print( "To run a lua program, just type its name." )
-    return
-end
 
 local bRunning = true
 local tCommandHistory = {}
