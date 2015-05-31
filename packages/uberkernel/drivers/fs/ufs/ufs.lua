@@ -17,6 +17,13 @@ local function collectFiles(dir, stripPath, table)
     return table
 end
 
+ufs.getSize = function(mountPath, device, path)
+    path = fsd.normalizePath(path)
+    path = fsd.resolveLinks(path)
+    path = fsd.stripPath(mountPath, path)
+    return oldfs.getSize(device .. path)
+end
+
 ufs.saveFs = function(mountPath, device)
     local p = fsd.normalizePath(device)
     if p == "/" then p = "" end
@@ -59,7 +66,7 @@ ufs.list = function(mountPath, device, path)
     path = fsd.normalizePath(path)
     path = fsd.resolveLinks(path)
     path = fsd.stripPath(mountPath, path)
-    if not fs.isDir(device .. path) then
+    if not oldfs.isDir(device .. path) then
         printError("Not a directory")
     end
     local p = oldfs.list(device .. path)

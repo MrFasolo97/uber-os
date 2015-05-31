@@ -10,6 +10,8 @@ tmpfs.loadFs = function(mountPath)
     return {}, true
 end
 
+tmpfs.getSize = function() return 0 end
+
 tmpfs.list = function(mountPath, device, path)
     if not mountPaths[mountPath] then
         mountPaths[mountPath] = {files = {}, dirs = {}}

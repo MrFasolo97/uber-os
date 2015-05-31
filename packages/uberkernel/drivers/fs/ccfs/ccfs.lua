@@ -6,7 +6,7 @@ ccfs.list = function(mountPath, device, path)
     path = fsd.normalizePath(path)
     path = fsd.resolveLinks(path)
     path = fsd.stripPath(mountPath, path)
-    if not fs.isDir(device .. path) then
+    if not oldfs.isDir(device .. path) then
         printError("Not a directory")
     end
     local p = oldfs.list(device .. path)
@@ -25,6 +25,13 @@ ccfs.exists = function(mountPath, device, path)
     path = fsd.stripPath(mountPath, path)
     if mountPath == path then return true end
     return oldfs.exists(device .. path)
+end
+
+ccfs.getSize = function(mountPath, device, path)
+    path = fsd.normalizePath(path)
+    path = fsd.resolveLinks(path)
+    path = fsd.stripPath(mountPath, path)
+    return oldfs.getSize(device .. path)
 end
 
 ccfs.isDir = function(mountPath, device, path)
