@@ -41,19 +41,7 @@ configure-group:
 	printf "root:x:0:root\nnetwork:x:1:\nusers:x:100:\n" > out/etc/group
 configure-fstab:
 	printf "__ROOT_DEV__ / ufs defaults 0 0\n/dev/ram /dev devfs defaults 0 0\n/rom /sys/rom romfs defaults 0 0\ntmpfs /tmp tmpfs" > out/etc/fstab
-configure-rc: configure-rc0 configure-rc1 configure-rc2 configure-rc3 configure-rc4 configure-rc5 configure-rc6 
-configure-rc0:
-	printf "" > out/etc/rc.d/rc0
-configure-rc1:
-	printf "R10udevd\nR99logind\n" > out/etc/rc.d/rc1
-configure-rc2:
-	printf "R10udevd\nR99logind\n" > out/etc/rc.d/rc2
-configure-rc3:
-	printf "R10udevd\nR99logind\n" > out/etc/rc.d/rc3
-configure-rc4:
-	printf "R10udevd\nR99logind\n" > out/etc/rc.d/rc4
-configure-rc5:
-	printf "R10udevd\nR99logind\n" > out/etc/rc.d/rc5
-configure-rc6:
-	printf "" > out/etc/rc.d/rc6
-
+configure-inittab:
+	printf "1:1:once:/bin/ush\n" > out/etc/inittab
+	printf "2:234:once:/etc/init.d/logind start\n" >> out/etc/inittab
+	printf "3:234:once:/etc/init.d/udevd start\n" >> out/etc/inittab
