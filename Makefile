@@ -31,7 +31,7 @@ source:
 	rm -rf out/usr/src/Build.lua
 	rm -rf out/usr/src/CONFIG
 
-configure: configure-prepare configure-passwd configure-group configure-fstab configure-rc
+configure: configure-prepare configure-passwd configure-group configure-fstab configure-inittab
 configure-prepare:
 	touch out/etc/{motd,issue}
 	mkdir out/etc/rc.d
