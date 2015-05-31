@@ -11,6 +11,8 @@ function devfs.loadFs()
     end
 end
 
+function devfs.getSize() return 0 end
+
 function devfs.list(mountPath, device, path)
     return udev.getMnemonics()
 end

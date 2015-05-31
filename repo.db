@@ -1,17 +1,16 @@
 upt 0.4.4 luamin
 libjson 1.0.1 
-ush 0.3.2 
+ush 0.4 
 init 1.0 
 udev 0.2.2 
 Bedrock build-479 
 login 0.2.2 
-ugui 0.1 
 libarchive 0.2.2 
 luamin 1.0.1 
-uberkernel 0.9.4.1-beta 
+uberkernel 0.9.4.2-beta 
 libargparse 1.0.1 
 libbase64 1.0.1 
-coreutils 0.4.1 
+coreutils 0.5
 utar 0.2.2 libarchive
 uboot 1.0.4 
 devutils 0.3.1 libarchive;luamin
@@ -54,11 +53,6 @@ F/login/login.lua
 F/login/PKGINFO.lua
 F/login/logind.lua
 F/login/Makefile
-D/ugui
-F/ugui/Build.lua
-F/ugui/ugui.lua
-F/ugui/PKGINFO.lua
-F/ugui/Makefile
 D/libarchive
 F/libarchive/Build.lua
 F/libarchive/libarchive.lua

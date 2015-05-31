@@ -37,16 +37,18 @@ local isDir = "-"
 local isLink = ""
 local flag = false
 for i = 1, #files do
+    local size = " " .. fs.getSize(dir .. "/" .. files[i]) .. " "
     if (files[i]:sub(1, 1) ~= ".") or allFiles then
         flag = true
         if fs.isDir(dir .. "/" .. files[i]) then
-            if term.isColor() then
+            if term.isColor() and stdout.isStdout then
                 term.setTextColor(colors.blue)
             end
             isDir = "d"
+            size = ""
         end
         if fs.getInfo(dir .. "/" .. files[i]).linkto then
-            if term.isColor() then
+            if term.isColor() and stdout.isStdout then
                 term.setTextColor(colors.cyan)
             end
         end
@@ -62,15 +64,15 @@ for i = 1, #files do
                 isLink = ""
             end
             print(isDir, table.concat(fsd.normalizePerms(fsd.getInfo(dir .. "/" .. files[i]).perms), ""), " ", 
-            users.getUsernameByUID(fsd.getInfo(dir .. "/" .. files[i]).owner), " ", users.getNameByGID(fsd.getInfo("/" .. files[i]).gid), isLink)
+            users.getUsernameByUID(fsd.getInfo(dir .. "/" .. files[i]).owner), " ", users.getNameByGID(fsd.getInfo("/" .. files[i]).gid), size, isLink)
         else
             write(files[i] .. " ")
         end
-        if term.isColor() then
+        if term.isColor() and stdout.isStdout then
             term.setTextColor(colors.white)
         end
         isDir = "-"
         isLink = ""
     end
 end
-if flag then print() end
+if flag and not more then print() end

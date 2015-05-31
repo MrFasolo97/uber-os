@@ -2,6 +2,8 @@
 local parentShell = shell
 local parentTerm = term.current()
 
+local env = {}
+
 local bExit = false
 local sDir = (parentShell and parentShell.dir()) or ""
 local sPath = (parentShell and parentShell.path()) or ".:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
@@ -56,6 +58,18 @@ end
 -- Install shell API
 function shell.run( ... )
     local tWords = tokenise( ... )
+    local pause = true
+    local var = tWords[1]:match("^(%a+)=")
+    if var then
+       env[var] = tWords[1]:match("^%a+=(.*)$") 
+       if tonumber(env[var]) then env[var] = tonumber(env[var]) end
+       return true
+    end
+    for k, v in pairs(tWords) do
+        if v:match("^%$%a+$") then
+            tWords[k] = env[v:match("^%$(%a+)$")]
+        end
+    end
     local sCommand = tWords[1]
     if sCommand then
         return run( sCommand, unpack( tWords, 2 ) )
@@ -185,14 +199,30 @@ if uid == 0 then promptSymbol = "#" end
 -- Read commands and execute them
 local tCommandHistory = {}
 while not bExit do
-    term.redirect( parentTerm )
-    term.setBackgroundColor( bgColour )
-    write(user .. ":" .. fsd.normalizePath(shell.dir()) .. promptSymbol .. " ")
-    term.setTextColour( textColour )
+    if stdout.isStdout then
+        term.redirect( parentTerm )
+        term.setBackgroundColor( bgColour )
+        write(user .. ":" .. fsd.normalizePath(shell.dir()) .. promptSymbol .. " ")
+        term.setTextColour( textColour )
+    end
 
     local sLine = read( nil, tCommandHistory )
     if #sLine > 0 then
         table.insert( tCommandHistory, sLine )
     end
-    thread.runFile(sLine, shell, true)
+    local piping = string.split(sLine, "|")
+    local rp, wp
+    rp, wp = fs.pipe()
+    for k, v in pairs(piping) do
+        local ins, outs
+        if k == 1 then ins = nil outs = wp else
+            ins = rp
+            rp, wp = fs.pipe()
+            outs = wp
+        end
+        if k == #piping then outs = nil end
+        local pause = true
+        if v:match("&$") then pause = false v = v:match("^(.*)&$") end
+        thread.runFile(v, shell, pause, nil, ins, outs)
+    end
 end
