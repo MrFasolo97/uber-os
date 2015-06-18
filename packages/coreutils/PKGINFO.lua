@@ -1,2 +1,2 @@
 DEPENDS = {}
-VERSION = "0.5"
+VERSION = "0.5.2"

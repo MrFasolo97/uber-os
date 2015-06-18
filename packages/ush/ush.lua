@@ -184,8 +184,10 @@ function shell.aliases()
     return tCopy
 end
 
-term.setBackgroundColor( bgColour )
-term.setTextColour( textColour )
+if thread.status(thread.getPID(coroutine.running())).stdout.isStdout then
+    term.setBackgroundColor( bgColour )
+    term.setTextColour( textColour )
+end
 
 local uid = thread.getUID(coroutine.running())
 local user = users.getUsernameByUID(uid)
@@ -199,30 +201,60 @@ if uid == 0 then promptSymbol = "#" end
 -- Read commands and execute them
 local tCommandHistory = {}
 while not bExit do
-    if stdout.isStdout then
+    if thread.status(thread.getPID(coroutine.running())).stdout.isStdout then
         term.redirect( parentTerm )
         term.setBackgroundColor( bgColour )
         write(user .. ":" .. fsd.normalizePath(shell.dir()) .. promptSymbol .. " ")
         term.setTextColour( textColour )
     end
 
-    local sLine = read( nil, tCommandHistory )
-    if #sLine > 0 then
-        table.insert( tCommandHistory, sLine )
+    local input = read( nil, tCommandHistory )
+    local commands = string.split(input, "&&")
+    for k, v in pairs(commands) do
+        commands[k] = v:gsub("^%s*(.-)%s*$", "%1") 
     end
-    local piping = string.split(sLine, "|")
-    local rp, wp
-    rp, wp = fs.pipe()
-    for k, v in pairs(piping) do
-        local ins, outs
-        if k == 1 then ins = nil outs = wp else
-            ins = rp
-            rp, wp = fs.pipe()
-            outs = wp
+    if #input > 0 then
+        table.insert(tCommandHistory, input)
+    end
+    for _, command in pairs(commands) do
+        local tempCommand = command
+        local inputFile = command:match("<(%S+)%s*>%S+$")
+        local outputFile = command:match("<%S+%s*>(%S+)$")
+        if not inputFile then
+            inputFile = command:match("<(%S+)$")
+            if inputFile then
+                tempCommand = tempCommand:match("^(.*)<%S+$")
+            end
         end
-        if k == #piping then outs = nil end
-        local pause = true
-        if v:match("&$") then pause = false v = v:match("^(.*)&$") end
-        thread.runFile(v, shell, pause, nil, ins, outs)
+
+        if not outputFile then
+            outputFile = command:match(">(%S+)$")
+            if outputFile then
+                tempCommand = tempCommand:match("^(.*)>%S+$")
+            end
+        end
+
+        command = tempCommand
+
+        local piping = string.split(command, "|")
+        local rp, wp
+        rp, wp = fs.pipe()
+        for k, v in pairs(piping) do
+            local ins, outs
+            if k == 1 then 
+                if inputFile then ins = fs.open(shell.resolve(inputFile), "r") else ins = nil end
+                outs = wp 
+            else
+                ins = rp
+                rp, wp = fs.pipe()
+                outs = wp
+            end
+            if k == #piping then 
+                if outputFile then outs = fs.open(shell.resolve(outputFile), "w") else outs = nil end
+            end
+            local pause = true
+            if v:match("&$") then pause = false v = v:match("^(.*)&$") end
+            thread.runFile(v, shell, pause, nil, ins, outs)
+        end
     end
 end

@@ -48,6 +48,15 @@ function fs.move(from, to)
     fs.delete(from)
 end
 
+function fs.getDrive(dir)
+    local drive = nativefs.getDrive(dir)
+    while not drive do
+        dir = nativefs.getDir(dir)
+        drive = nativefs.getDrive(dir)
+    end
+    return drive
+end
+
 local oldCopy = oldfs.copy
 local oldMove = oldfs.move
 
@@ -205,7 +214,7 @@ function fsd.recursList(path, cache, include_start, force, dontfollow)
         table.insert(cache, p)
         if not (fsd.getInfo(p).linkto and dontfollow) then
             if fs.isDir(p) then
-                fsd.recursList(p, cache)
+                fsd.recursList(p, cache, nil, force, dontfollow)
             end
         end
     end

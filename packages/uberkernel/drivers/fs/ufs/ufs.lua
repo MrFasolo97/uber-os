@@ -74,7 +74,7 @@ ufs.list = function(mountPath, device, path)
     for i = 1, #p do
         if p[i] then
             local x = path .. "/" .. p[i]
-            if (x == "/rom") or (x == "/UFSDATA") then
+            if (oldfs.getDrive(x) ~= "hdd" and mountPath == "/") or (x == "/UFSDATA") then
                 table.remove(p, i)
             end
         end
@@ -92,6 +92,7 @@ ufs.exists = function(mountPath, device, path)
     if path == "/UFSDATA" then
         return false
     end
+    if oldfs.getDrive(path) ~= "hdd" and mountPath == "/" then return false end
     if mountPath == path then return true end
     return oldfs.exists(device .. path)
 end
@@ -106,6 +107,7 @@ ufs.isDir = function(mountPath, device, path)
     if path == "/UFSDATA" then
         return false
     end
+    if oldfs.getDrive(path) ~= "hdd" and mountPath == "/" then return false end
     if mountPath == path then return true end
     return oldfs.isDir(device .. path)
 end
@@ -114,6 +116,7 @@ ufs.open = function(mountPath, device, path, mode)
     path = fsd.resolveLinks(path)
     path = fsd.stripPath(mountPath, path)
     if fsd.normalizePath(path) == "/UFSDATA" then printError("Internal error") return end
+    if oldfs.getDrive(path) ~= "hdd" and mountPath == "/" then return false end
     return oldfs.open(device .. path, mode)
 end
 
@@ -121,6 +124,7 @@ ufs.makeDir = function(mountPath, device, path)
     path = fsd.resolveLinks(path)
     path = fsd.stripPath(mountPath, path)
     if fsd.normalizePath(path) == "/UFSDATA" then printError("Internal error") return end
+    if oldfs.getDrive(path) ~= "hdd" and mountPath == "/" then return false end
     oldfs.makeDir(device .. path)
     fs.setNode(mountPath .. "/" .. path)
 end
@@ -151,6 +155,7 @@ end
 ufs.delete = function(mountPath, device, path)
     path = fsd.stripPath(mountPath, path)
     if fsd.normalizePath(path) == "/UFSDATA" then printError("Internal error") return end
+    if oldfs.getDrive(path) ~= "hdd" and mountPath == "/" then return false end
     fsd.setNode(path, nil, nil, false)
     oldfs.delete(device .. path)
     fs.deleteNode(mountPath .. "/" .. path)

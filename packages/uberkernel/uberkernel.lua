@@ -257,7 +257,6 @@ local threadMan = function() --Start the thread manager
         end
         local pid, t = thread.runFile(file, nil, false, nil, nil, nil, nil, name)
         daemons[name] = pid
-        fs.open("/var/lock/" .. name, "w").close()
         os.sleep(0)
     end)
 
@@ -272,7 +271,6 @@ local threadMan = function() --Start the thread manager
         end
         thread.kill(daemons[name], "TERM")
         daemons[name] = nil
-        fs.delete("/var/lock/" .. name)
     end)
 
     rawset(thread, "getDaemonStatus", function(name) --Get daemon status (running or stopped)
@@ -453,6 +451,11 @@ local threadMan = function() --Start the thread manager
         kernel.doHook("after_resume", t.pid, evt, ...)
         if t.dead and t.pid ~= 1 then
             kernel.doHook("dead", t.pid)
+            for k, v in pairs(threads) do
+                if v.ppid == t.pid then
+                    threads[k].ppid = 1 
+                end
+            end
             local clone = deepcopy(daemons)
             for k, v in pairs(daemons) do
                 if k == t.daemon then
