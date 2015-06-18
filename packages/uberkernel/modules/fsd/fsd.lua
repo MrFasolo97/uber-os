@@ -48,6 +48,15 @@ function fs.move(from, to)
     fs.delete(from)
 end
 
+function fs.getDrive(dir)
+    local drive = nativefs.getDrive(dir)
+    while not drive do
+        dir = nativefs.getDir(dir)
+        drive = nativefs.getDrive(dir)
+    end
+    return drive
+end
+
 local oldCopy = oldfs.copy
 local oldMove = oldfs.move
 

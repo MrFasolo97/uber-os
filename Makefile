@@ -31,10 +31,9 @@ source:
 	rm -rf out/usr/src/Build.lua
 	rm -rf out/usr/src/CONFIG
 
-configure: configure-prepare configure-passwd configure-group configure-fstab configure-inittab
+configure: configure-prepare configure-passwd configure-group configure-fstab configure-inittab configure-ufsdata
 configure-prepare:
 	touch out/etc/{motd,issue}
-	mkdir out/etc/rc.d
 configure-passwd:
 	printf "root::0:0::/root:/bin/ush\n" > out/etc/passwd
 configure-group:
@@ -45,3 +44,8 @@ configure-inittab:
 	printf "1:1:once:/bin/ush\n" > out/etc/inittab
 	printf "2:234:once:/etc/init.d/logind start\n" >> out/etc/inittab
 	printf "3:234:once:/etc/init.d/udevd start\n" >> out/etc/inittab
+configure-ufsdata:
+	printf "/:0:755::0\n" > out/UFSDATA
+	printf "/etc/passwd:0:700::0\n" >> out/UFSDATA
+	printf "/sys/rom:0:700::0\n" >> out/UFSDATA
+	printf "/root:0:700::0\n" >> out/UFSDATA

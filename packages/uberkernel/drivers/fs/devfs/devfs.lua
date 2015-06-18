@@ -30,28 +30,42 @@ end
 
 function devfs.open(mountPath, device, path, mode)
     path = fs.normalizePath(path)
-    local text = udev.readDevice(oldfs.getName(path))
-    local handle = {
-        currentLine = 1,
-        text = text,
-        lines = string.split(text, "\n"),
-        close = function() end
-    }
-    local readLine = function()
-        local handle = handle
-        if handle.currentLine > #handle.lines then
-            return nil
+    if mode == "r" then
+        local text = udev.readDevice(oldfs.getName(path))
+        local handle = {
+            currentLine = 1,
+            text = text,
+            lines = string.split(text, "\n"),
+            close = function() end
+        }
+        local readLine = function()
+            local handle = handle
+            if handle.currentLine > #handle.lines then
+                return nil
+            end
+            handle.currentLine = handle.currentLine + 1
+            return handle.lines[handle.currentLine - 1]
         end
-        handle.currentLine = handle.currentLine + 1
-        return handle.lines[handle.currentLine - 1]
+        local readAll = function()
+            local handle = handle
+            return table.concat(handle.lines, "\n", handle.currentLine)
+        end
+        handle.readLine = readLine
+        handle.readAll = readAll
+        return handle
+    else
+        local handle = {
+            close = function() end,
+            flush = function() end
+        }
+        local w = function(s)
+            local handle = handle
+            return udev.onWrite(oldfs.getName(path), s)
+        end
+        handle.write = w
+        handle.writeLine = w
+        return handle
     end
-    local readAll = function()
-        local handle = handle
-        return table.concat(handle.lines, "\n", handle.currentLine)
-    end
-    handle.readLine = readLine
-    handle.readAll = readAll
-    return handle
 end
 
 devfs = applyreadonly(devfs)
