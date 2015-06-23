@@ -300,8 +300,6 @@ function ccute.Button._init(self, renderTarget)
     self.pressedColor = colors.lightGray
     self.releaseTimer = nil
     self.pressed = false
-    self.pressAnimation = nil
-    self.pressAnimationTimer = nil
 end
 
 
@@ -320,16 +318,6 @@ function ccute.Button.processEvent(self, event, e1, e2, e3, e4, e5)
             end
         end
     end
-    if event == "timer" and e1 == self.pressAnimationTimer then
-        if self.pressAnimation then
-            self.pressAnimation:tick(0.05)
-            if self.pressAnimation.over then
-                self.pressAnimation = nil
-            else
-                self.pressAnimationTimer = os.startTimer(0.05)
-            end
-        end
-    end
     if event == "mouse_click" then
         local x, y
         x, y = self:getRealXY()
@@ -337,26 +325,12 @@ function ccute.Button.processEvent(self, event, e1, e2, e3, e4, e5)
             e3 >= y and e3 <= y + self.height - 1 then
             self.releaseTimer = os.startTimer(1)
             self.pressed = true
-            local animation = ccute.RoundToggleAnimation()
-            animation.speed = 40
-            animation.totalTime = 10
-            animation.xstart = e2
-            animation.ystart = e3
-            self.pressAnimation = animation
-            self.pressAnimationTimer = os.startTimer(0.05)
             if self.onclick then self:onclick() end
         end
     end
     if event == "timer" and e1 == self.releaseTimer then
         self.releaseTimer = nil
         self.pressed = false
-        local animation = ccute.RoundToggleAnimation()
-        animation.speed = 50
-        animation.totalTime = 2
-        animation.xstart = self.pressAnimation.xstart
-        animation.ystart = self.pressAnimation.ystart
-        self.pressAnimation = animation
-        self.pressAnimationTimer = os.startTimer(0.05)
     end
 
 end
@@ -367,19 +341,10 @@ function ccute.Button.draw(self)
     for i = x, x + self.width - 1 do
         for j = y, y + self.height - 1 do
             if not self.animation or self.animation:mask(i, j) then 
-                if not self.pressAnimation or self.pressAnimation:mask(i, j) then
-                    if self.pressed then
-                        self.renderTarget:drawPixel(i, j, self.color, self.color, " ")
-                    else
-                        self.renderTarget:drawPixel(i, j, self.pressedColor, self.pressedColor, " ")
-                    end
+                if self.pressed then
+                    self.renderTarget:drawPixel(i, j, self.pressedColor, self.pressedColor, " ")
                 else
-                    if self.pressed then
-                        self.renderTarget:drawPixel(i, j, self.pressedColor, self.pressedColor, " ")
-                    else
-                        self.renderTarget:drawPixel(i, j, self.color, self.color, " ")
-                    end
-
+                    self.renderTarget:drawPixel(i, j, self.color, self.color, " ")
                 end
             end
         end
@@ -704,6 +669,7 @@ function ccute.HorizontalLayout._init(self, renderTarget)
     self.rightMargin = 0
     self.topMargin = 0
     self.bottomMargin = 0
+    self.minWidth = 1
 end
 
 function ccute.HorizontalLayout.recalculate(self)
@@ -716,7 +682,7 @@ function ccute.HorizontalLayout.recalculate(self)
     i = self.leftMargin
     for k, v in pairs(self.children) do
         local nw, nh
-        nw = math.floor((self.width - self.leftMargin - self.rightMargin) / totalWeight * v.layoutWeight) - 1
+        nw = math.max(math.floor((self.width - self.leftMargin - self.rightMargin) / totalWeight * v.layoutWeight) - 1, self.minWidth)
         nh = self.height - self.topMargin - self.bottomMargin
         if v.maxWidth then nw = math.min(nw, v.maxWidth) end
         if v.maxHeight then nh = math.min(nh, v.maxHeight) end
@@ -746,6 +712,7 @@ function ccute.VerticalLayout._init(self, renderTarget)
     self.rightMargin = 0
     self.topMargin = 0
     self.bottomMargin = 0
+    self.minHeight = 1
 end
 
 function ccute.VerticalLayout.recalculate(self)
@@ -759,7 +726,7 @@ function ccute.VerticalLayout.recalculate(self)
     for k, v in pairs(self.children) do
         local nw, nh
         nw = self.width - self.leftMargin - self.rightMargin
-        nh = math.floor((self.height - self.topMargin - self.bottomMargin) / totalWeight * v.layoutWeight) - 1
+        nh = math.max(math.floor((self.height - self.topMargin - self.bottomMargin) / totalWeight * v.layoutWeight) - 1, self.minHeight)
         v:resize(nw, nh)
         if v.maxWidth then nw = math.min(nw, v.maxWidth) end
         if v.maxHeight then nh = math.min(nh, v.maxHeight) end
