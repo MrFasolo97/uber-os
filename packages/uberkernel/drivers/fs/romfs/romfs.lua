@@ -16,6 +16,13 @@ romfs.list = function(mountPath, device, path)
     return p
 end
 
+romfs.getSize = function(mountPath, device, path)
+    path = fsd.normalizePath(path)
+    path = fsd.resolveLinks(path)
+    path = fsd.stripPath(mountPath, path)
+    return oldfs.getSize(device .. path)
+end
+
 romfs.exists = function(mountPath, device, path)
     path = fsd.normalizePath(path)
     path = fsd.resolveLinks(path)

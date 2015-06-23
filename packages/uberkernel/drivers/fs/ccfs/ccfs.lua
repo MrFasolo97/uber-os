@@ -6,7 +6,7 @@ ccfs.list = function(mountPath, device, path)
     path = fsd.normalizePath(path)
     path = fsd.resolveLinks(path)
     path = fsd.stripPath(mountPath, path)
-    if not fs.isDir(device .. path) then
+    if not oldfs.isDir(device .. path) then
         printError("Not a directory")
     end
     local p = oldfs.list(device .. path)
@@ -14,6 +14,9 @@ ccfs.list = function(mountPath, device, path)
     for i = 1, #p do
         if p[i] then
             local x = path .. "/" .. p[i]
+            if oldfs.getDrive(x) ~= "hdd" and mountPath == "/" then 
+                table.remove(p, i)
+            end
         end
     end
     return p
@@ -24,7 +27,16 @@ ccfs.exists = function(mountPath, device, path)
     path = fsd.resolveLinks(path)
     path = fsd.stripPath(mountPath, path)
     if mountPath == path then return true end
+    if oldfs.getDrive(path) ~= "hdd" and mountPath == "/" then return false end
     return oldfs.exists(device .. path)
+end
+
+ccfs.getSize = function(mountPath, device, path)
+    path = fsd.normalizePath(path)
+    path = fsd.resolveLinks(path)
+    path = fsd.stripPath(mountPath, path)
+    if oldfs.getDrive(path) ~= "hdd" and mountPath == "/" then return false end
+    return oldfs.getSize(device .. path)
 end
 
 ccfs.isDir = function(mountPath, device, path)
@@ -32,18 +44,21 @@ ccfs.isDir = function(mountPath, device, path)
     path = fsd.resolveLinks(path)
     path = fsd.stripPath(mountPath, path)
     if mountPath == path then return true end
+    if oldfs.getDrive(path) ~= "hdd" and mountPath == "/" then return false end
     return oldfs.isDir(device .. path)
 end
 
 ccfs.open = function(mountPath, device, path, mode)
     path = fsd.resolveLinks(path)
     path = fsd.stripPath(mountPath, path)
+    if oldfs.getDrive(path) ~= "hdd" and mountPath == "/" then return false end
     return oldfs.open(device .. path, mode)
 end
 
 ccfs.makeDir = function(mountPath, device, path)
     path = fsd.resolveLinks(path)
     path = fsd.stripPath(mountPath, path)
+    if oldfs.getDrive(path) ~= "hdd" and mountPath == "/" then return false end
     oldfs.makeDir(device .. path)
     fs.setNode(mountPath .. "/" .. path)
 end
@@ -70,6 +85,7 @@ end
 ccfs.delete = function(mountPath, device, path)
     path = fsd.stripPath(mountPath, path)
     fsd.setNode(path, nil, nil, false)
+    if oldfs.getDrive(path) ~= "hdd" and mountPath == "/" then return false end
     oldfs.delete(device .. path)
     fs.deleteNode(mountPath .. "/" .. path)
 end

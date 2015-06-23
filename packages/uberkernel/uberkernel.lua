@@ -134,6 +134,8 @@ local fSilent = false
 local fNoPanic = false
 local fLog = false
 local fNoModeSet = false
+local runlevel = 3
+local init = "/sbin/init"
 
 local loadedModules = {} --Already loaded modules
 
@@ -206,7 +208,7 @@ local threadMan = function() --Start the thread manager
         end
     end)
 
-    rawset(thread, "startThread", function(fn, reserved, desc, uid, stdin, stdout, stderr, daemon) --Run the thread
+    rawset(thread, "startThread", function(fn, tterm, desc, uid, stdin, stdout, stderr, daemon) --Run the thread
         if thread.getUID(coroutine.running()) ~= 0 then
             daemon = nil
         end
@@ -237,30 +239,12 @@ local threadMan = function() --Start the thread manager
             stderr = stderr or newStderr(), --Stderr stream for process
             daemon = daemon,
             signals = {},
-            skip = false
+            skip = false,
+            tterm = tterm or term.current()
         })
         return newpid, starting[#starting]
     end)
 
-    rawset(thread, "runFile", function(file, shell, pause, uid, stdin, stdout, stderr, daemon) --Start file
-        local pid, t = thread.startThread(function()
-            if shell then
-                shell.run(file)
-            else
-                os.run({}, file)
-            end
-        end, nil, daemon or file, uid or thread.getUID(coroutine.running()), stdin, stdout, stderr, daemon)
-        if daemon and (thread.getUID(coroutine.running()) == 0) then
-            t.ppid = 1
-        end
-        if pause then
-            local ppid = thread.getPID(coroutine.running())
-            for k, v in pairs(threads) do if ppid == v.pid then v.paused = true end end
-            coroutine.yield()
-        else
-            return pid
-        end
-    end)
 
     rawset(thread, "runDaemon", function(file, name) --Start daemon
         if thread.getUID(coroutine.running()) ~= 0 then
@@ -273,7 +257,6 @@ local threadMan = function() --Start the thread manager
         end
         local pid, t = thread.runFile(file, nil, false, nil, nil, nil, nil, name)
         daemons[name] = pid
-        fs.open("/var/lock/" .. name, "w").close()
         os.sleep(0)
     end)
 
@@ -288,7 +271,6 @@ local threadMan = function() --Start the thread manager
         end
         thread.kill(daemons[name], "TERM")
         daemons[name] = nil
-        fs.delete("/var/lock/" .. name)
     end)
 
     rawset(thread, "getDaemonStatus", function(name) --Get daemon status (running or stopped)
@@ -368,6 +350,7 @@ local threadMan = function() --Start the thread manager
             if threads[i].pid == pid then
                 if (thread.getUID(coroutine.running()) == threads[i].uid) or
                     (thread.getUID(coroutine.running()) == 0) then
+
                     return {
                         dead = threads[i].dead,
                         kill = threads[i].kill,
@@ -379,7 +362,8 @@ local threadMan = function() --Start the thread manager
                         stdin = threads[i].stdin,
                         stdout = threads[i].stdout,
                         stderr = threads[i].stderr,
-                        daemon = threads[i].daemon
+                        daemon = threads[i].daemon,
+                        tterm = threads[i].tterm
                     }
                 else
                     return {
@@ -390,7 +374,8 @@ local threadMan = function() --Start the thread manager
                         desc = threads[i].desc,
                         uid = threads[i].uid,
                         paused = threads[i].paused,
-                        daemon = threads[i].daemon
+                        daemon = threads[i].daemon,
+                        tterm = threads[i].tterm
                     }
                 end
             end
@@ -457,6 +442,7 @@ local threadMan = function() --Start the thread manager
             if t.filter ~= nil and evt ~= t.filter then return end
             if evt == "terminate" then thread.kill(t.pid, "INT") end
             kernel.doHook("before_resume", t.pid, evt, ...)
+            term.redirect(t.tterm)
             coroutine.resume(t.cr, evt, ...)
             t.dead = (coroutine.status(t.cr) == "dead")
         else
@@ -464,6 +450,12 @@ local threadMan = function() --Start the thread manager
         end
         kernel.doHook("after_resume", t.pid, evt, ...)
         if t.dead and t.pid ~= 1 then
+            kernel.doHook("dead", t.pid)
+            for k, v in pairs(threads) do
+                if v.ppid == t.pid then
+                    threads[k].ppid = 1 
+                end
+            end
             local clone = deepcopy(daemons)
             for k, v in pairs(daemons) do
                 if k == t.daemon then
@@ -478,6 +470,29 @@ local threadMan = function() --Start the thread manager
             t.stderr.close()
         end
     end
+
+    rawset(thread, "runFile", function(file, shell, pause, uid, stdin, stdout, stderr, daemon, tterm) --Start file
+        local pid, t = thread.startThread(function()
+            if shell then
+                shell.run(file)
+            else
+                local tmp = string.split(file, " ")
+                file = tmp[1]
+                os.run({}, file, unpack(tmp, 2))
+            end
+        end, tterm, daemon or file, uid or thread.getUID(coroutine.running()), stdin, stdout, stderr, daemon)
+        if daemon and (thread.getUID(coroutine.running()) == 0) then
+            t.ppid = 1
+        end
+        os.queueEvent("process_start", pid)
+        if pause then
+            local ppid = thread.getPID(coroutine.running())
+            for k, v in pairs(threads) do if ppid == v.pid then v.paused = true end end
+            coroutine.yield()
+        else
+            return pid
+        end
+    end)
 
     local function tickAll() --Main routine
         if isPanic then while true do os.sleep(0) end end
@@ -530,9 +545,15 @@ local threadMan = function() --Start the thread manager
         _G["newStderr"] = newStderr
         os = applyreadonly(os) _G["os"] = os
         _G._G = applyreadonly(_G)
+        if not fs.exists(init) then
+            kernel.panic("init not found.\nTry passing init= option to kernel")
+            return
+        end
+        _G.os.loadAPI = nil
+        _G.os.unloadAPI = nil
         thread.startThread(function() 
             kernel.log("Starting init")
-            os.run({}, "/sbin/init")
+            os.run({}, init, tostring(runlevel))
         end, nil, "init", uid)
     end
 
@@ -830,6 +851,8 @@ local function start()
                     if argv[i] == "log" then fLog = true end
                     if argv[i] == "silent" then fSilent = true end
                     if argv[i]:match("^.*=") == "root=" then _G["ROOT_DIR"] = argv[i]:sub(6) end
+                    if argv[i]:match("^.*=") == "runlevel=" then runlevel = argv[i]:sub(10) end
+                    if argv[i]:match("^.*=") == "init=" then init = argv[i]:sub(6) end
                 end
             end
             local status, err = pcall(start)

@@ -1,8 +1,10 @@
 --Build this package from inside UberOS
 local minify = lua.include("min")
-local SRC = {"alias", "chown", "drive", "exit", "label", "lua", "modprobe", "ps", "shutdown", "cd", "clear", "edit", "id", "log", "mv", "reboot", "chmod", "cp", "eject", "kill", "ls", "mkdir", "rm", "mount", "umount", "ln", "readlink", "passwd", "useradd", "usermod", "userdel", "su", "sync", "groupadd", "groupdel"}
+local SRC = {"alias", "chown", "drive", "exit", "label", "lua", "modprobe", "ps", "cd", "clear", "edit", "id", "log", "mv", "chmod", "cp", "eject", "kill", "ls", "mkdir", "rm", "mount", "umount", "ln", "readlink", "passwd", "useradd", "usermod", "userdel", "su", "sync", "groupadd", "groupdel", "grep", "echo", "cat"}
+local SRC_SBIN = {"shutdown", "reboot", "halt"}
 local PWD = shell.dir()
 local DEST = "/bin"
+local DEST_SBIN = "/sbin"
 local EXTIN = ".lua"
 local EXTOUT = ""
 local argv = { ... }
@@ -16,7 +18,7 @@ local function prepare()
 end
 
 local function build(source)
-    if not source then for k, v in pairs(SRC) do build(v) end return end
+    if not source then for k, v in pairs(SRC) do build(v) end for k, v in pairs(SRC_SBIN) do build(v) end return end
     local f = fs.open(PWD .. "/" .. source .. EXTIN, "r")
     local c = f.readAll()
     f.close()
@@ -33,6 +35,9 @@ local function install(root)
     end
     for k, v in pairs(SRC) do
         pcall(fs.copy, PWD .. "/out/" .. v .. EXTOUT, root .. DEST .. "/" .. v .. EXTOUT)
+    end
+    for k, v in pairs(SRC_SBIN) do
+        pcall(fs.copy, PWD .. "/out/" .. v .. EXTOUT, root .. DEST_SBIN .. "/" .. v .. EXTOUT)
     end
 end
 

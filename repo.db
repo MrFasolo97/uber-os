@@ -1,19 +1,19 @@
 upt 0.4.4 luamin
 libjson 1.0.1 
-ush 0.3.2 
-init 0.3.1 
-udev 0.2.2 
+ush 0.4.1 
+init 1.0 
+udev 0.3 
 Bedrock build-479 
 login 0.2.2 
 ugui 0.1 
 libarchive 0.2.2 
 luamin 1.0.1 
-uberkernel 0.9.4-beta 
+uberkernel 0.9.5-beta 
 libargparse 1.0.1 
 libbase64 1.0.1 
-coreutils 0.4.0 
+coreutils 0.5.2 
 utar 0.2.2 libarchive
-uboot 1.0.3 
+uboot 1.0.4 
 devutils 0.3.1 libarchive;luamin
 //DIRLIST
 D/upt
@@ -142,16 +142,19 @@ F/coreutils/ls.lua
 F/coreutils/ps.lua
 F/coreutils/sync.lua
 F/coreutils/Build.lua
+F/coreutils/echo.lua
 F/coreutils/drive.lua
 F/coreutils/chown.lua
 F/coreutils/chmod.lua
 F/coreutils/clear.lua
 F/coreutils/mkdir.lua
+F/coreutils/grep.lua
 F/coreutils/edit.lua
 F/coreutils/reboot.lua
 F/coreutils/shutdown.lua
 F/coreutils/useradd.lua
 F/coreutils/umount.lua
+F/coreutils/halt.lua
 F/coreutils/kill.lua
 F/coreutils/lua.lua
 F/coreutils/label.lua
@@ -164,6 +167,7 @@ F/coreutils/rm.lua
 F/coreutils/cp.lua
 F/coreutils/groupadd.lua
 F/coreutils/alias.lua
+F/coreutils/cat.lua
 F/coreutils/groupdel.lua
 F/coreutils/Makefile
 F/coreutils/mv.lua

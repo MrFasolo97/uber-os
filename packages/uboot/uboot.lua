@@ -39,7 +39,7 @@ term.clear()
 term.setCursorPos(1, 1)
 print("Uber Bootloader v0.1")
 print("Root directory: /" .. ROOT_DIR)
-local s = ROOT_DIR .. "/boot/uberkernel mlua musers mfsd macpi log root=" .. ROOT_DIR
+local s = ROOT_DIR .. "/boot/uberkernel mlua musers mfsd macpi log root=" .. ROOT_DIR .. " runlevel=3"
 if s:sub(1, 1) ~= "/" then s = "/" .. s end
 print("Default = " .. s)
 print("")

@@ -7,7 +7,7 @@ if #argv < x then
     return
 end
 
-for k, v in pairs(fs.find(shell.resolve(argv[x])), true) do
+for k, v in pairs(fs.find(shell.resolve(argv[x]), true)) do
     fs.delete(fs.resolveLinks(v, true))
     if x == 2 then
         print("Removed " .. v)
