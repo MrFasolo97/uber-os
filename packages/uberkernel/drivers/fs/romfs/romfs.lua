@@ -52,25 +52,6 @@ romfs.makeDir = function(mountPath, device, path)
     fs.setNode(mountPath .. "/" .. path)
 end
 
-romfs.move = function(mountPath, device, from, to)
-    from = fsd.resolveLinks(from)
-    to = fsd.resolveLinks(to)
-    from = fsd.stripPath(mountPath, from)
-    to = fsd.stripPath(mountPath, to)
-    oldfs.move(device .. from, device .. to)
-    fs.setNode(mountPath .. "/" .. to)
-end
-
-romfs.copy = function(mountPath, device, from, to)
-    from = fsd.resolveLinks(from)
-    to = fsd.resolveLinks(to)
-    from = fsd.stripPath(mountPath, from)
-    to = fsd.stripPath(mountPath, to)
-    oldfs.copy(device .. from, device .. to)
-    fs.setNode(mountPath .. "/" .. to)
-end
-
-
 romfs.delete = function(mountPath, device, path)
     path = fsd.stripPath(mountPath, path)
     fsd.setNode(path, nil, nil, false)

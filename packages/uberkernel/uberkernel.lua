@@ -23,7 +23,7 @@ if ccver < "1.6" then
     return
 end
 
-if ccver >= "1.74" and shell then
+if ccver >= "1.75" and shell then
     print("ComputerCraft " .. ccver .. " is not supported by this version of kernel")
     print("It is recomended to downgrade your version of CC")
     print("Proceed on your own risk")

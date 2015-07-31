@@ -38,33 +38,37 @@ local isDir = "-"
 local isLink = ""
 local flag = false
 if not more then
-    local tFiles = {}
-    local tDirs = {}
-    local tLinks = {}
+    if outf.isStdout then
+        local tFiles = {}
+        local tDirs = {}
+        local tLinks = {}
 
-    for n, sItem in pairs(files) do
-        if string.sub(sItem, 1, 1) ~= "." or allFiles then
-            local sPath = fs.combine(dir, sItem)
-            if fs.getInfo(sPath).linkto then
-                table.insert(tLinks, sItem)
-            else
-                if fs.isDir(sPath) then
-                    table.insert(tDirs, sItem)
+        for n, sItem in pairs(files) do
+            if string.sub(sItem, 1, 1) ~= "." or allFiles then
+                local sPath = fs.combine(dir, sItem)
+                if fs.getInfo(sPath).linkto then
+                    table.insert(tLinks, sItem)
                 else
-                    table.insert(tFiles, sItem)
+                    if fs.isDir(sPath) then
+                        table.insert(tDirs, sItem)
+                    else
+                        table.insert(tFiles, sItem)
+                    end
                 end
             end
         end
-    end
-    table.sort(tDirs)
-    table.sort(tFiles)
-    table.sort(tLinks)
+        table.sort(tDirs)
+        table.sort(tFiles)
+        table.sort(tLinks)
 
-    if term.isColour() then
-        textutils.pagedTabulate(colors.blue, tDirs, colors.white, tFiles, colors.cyan, tLinks)
-        term.setTextColor(colors.white)
+        if term.isColour() then
+            textutils.pagedTabulate(colors.blue, tDirs, colors.white, tFiles, colors.cyan, tLinks)
+            term.setTextColor(colors.white)
+        else
+            textutils.pagedTabulate(tDirs, tFiles, tLinks)
+        end
     else
-        textutils.pagedTabulate(tDirs, tFiles, tLinks)
+        outf.write(table.concat(fs.list(dir), "\n"))
     end
 else
     for i = 1, #files do
