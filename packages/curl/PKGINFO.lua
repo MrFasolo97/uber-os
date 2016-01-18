@@ -1,0 +1,2 @@
+DEPENDS = {}
+VERSION = "1.0"

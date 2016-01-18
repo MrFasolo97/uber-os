@@ -1,6 +1,9 @@
+udm 0.1.0 ccute
+curl 1.0 
 upt 0.4.4 luamin
 libjson 1.0.1 
-ush 0.4.1 
+ush 0.5.0 
+ccute 0.1.0 
 init 1.0 
 udev 0.3 
 Bedrock build-479 
@@ -8,7 +11,7 @@ login 0.2.2
 ugui 0.1 
 libarchive 0.2.2 
 luamin 1.0.1 
-uberkernel 0.9.5-beta 
+uberkernel 1.0.0 
 libargparse 1.0.1 
 libbase64 1.0.1 
 coreutils 0.5.2 
@@ -16,6 +19,17 @@ utar 0.2.2 libarchive
 uboot 1.0.4 
 devutils 0.3.1 libarchive;luamin
 //DIRLIST
+D/udm
+F/udm/Build.lua
+F/udm/udm.lua
+F/udm/udmd.lua
+F/udm/PKGINFO.lua
+F/udm/Makefile
+D/curl
+F/curl/curl.lua
+F/curl/Build.lua
+F/curl/PKGINFO.lua
+F/curl/Makefile
 D/upt
 F/upt/Build.lua
 F/upt/upt.lua
@@ -31,6 +45,12 @@ F/ush/Build.lua
 F/ush/ush.lua
 F/ush/PKGINFO.lua
 F/ush/Makefile
+D/ccute
+F/ccute/Build.lua
+F/ccute/libccute.lua
+F/ccute/libccute_new.lua
+F/ccute/PKGINFO.lua
+F/ccute/Makefile
 D/init
 F/init/Build.lua
 F/init/init.lua

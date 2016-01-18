@@ -59,16 +59,33 @@ end
 function shell.run( ... )
     local tWords = tokenise( ... )
     local pause = true
+    for k, v in pairs(tWords) do
+        if v:match("%${%a+}") then
+            tWords[k] = string.gsub(v, "%${(%a+)}", function(var)
+                if var == "PATH" then
+                    return shell.path()
+                else 
+                    return env[var]
+                end
+            end)
+        elseif v:match("^%$%a+$") then
+            local var = v:match("^%$(%a+)$")
+            if var == "PATH" then
+                tWords[k] = shell.path()
+            else 
+                tWords[k] = env[var]
+            end
+        end
+    end
     local var = tWords[1]:match("^(%a+)=")
     if var then
-       env[var] = tWords[1]:match("^%a+=(.*)$") 
-       if tonumber(env[var]) then env[var] = tonumber(env[var]) end
-       return true
-    end
-    for k, v in pairs(tWords) do
-        if v:match("^%$%a+$") then
-            tWords[k] = env[v:match("^%$(%a+)$")]
+        if var == "PATH" then
+            shell.setPath(tWords[1]:match("^%a+=(.*)$"))
+        else
+            env[var] = tWords[1]:match("^%a+=(.*)$") 
+            if tonumber(env[var]) then env[var] = tonumber(env[var]) end
         end
+        return true
     end
     local sCommand = tWords[1]
     if sCommand then

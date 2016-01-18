@@ -113,11 +113,13 @@ function ccute.Surface.resizeSurface(self)
 end
 
 function ccute.Surface.drawPixel(self, x, y, textColor, backgroundColor, text)
-    self.surface[x][y] = {
-        textColor = textColor or self.surface[x][y].textColor,
-        backgroundColor = backgroundColor or self.surface[x][y].backgroundColor,
-        text = text or self.surface[x][y].color
-    }
+    if self.surface[x] and self.surface[x][y] then
+        self.surface[x][y] = {
+            textColor = textColor or self.surface[x][y].textColor,
+            backgroundColor = backgroundColor or self.surface[x][y].backgroundColor,
+            text = text or self.surface[x][y].color
+        }
+    end
 end
 
 local function compareTables(a, b)
@@ -245,6 +247,10 @@ function ccute.Widget.getRealXY(self)
 end
 
 function ccute.Widget.processEvent(self, event, e1, e2, e3, e4, e5)
+    if event == "ccute.before_event" then
+        if self.width == 0 then self.width = self.parent.width end
+        if self.height == 0 then self.height = self.parent.height end
+    end
     for k, v in pairs(self.children) do
         v:processEvent(event, e1, e2, e3, e4, e5)
     end
@@ -295,29 +301,19 @@ setmetatable(ccute.Button, {
     end,
 })
 
-function ccute.Button._init(self, renderTarget)
+function ccute.Button._init(self, renderTarget, text)
     ccute.Widget._init(self, renderTarget)
     self.pressedColor = colors.lightGray
     self.releaseTimer = nil
     self.pressed = false
+    self.textColor = colors.black
+    self.pressedTextColor = colors.black
+    self.text = text or "Button"
 end
 
 
 function ccute.Button.processEvent(self, event, e1, e2, e3, e4, e5)
-    for k, v in pairs(self.children) do
-        v:processEvent(event, e1, e2, e3, e4, e5)
-    end
-    if event == "timer" and e1 == self.animationTimer then
-        if self.animation then
-            self.animation:tick(0.05)
-            if self.animation.over then
-                self.visible = self.animation.show
-                self.animation = nil
-            else
-                self.animationTimer = os.startTimer(0.05)
-            end
-        end
-    end
+    ccute.Widget.processEvent(self, event, e1, e2, e3, e4, e5)
     if event == "mouse_click" then
         local x, y
         x, y = self:getRealXY()
@@ -349,6 +345,15 @@ function ccute.Button.draw(self)
             end
         end
     end
+    local middlex = math.floor((x + x + self.width) / 2)
+    local middley = math.floor((y + y + self.height) / 2)
+    for i = 1, #self.text do
+        if self.pressed then
+            self.renderTarget:drawPixel(math.floor(middlex - #self.text / 2 + i), middley, self.pressedTextColor, nil, self.text:sub(i, i))
+        else
+            self.renderTarget:drawPixel(math.floor(middlex - #self.text / 2 + i), middley, self.textColor, nil, self.text:sub(i, i))
+        end
+    end
     for k, v in pairs(self.children) do
         if v.visible then v:draw() end
     end
@@ -371,6 +376,7 @@ function ccute.Label._init(self, renderTarget, text)
     self.text = text or ""
     self.color = colors.black
     self.backgroundColor = nil
+    self.align = "left"
 end
 
 function ccute.Label.draw(self)
@@ -392,7 +398,13 @@ function ccute.Label.draw(self)
     for i = 1, #lines do
         for j = 1, #lines[i] do
             if not self.animation or self.animation:mask(j + x - 1, i + y - 1) then 
-                self.renderTarget:drawPixel(j + x - 1, i + y - 1, self.color, self.backgroundColor, string.sub(lines[i], j, j))
+                if self.align == "left" then
+                    self.renderTarget:drawPixel(j + x - 1, i + y - 1, self.color, self.backgroundColor, string.sub(lines[i], j, j))
+                elseif self.align == "center" then
+                    self.renderTarget:drawPixel(j + x - 1 + (math.max(self.width, #lines[i]) - #lines[i]) / 2, i + y - 1, self.color, self.backgroundColor, string.sub(lines[i], j, j))
+                else
+                    self.renderTarget:drawPixel(j + x - 1 + math.max(self.width, #lines[i]) - #lines[i], i + y - 1, self.color, self.backgroundColor, string.sub(lines[i], j, j))
+                end
             end
         end
     end
@@ -424,20 +436,7 @@ function ccute.Input._init(self, renderTarget)
 end
 
 function ccute.Input.processEvent(self, event, e1, e2, e3, e4, e5)
-    for k, v in pairs(self.children) do
-        v:processEvent(event, e1, e2, e3, e4, e5)
-    end
-    if event == "timer" and e1 == self.animationTimer then
-        if self.animation then
-            self.animation:tick(0.05)
-            if self.animation.over then
-                self.visible = self.animation.show
-                self.animation = nil
-            else
-                self.animationTimer = os.startTimer(0.05)
-            end
-        end
-    end
+    ccute.Widget.processEvent(self, event, e1, e2, e3, e4, e5)
     if event == "mouse_click" then
         local x, y
         x, y = self:getRealXY()
@@ -623,20 +622,7 @@ function ccute.Layout._init(self, renderTarget)
 end
 
 function ccute.Layout.processEvent(self, event, e1, e2, e3, e4, e5)
-    for k, v in pairs(self.children) do
-        v:processEvent(event, e1, e2, e3, e4, e5)
-    end
-    if event == "timer" and e1 == self.animationTimer then
-        if self.animation then
-            self.animation:tick(0.05)
-            if self.animation.over then
-                self.visible = self.animation.show
-                self.animation = nil
-            else
-                self.animationTimer = os.startTimer(0.05)
-            end
-        end
-    end
+    ccute.Widget.processEvent(self, event, e1, e2, e3, e4, e5)
     self:recalculate()
 end
 
@@ -761,20 +747,7 @@ function ccute.ScrollBar._init(self, renderTarget)
 end
 
 function ccute.ScrollBar.processEvent(self, event, e1, e2, e3, e4, e5)
-    for k, v in pairs(self.children) do
-        v:processEvent(event, e1, e2, e3, e4, e5)
-    end
-    if event == "timer" and e1 == self.animationTimer then
-        if self.animation then
-            self.animation:tick(0.05)
-            if self.animation.over then
-                self.visible = self.animation.show
-                self.animation = nil
-            else
-                self.animationTimer = os.startTimer(0.05)
-            end
-        end
-    end
+    ccute.Widget.processEvent(self, event, e1, e2, e3, e4, e5)
     local fillStart, fillEnd
     if self.horizontal then
         fillStart = math.floor(self.leftLine / self.totalLines * self.width)
@@ -947,6 +920,7 @@ function ccute.Application.run(self, noesc)
         if event == "key" and e1 == 1 and not noesc then
             break
         end
+        self.coreWidget:processEvent("ccute.before_event")
         self.coreWidget:processEvent(event, e1, e2, e3, e4, e5)
         self.coreWidget:draw()
         self.renderer:drawAtXY(1, 1)

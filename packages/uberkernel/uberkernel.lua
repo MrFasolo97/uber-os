@@ -17,13 +17,13 @@ ccver = sChangelog:match("New Features in ComputerCraft ([%d%.]+):")
 
 if ccver < "1.6" then
     print("ComputerCraft " .. ccver .. " is not supported by this version of kernel")
-    print("Supported versions: 1.6-1.73")
+    print("Supported versions: 1.6-1.78")
     print("Please, update your ComputerCraft")
     printError("Failed to start kernel")
     return
 end
 
-if ccver >= "1.75" and shell then
+if ccver > "1.78" and shell then
     print("ComputerCraft " .. ccver .. " is not supported by this version of kernel")
     print("It is recomended to downgrade your version of CC")
     print("Proceed on your own risk")
@@ -32,19 +32,18 @@ if ccver >= "1.75" and shell then
 end
 
 
-if ccver < "1.63" then --Patch fs.getDir. Without this patch kernel will crash on CC before 1.63
-    print("[CC < 1.63]: Patching fs.getDir")
-    fs.getDir = function(dir)
-        assert(type(dir) == "string", "string expected got " .. type(dir))
-        if dir:match("/") then
-            return dir:match("^/?(.*)/.+$")
-        else
-            return ""
-        end
+--Patch fs.getDir. Without this patch kernel will crash on CC before 1.63
+print("Patching fs.getDir")
+fs.getDir = function(dir)
+    assert(type(dir) == "string", "string expected got " .. type(dir))
+    if dir:match("/") then
+        return dir:match("^/?(.*)/.+$") or ""
+    else
+        return ""
     end
 end
 
-local version = "UberKernel Beta"
+local version = "UberOS"
 local temp_dir
 if KERNEL_DIR then
     temp_dir = KERNEL_DIR
