@@ -5,9 +5,9 @@
 -- A command line utility for minifying lua source code using the minifier.
 --
 
-local util = require'Util'
-local Parser = require'ParseLua'
-local Format_Mini = require'FormatMini'
+local util = os.loadAPI('Util')
+local Parser = os.loadAPI('ParseLua')
+local Format_Mini = os.loadAPI('FormatMini')
 local ParseLua = Parser.ParseLua
 local PrintTable = util.PrintTable
 
